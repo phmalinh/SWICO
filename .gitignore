@@ -1,0 +1,26 @@
+# Frontend env files
+frontend/.env.local
+frontend/.env.*
+!frontend/.env
+!frontend/.env.example
+
+# Python virtual env
+.venv/
+
+# Local temp / workspace files
+temp.xlsx
+*.log
+*.pyc
+__pycache__/
+
+# Frontend files
+frontend/node_modules/
+frontend/dist/
+frontend/vite-dev.err.log
+frontend/vite-dev.out.log
+frontend/tmp_*.py
+
+# Backend files
+swico/target/
+swico/.mvn/wrapper/maven-wrapper.jar
+swico/swico-backend.log

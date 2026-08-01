@@ -1,0 +1,13 @@
+package com.swico.swico;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class SwicoApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
