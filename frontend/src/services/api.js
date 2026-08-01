@@ -332,6 +332,7 @@ export const productionApi = {
   today: params => request(`/production-reports/today${buildQuery(params)}`),
   search: params => request(`/production-reports${buildQuery(params)}`),
   dashboard: params => request(`/production-reports/dashboard${buildQuery(params)}`),
+  myReports: params => request(`/production-reports/mine${buildQuery(params)}`),
 
   // Đã tối ưu hàm exportV9 dùng chung request()
   exportV9: params => request(`/production-reports/export-v9${buildQuery(params)}`, {}, { responseType: 'blob' }),

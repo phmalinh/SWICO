@@ -12,9 +12,14 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
-            <div class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2">
-              <span class="block text-[11px] font-bold uppercase text-slate-400">{{ t('layout.currentShift') }}</span>
-              <span class="text-sm font-bold text-amber-300">全天1 06:00-18:00</span>
+            <div class="py-2">
+            <el-select v-model="locale" size="small" style="width: 110px" @change="value => setLocale(value)">
+              <el-option label="Tiếng Việt" value="vi" />
+              <el-option label="繁體中文" value="zh-Hant" />
+            </el-select>
+            </div>
+            <div class="px-4 py-2">
+              <span class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-500">{{ currentDate }}</span>
             </div>
             <div class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-bold text-slate-200">
               {{ displayUsername }} • {{ roleLabels[userRole]?.label }}

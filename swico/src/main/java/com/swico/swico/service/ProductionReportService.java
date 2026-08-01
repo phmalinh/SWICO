@@ -57,7 +57,7 @@ public class ProductionReportService {
     }
 
     @Transactional
-    public ProductionReportResponse createReport(ProductionCalculationRequest request) {
+    public ProductionReportResponse createReport(ProductionCalculationRequest request, String createdBy) {
         String normalizedShiftName = request.shiftName() != null ? request.shiftName().trim() : null;
         Integer shiftMinutes = formulaService.resolveShiftMinutes(normalizedShiftName);
         if (shiftMinutes == null) {
@@ -86,6 +86,7 @@ public class ProductionReportService {
         entity.setGoodQuantity(request.goodQuantity());
         entity.setDefectQuantity(request.defectQuantity());
         entity.setCompany(request.company());
+        entity.setCreatedBy(createdBy);
         entity.setDowntimeReason(request.downtimeReason());
 
         ProductionCalculationResponse calculated = formulaService.calculate(request, effectiveShiftMinutes);
@@ -143,7 +144,7 @@ public class ProductionReportService {
     }
 
     @Transactional
-    public List<ProductionReportResponse> importReports(MultipartFile file) {
+    public List<ProductionReportResponse> importReports(MultipartFile file, String createdBy) {
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
             if (sheet == null) {
@@ -181,7 +182,7 @@ public class ProductionReportService {
                         parseString(row.getCell(headerIndex.getOrDefault("downtimeReason", -1)))
                 );
 
-                ProductionReportResponse imported = createReport(request);
+                ProductionReportResponse imported = createReport(request, createdBy);
                 importedReports.add(imported);
             }
 
@@ -322,6 +323,32 @@ public class ProductionReportService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProductionReportResponse> getMyReports(String createdBy, LocalDate reportDate, String lineCode, String shiftName, String partNumber) {
+        List<DailyProductionReport> reports;
+        boolean hasLineFilter = lineCode != null && !lineCode.isBlank();
+
+        if (reportDate == null) {
+            if (hasLineFilter) {
+                reports = reportRepository.findByCreatedByAndLine_LineCodeOrderByCreatedAtDesc(createdBy, lineCode);
+            } else {
+                reports = reportRepository.findByCreatedByOrderByCreatedAtDesc(createdBy);
+            }
+        } else {
+            if (hasLineFilter) {
+                reports = reportRepository.findByCreatedByAndLine_LineCodeAndReportDateOrderByCreatedAtDesc(createdBy, lineCode, reportDate);
+            } else {
+                reports = reportRepository.findByCreatedByAndReportDateOrderByCreatedAtDesc(createdBy, reportDate);
+            }
+        }
+
+        return reports.stream()
+                .filter(r -> shiftName == null || shiftName.isBlank() || (r.getShift() != null && shiftName.equals(r.getShift().getShiftName())))
+                .filter(r -> partNumber == null || partNumber.isBlank() || (r.getProduct() != null && r.getProduct().getPartNumber().contains(partNumber)))
+                .map(r -> toResponse(r, null))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<ProductionReportResponse> getTodayReports(LocalDate reportDate, String lineCode) {
         LocalDate date = reportDate != null ? reportDate : LocalDate.now();
         List<DailyProductionReport> reports = (lineCode == null || lineCode.isBlank())
@@ -407,7 +434,8 @@ public class ProductionReportService {
                 report.getOee(),
                 calculated != null ? calculated.evaluationLabel() : formulaService.evaluationLabel(report.getOee()),
                 report.getCreatedAt(),
-                report.getUpdatedAt()
+                report.getUpdatedAt(),
+                report.getCreatedBy()
         );
     }
 

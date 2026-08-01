@@ -28,5 +28,6 @@ public record ProductionReportResponse(
         BigDecimal oee,
         String evaluationLabel,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String createdBy
 ) {}

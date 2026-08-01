@@ -53,12 +53,13 @@ public class ProductionReportController {
 
     @PostMapping
     public ProductionReportResponse create(@Valid @RequestBody ProductionCalculationRequest request, Authentication authentication) {
-        ProductionReportResponse response = reportService.createReport(request);
+        String username = authentication != null ? authentication.getName() : "SYSTEM";
+        ProductionReportResponse response = reportService.createReport(request, username);
         auditLogService.record(
                 "CREATE",
                 "DailyProductionReport",
                 response.id(),
-                authentication.getName(),
+                username,
                 String.format("Tạo báo cáo ca %s - %s", response.lineCode(), response.partNumber())
         );
         return response;
@@ -67,11 +68,12 @@ public class ProductionReportController {
     @PutMapping("/{id}")
     public ProductionReportResponse update(@PathVariable Long id, @Valid @RequestBody ProductionCalculationRequest request, Authentication authentication) {
         ProductionReportResponse response = reportService.updateReport(id, request);
+        String username = authentication != null ? authentication.getName() : "SYSTEM";
         auditLogService.record(
                 "UPDATE",
                 "DailyProductionReport",
                 response.id(),
-                authentication.getName(),
+                username,
                 String.format("Cập nhật báo cáo %s - %s", response.lineCode(), response.partNumber())
         );
         return response;
@@ -101,6 +103,21 @@ public class ProductionReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDate
     ) {
         return reportService.getDashboard(reportDate);
+    }
+
+    @GetMapping("/mine")
+    public List<ProductionReportResponse> mine(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDate,
+            @RequestParam(required = false) String lineCode,
+            @RequestParam(required = false) String shiftName,
+            @RequestParam(required = false) String partNumber,
+            Authentication authentication
+    ) {
+        String username = authentication != null ? authentication.getName() : null;
+        if (username == null) {
+            return java.util.Collections.emptyList();
+        }
+        return reportService.getMyReports(username, reportDate, lineCode, shiftName, partNumber);
     }
 
     @GetMapping("/export-v9")
@@ -136,14 +153,12 @@ public class ProductionReportController {
     // }
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public List<ProductionReportResponse> importReports(
-            @RequestParam("file") MultipartFile file, // 👈 Đổi từ @RequestPart sang @RequestParam
+            @RequestParam("file") MultipartFile file, //  Đổi từ @RequestPart sang @RequestParam
             Authentication authentication
     ) {
         logger.info("Import endpoint reached, fileName={}, authPresent={}, username={}", file != null ? file.getOriginalFilename() : null, authentication != null, authentication != null ? authentication.getName() : null);
-        List<ProductionReportResponse> reports = reportService.importReports(file);
-        
-        // Lấy tên người dùng an toàn (tránh NullPointerException nếu authentication null)
         String username = (authentication != null) ? authentication.getName() : "SYSTEM";
+        List<ProductionReportResponse> reports = reportService.importReports(file, username);
 
         if (reports != null) {
             reports.forEach(report -> auditLogService.record(
@@ -155,7 +170,7 @@ public class ProductionReportController {
             ));
         }
         return reports;
-}
+    }
 
     @DeleteMapping
     public void deleteReports(@RequestBody java.util.List<Long> ids, Authentication authentication) {

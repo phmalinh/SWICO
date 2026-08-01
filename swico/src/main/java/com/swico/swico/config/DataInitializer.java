@@ -28,8 +28,12 @@ public class DataInitializer implements CommandLineRunner {
 
     private void upsertUser(String username, String rawPassword, String fullName, Role role, String lineCode) {
         User user = userRepository.findByUsername(username).orElseGet(User::new);
+        boolean isNewUser = user.getId() == null;
+
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(rawPassword));
+        if (isNewUser) {
+            user.setPassword(passwordEncoder.encode(rawPassword));
+        }
         user.setFullName(fullName);
         user.setRole(role);
         user.setLineCode(lineCode);

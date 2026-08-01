@@ -24,24 +24,6 @@
       </div>
     </div>
 
-    <div class="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_1fr]">
-      <div class="page-card p-5">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h3 class="section-title">{{ t('reports.dashboard.sections.lineOee') }}</h3>
-            <p class="section-subtitle">{{ t('reports.dashboard.sections.lineHint') }}</p>
-          </div>
-          <span class="metric-chip border-sky-200 bg-sky-50 text-sky-700">{{ t('reports.dashboard.labels.target') }} 85%</span>
-        </div>
-        <v-chart class="mt-4" style="height: 320px; min-height: 320px; width: 100%;" :option="lineChartOption" autoresize />
-      </div>
-      <div class="page-card p-5">
-        <h3 class="section-title">{{ t('reports.dashboard.sections.trend') }}</h3>
-        <p class="section-subtitle">{{ t('reports.dashboard.sections.trendHint') }}</p>
-        <v-chart class="mt-4" style="height: 320px; min-height: 320px; width: 100%;" :option="trendChartOption" autoresize />
-      </div>
-    </div>
-
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       <article
         v-for="line in lineDetails"

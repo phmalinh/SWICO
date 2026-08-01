@@ -49,6 +49,9 @@ public class DailyProductionReport {
     @Column(name = "company", length = 100)
     private String company;
 
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
     @Column(name = "downtime_reason", length = 200)
     private String downtimeReason;
 
@@ -218,6 +221,14 @@ public class DailyProductionReport {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 
     public String getDowntimeReason() {
