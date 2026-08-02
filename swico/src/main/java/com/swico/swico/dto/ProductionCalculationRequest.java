@@ -21,5 +21,14 @@ public record ProductionCalculationRequest(
         @NotNull @Min(0) Integer goodQuantity,
         @NotNull @Min(0) Integer defectQuantity,
         String company,
-        String downtimeReason
+        String downtimeReason,
+        // Optional: overrides supplied by import file. If present they will be used instead of calculated values.
+        Integer shiftStandardTimeMinutes,
+        BigDecimal dailyTargetQuantity,
+        BigDecimal productionEfficiency,
+        BigDecimal availabilityRate,
+        BigDecimal performanceRate,
+        BigDecimal qualityRate,
+        BigDecimal oee,
+        String evaluationLabel
 ) {}

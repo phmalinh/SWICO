@@ -123,7 +123,7 @@ public class ReferenceDataSeeder {
     private void saveMachine(String machineCode, String lineCode, String description) {
         Machine machine = new Machine();
         machine.setMachineCode(machineCode);
-        machine.setLine(lineRepository.findByLineCode(lineCode).orElseThrow());
+        //machine.setLine(lineRepository.findByLineCode(lineCode).orElseThrow());
         machine.setDescription(description);
         machineRepository.save(machine);
     }
@@ -143,8 +143,16 @@ public class ReferenceDataSeeder {
                 inputQuantity,
                 goodQuantity,
                 defectQuantity,
-                null,
-                null
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
         );
         ProductionCalculationResponse calculated = formulaService.calculate(request, shift.getStandardTimeMinutes());
 

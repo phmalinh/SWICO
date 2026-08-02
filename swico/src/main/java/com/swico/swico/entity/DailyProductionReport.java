@@ -58,6 +58,9 @@ public class DailyProductionReport {
     @Column(name = "target_quantity", precision = 10, scale = 2)
     private BigDecimal targetQuantity;
 
+    @Column(name = "production_efficiency", precision = 5, scale = 4)
+    private BigDecimal productionEfficiency;
+
     @Column(name = "availability_rate", precision = 5, scale = 4)
     private BigDecimal availabilityRate;
 
@@ -69,6 +72,9 @@ public class DailyProductionReport {
 
     @Column(name = "oee", precision = 5, scale = 4)
     private BigDecimal oee;
+
+    @Column(name = "evaluation_label", length = 100)
+    private String evaluationLabel;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -183,6 +189,14 @@ public class DailyProductionReport {
         this.targetQuantity = targetQuantity;
     }
 
+    public BigDecimal getProductionEfficiency() {
+        return productionEfficiency;
+    }
+
+    public void setProductionEfficiency(BigDecimal productionEfficiency) {
+        this.productionEfficiency = productionEfficiency;
+    }
+
     public BigDecimal getAvailabilityRate() {
         return availabilityRate;
     }
@@ -213,6 +227,14 @@ public class DailyProductionReport {
 
     public void setOee(BigDecimal oee) {
         this.oee = oee;
+    }
+
+    public String getEvaluationLabel() {
+        return evaluationLabel;
+    }
+
+    public void setEvaluationLabel(String evaluationLabel) {
+        this.evaluationLabel = evaluationLabel;
     }
 
     public String getCompany() {
