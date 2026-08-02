@@ -21,7 +21,5 @@ public interface DailyProductionReportRepository extends JpaRepository<DailyProd
 
     List<DailyProductionReport> findByCreatedByAndLine_LineCodeAndReportDateOrderByCreatedAtDesc(String createdBy, String lineCode, LocalDate reportDate);
 
-    List<DailyProductionReport> findByCreatedByAndReportDateOrderByCreatedAtDesc(String createdBy, LocalDate reportDate);
-
     List<DailyProductionReport> findByCreatedByAndReportDateBetweenOrderByReportDateDescCreatedAtDesc(String createdBy, LocalDate from, LocalDate to);
 }
