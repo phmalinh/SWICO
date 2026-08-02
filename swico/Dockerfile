@@ -1,23 +1,24 @@
-# Bước 1: Build file JAR bằng Maven & Java 17
-FROM maven:3.9-eclipse-temurin-17 AS build
+# Bước 1: Build file JAR bằng Maven & Java 21
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy pom.xml và tải dependencies trước để lưu cache
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# Copy toàn bộ mã nguồn
+COPY . .
 
-# Copy toàn bộ mã nguồn và thực hiện build (bỏ qua unit tests)
-COPY src ./src
+# Giới hạn RAM cho Maven để tránh bị nổ bộ nhớ trên gói Free của Render
+ENV MAVEN_OPTS="-Xmx400m"
+
+# Build dự án (bỏ qua unit tests)
 RUN mvn clean package -DskipTests
 
-# Bước 2: Khởi chạy ứng dụng bằng JRE nhẹ
-FROM eclipse-temurin:17-jre
+# Bước 2: Khởi chạy ứng dụng bằng JRE Java 21
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# Chỉ copy đúng file jar thực thi (tránh file .original)
+# Copy file jar thực thi
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-# Chạy ứng dụng và tiêm cổng PORT của Render (mặc định 8080 nếu chạy local)
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
+# Chạy ứng dụng và tiêm cổng PORT từ Render
+ENTRYPOINT ["sh", "-c", "java -Xmx300m -jar app.jar --server.port=${PORT:-8080}"]
