@@ -271,9 +271,6 @@ async function request(path, options = {}, config = {}) {
     if (!response.ok) {
       const text = await response.text()
       if (response.status === 401) {
-        if (config.handleAuthFailure !== false) {
-          handleAuthFailure()
-        }
         throw new Error(text || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
       }
       if (response.status === 403) {

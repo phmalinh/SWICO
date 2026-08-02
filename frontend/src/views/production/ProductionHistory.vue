@@ -40,14 +40,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column :label="t('productionHistory.table.actions')" width="110" align="center" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="openEdit(row)">
-              <el-icon><Edit /></el-icon>
-              {{ t('productionHistory.table.edit') }}
-            </el-button>
-          </template>
-        </el-table-column>
+        
       </el-table>
 
       <div class="flex justify-end px-4 py-3 border-t border-slate-200 bg-slate-50">
