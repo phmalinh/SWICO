@@ -2,9 +2,7 @@ package com.swico.swico.service;
 
 import com.swico.swico.dto.MachineResponse;
 import com.swico.swico.dto.MachineUpsertRequest;
-import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Machine;
-import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.MachineRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,11 +12,9 @@ import java.util.List;
 public class MachineService {
 
     private final MachineRepository machineRepository;
-    private final LineRepository lineRepository;
 
-    public MachineService(MachineRepository machineRepository, LineRepository lineRepository) {
+    public MachineService(MachineRepository machineRepository) {
         this.machineRepository = machineRepository;
-        this.lineRepository = lineRepository;
     }
 
     public List<MachineResponse> getAll() {
@@ -26,10 +22,8 @@ public class MachineService {
     }
 
     public MachineResponse create(MachineUpsertRequest request) {
-        Line line = lineRepository.findByLineCode(request.lineCode()).orElseThrow();
         Machine machine = new Machine();
         machine.setMachineCode(request.machineCode());
-        machine.setLine(line);
         machine.setDescription(request.description());
         Machine saved = machineRepository.save(machine);
         return toResponse(saved);
@@ -37,9 +31,7 @@ public class MachineService {
 
     public MachineResponse update(Long id, MachineUpsertRequest request) {
         Machine machine = machineRepository.findById(id).orElseThrow();
-        Line line = lineRepository.findByLineCode(request.lineCode()).orElseThrow();
         machine.setMachineCode(request.machineCode());
-        machine.setLine(line);
         machine.setDescription(request.description());
         return toResponse(machineRepository.save(machine));
     }
@@ -52,7 +44,6 @@ public class MachineService {
         return new MachineResponse(
                 machine.getId(),
                 machine.getMachineCode(),
-                machine.getLine() != null ? machine.getLine().getLineCode() : null,
                 machine.getDescription()
         );
     }

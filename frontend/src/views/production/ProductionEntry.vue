@@ -287,9 +287,7 @@ const downtimeReasons = [
   '其他 / Khác',
 ]
 
-const filteredMachines = computed(() =>
-  machines.value.filter(m => !form.value.lineCode || m.lineCode === form.value.lineCode)
-)
+const filteredMachines = computed(() => machines.value)
 
 const selectedShiftMinutes = computed(() => {
   const shift = shifts.value.find(s => s.shiftName === form.value.shiftName)
@@ -410,9 +408,8 @@ function onProductChange(partNumber) {
 }
 
 function onLineChange(lineCode) {
-  const firstMachine = machines.value.find(m => m.lineCode === lineCode)
-  if (firstMachine) {
-    form.value.machineCode = firstMachine.machineCode
+  if (machines.value.length) {
+    form.value.machineCode = machines.value[0].machineCode
   }
 }
 
@@ -443,7 +440,7 @@ async function loadInitialData() {
       cycleTimeSeconds: item.cycleTimeSeconds,
     }))
     lines.value = linesRes.map(item => ({ id: item.id, lineCode: item.code, description: item.name }))
-    machines.value = machinesRes.map(item => ({ id: item.id, machineCode: item.machineCode, lineCode: item.lineCode, description: item.description }))
+    machines.value = machinesRes.map(item => ({ id: item.id, machineCode: item.machineCode, description: item.description }))
     shifts.value = shiftsRes.map(item => ({ id: item.id, shiftName: item.name, standardTimeMinutes: item.standardTimeMinutes }))
 
     if (!form.value.lineCode && lines.value.length) form.value.lineCode = lines.value[0].lineCode

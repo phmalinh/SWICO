@@ -12,9 +12,6 @@
         <el-table-column prop="machineCode" :label="t('master.machines.table.machineCode')" width="140">
           <template #default="{ row }"><span class="font-mono font-black text-slate-800">{{ row.machineCode }}</span></template>
         </el-table-column>
-        <el-table-column prop="lineCode" :label="t('master.machines.table.lineCode')" width="110" align="center">
-          <template #default="{ row }"><el-tag>{{ row.lineCode }}</el-tag></template>
-        </el-table-column>
         <el-table-column prop="description" :label="t('master.machines.table.description')" min-width="220" />
         <el-table-column :label="t('master.machines.table.actions')" width="150" align="center">
           <template #default="{ row }">
@@ -37,11 +34,6 @@
     <el-dialog v-model="dialogVisible" :title="editId ? t('master.machines.dialog.titleEdit') : t('master.machines.dialog.titleCreate')" width="480px" destroy-on-close>
       <el-form :model="form" label-position="top">
         <el-form-item :label="t('master.machines.dialog.machineCode')" required><el-input v-model="form.machineCode" placeholder="TC-31" /></el-form-item>
-        <el-form-item :label="t('master.machines.dialog.lineCode')" required>
-          <el-select v-model="form.lineCode" class="w-full">
-            <el-option v-for="l in mockLines" :key="l.lineCode" :label="l.lineCode" :value="l.lineCode" />
-          </el-select>
-        </el-form-item>
         <el-form-item :label="t('master.machines.dialog.description')"><el-input v-model="form.description" /></el-form-item>
       </el-form>
       <template #footer>
@@ -57,7 +49,6 @@ import { computed, onMounted, ref } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
-import { mockLines } from '@/data/mockData'
 import { masterApi } from '@/services/api'
 import { useI18n } from '@/i18n'
 
@@ -66,7 +57,7 @@ const machines = ref([])
 const dialogVisible = ref(false)
 const editId = ref(null)
 const loading = ref(false)
-const form = ref({ machineCode: '', lineCode: 'A1', description: '' })
+const form = ref({ machineCode: '', description: '' })
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -80,7 +71,6 @@ function normalizeMachine(item) {
   return {
     id: item.id,
     machineCode: item.machineCode,
-    lineCode: item.lineCode,
     description: item.description,
   }
 }
@@ -99,7 +89,7 @@ async function loadMachines() {
 
 function openDialog(row) {
   editId.value = row?.id || null
-  form.value = row ? { ...row } : { machineCode: '', lineCode: 'A1', description: '' }
+  form.value = row ? { ...row } : { machineCode: '', description: '' }
   dialogVisible.value = true
 }
 
@@ -108,7 +98,6 @@ async function save() {
   try {
     const payload = {
       machineCode: form.value.machineCode.trim(),
-      lineCode: form.value.lineCode,
       description: form.value.description?.trim() || '',
     }
     if (editId.value) {
