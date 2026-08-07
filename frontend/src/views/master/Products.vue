@@ -8,7 +8,7 @@
     </PageHeader>
 
     <div class="page-card overflow-hidden">
-      <el-table :data="paginatedProducts" stripe style="width: 100%" size="large" v-loading="loading">
+      <el-table :data="paginatedRows" stripe style="width: 100%" size="large" v-loading="loading">
         <el-table-column type="index" label="#" width="60" />
         <el-table-column prop="partNumber" :label="t('master.products.table.partNumber')" width="150">
           <template #default="{ row }"><span class="font-mono font-black text-sky-600">{{ row.partNumber }}</span></template>
@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="editId ? t('master.products.dialog.titleEdit') : t('master.products.dialog.titleCreate')" width="480px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="editId ? t('master.products.dialog.titleEdit') : t('master.products.dialog.titleCreate')" width="560px" destroy-on-close>
       <el-form :model="form" label-position="top">
         <el-form-item :label="t('master.products.dialog.partNumber')" required><el-input v-model="form.partNumber" placeholder="PN-001" /></el-form-item>
         <el-form-item :label="t('master.products.dialog.partName')" required><el-input v-model="form.partName" :placeholder="t('master.products.placeholders.partName')" /></el-form-item>
@@ -66,26 +66,22 @@ const form = ref({ partNumber: '', partName: '', cycleTimeSeconds: 10 })
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-const paginatedProducts = computed(() => {
+const paginatedRows = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return products.value.slice(start, end)
 })
 
-function normalizeProduct(item) {
-  return {
-    id: item.id,
-    partNumber: item.code ?? item.partNumber,
-    partName: item.name ?? item.partName,
-    cycleTimeSeconds: Number(item.cycleTimeSeconds ?? 10),
-  }
-}
-
 async function loadProducts() {
   loading.value = true
   try {
     const data = await masterApi.getProducts()
-    products.value = data.map(normalizeProduct)
+    products.value = data.map(item => ({
+      id: item.id,
+      partNumber: item.code ?? item.partNumber,
+      partName: item.name ?? item.partName,
+      cycleTimeSeconds: Number(item.cycleTimeSeconds ?? 10),
+    }))
   } catch (error) {
     ElMessage.error(`${t('master.products.messages.loadFailed')}: ${error.message}`)
   } finally {
@@ -95,7 +91,9 @@ async function loadProducts() {
 
 function openDialog(row) {
   editId.value = row?.id || null
-  form.value = row ? { ...row } : { partNumber: '', partName: '', cycleTimeSeconds: 10 }
+  form.value = row
+    ? { ...row }
+    : { partNumber: '', partName: '', cycleTimeSeconds: 10 }
   dialogVisible.value = true
 }
 

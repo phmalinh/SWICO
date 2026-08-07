@@ -10,10 +10,10 @@
       <el-form :model="filters" label-position="top">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
           <el-form-item :label="t('reports.search.fields.dateFrom')">
-            <el-date-picker v-model="filters.dateFrom" type="date" class="!w-full" value-format="YYYY-MM-DD" placeholder="" />
+            <el-date-picker v-model="filters.dateFrom" type="date" class="!w-full" value-format="YYYY-MM-DD" />
           </el-form-item>
           <el-form-item :label="t('reports.search.fields.dateTo')">
-            <el-date-picker v-model="filters.dateTo" type="date" class="!w-full" value-format="YYYY-MM-DD" placeholder="" />
+            <el-date-picker v-model="filters.dateTo" type="date" class="!w-full" value-format="YYYY-MM-DD" />
           </el-form-item>
           <el-form-item :label="t('reports.search.fields.line')">
             <el-select v-model="filters.lineCode" clearable :placeholder="t('reports.search.fields.all')" class="w-full">
@@ -52,9 +52,17 @@
         <el-table-column prop="machineCode" :label="t('reports.search.table.machine')" width="92" />
         <el-table-column prop="partNumber" :label="t('reports.search.table.partNumber')" width="120" />
         <el-table-column prop="partName" :label="t('reports.search.table.partName')" min-width="150" show-overflow-tooltip />
+        <el-table-column :label="t('reports.search.table.processIds')" min-width="130" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
+        </el-table-column>
         <el-table-column :label="t('reports.search.table.oee')" width="88" align="center">
           <template #default="{ row }">
             <span class="font-black" :class="oeeTextClass(row.oee)">{{ formatPercent(row.oee) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="productionEfficiency" :label="t('reports.search.table.productionEfficiency')" width="90" align="center">
+          <template #default="{ row }">
+            {{ rate(row.productionEfficiency) }}
           </template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.rates')" width="132" align="center">
@@ -65,6 +73,8 @@
         <el-table-column :label="t('reports.search.table.inputGoodDefect')" width="140" align="center">
           <template #default="{ row }">{{ row.inputQuantity }}/{{ row.goodQuantity }}/{{ row.defectQuantity }}</template>
         </el-table-column>
+        <el-table-column prop="internalDefectQuantity" :label="t('reports.search.table.internalDefectQuantity')" width="130" align="center" />
+        <el-table-column prop="externalDefectQuantity" :label="t('reports.search.table.externalDefectQuantity')" width="130" align="center" />
       </el-table>
       <div class="border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-500">
         {{ t('reports.search.results', { count: reports.length }) }}
@@ -84,8 +94,8 @@ import { useI18n } from '@/i18n'
 const { t } = useI18n()
 
 const filters = ref({
-  dateFrom: null,
-  dateTo: null,
+  dateFrom: new Date().toISOString().slice(0, 10),
+  dateTo: new Date().toISOString().slice(0, 10),
   lineCode: '',
   shiftName: '',
   partNumber: '',
@@ -94,17 +104,43 @@ const filters = ref({
 const reports = ref([])
 const lines = ref([])
 const shifts = ref([])
+const processNameById = ref({})
 const loading = ref(false)
 const selectedIds = ref([])
 
 async function loadOptions() {
   try {
-    const [linesRes, shiftsRes] = await Promise.all([masterApi.getLines(), masterApi.getShifts()])
+    const [linesRes, shiftsRes, productsRes] = await Promise.all([masterApi.getLines(), masterApi.getShifts(), masterApi.getProducts()])
     lines.value = linesRes.map(item => ({ lineCode: item.code, description: item.name }))
     shifts.value = shiftsRes.map(item => ({ shiftName: item.name }))
+    await loadProcessNamesForProducts(productsRes)
   } catch (error) {
     ElMessage.error(`${t('reports.search.messages.loadFailed')}: ${error.message}`)
   }
+}
+
+function mergeProcessNames(processes = []) {
+  processNameById.value = {
+    ...processNameById.value,
+    ...processes.reduce((map, process) => {
+      if (process?.id) map[process.id] = process.process
+      return map
+    }, {}),
+  }
+}
+
+async function loadProcessNamesForProducts(products = []) {
+  const processGroups = await Promise.all(
+    products
+      .filter(product => product.id)
+      .map(product => masterApi.getProductProcesses(product.id).catch(() => []))
+  )
+  processGroups.forEach(mergeProcessNames)
+}
+
+function formatProcessIds(processIds) {
+  if (!Array.isArray(processIds) || processIds.length === 0) return '-'
+  return processIds.map(id => processNameById.value[id]).filter(Boolean).join('； ') || '-'
 }
 
 function formatPercent(value) {
@@ -164,8 +200,8 @@ async function deleteSelected() {
 
 function resetFilters() {
   filters.value = {
-    dateFrom: null,
-    dateTo: null,
+    dateFrom: new Date().toISOString().slice(0, 10),
+    dateTo: new Date().toISOString().slice(0, 10),
     lineCode: '',
     shiftName: '',
     partNumber: '',

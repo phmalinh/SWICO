@@ -187,15 +187,16 @@
 // export { API_BASE_URL }
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8081/api/v1'
 const AUTH_PATH = (import.meta.env.VITE_AUTH_PATH || '/auth').replace(/\/+$/, '')
-const APP_ENV = import.meta.env.VITE_APP_ENV || 'development'
 const API_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 30000)
-const ENABLE_API_LOGS = import.meta.env.VITE_ENABLE_API_LOGS === 'true' || import.meta.env.DEV
 
 function normalizeToken(token) {
   if (!token) return null
-  const trimmed = String(token).trim()
+  let trimmed = String(token).trim()
   if (trimmed === 'null' || trimmed === 'undefined' || trimmed === '') return null
-  return trimmed
+  if (trimmed.toLowerCase().startsWith('bearer ')) {
+    trimmed = trimmed.slice(7).trim()
+  }
+  return trimmed || null
 }
 
 function buildQuery(params = {}) {
@@ -242,22 +243,6 @@ async function request(path, options = {}, config = {}) {
     console.warn('[api] protected request without auth token', method, path)
   }
 
-  if (ENABLE_API_LOGS) {
-    try {
-      console.debug('[api] request', {
-        env: APP_ENV,
-        method,
-        path,
-        url: buildApiUrl(path),
-        tokenPresent: !!token,
-        tokenSnippet: token ? `${String(token).slice(0, 8)}...` : null,
-        headers: Object.fromEntries(headers.entries()),
-      })
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS)
 
@@ -271,6 +256,9 @@ async function request(path, options = {}, config = {}) {
     if (!response.ok) {
       const text = await response.text()
       if (response.status === 401) {
+        if (config.handleAuthFailure !== false) {
+          handleAuthFailure()
+        }
         throw new Error(text || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
       }
       if (response.status === 403) {
@@ -319,6 +307,10 @@ export const masterApi = {
   createMachine: payload => request('/master-data/machines', { method: 'POST', body: JSON.stringify(payload) }),
   updateMachine: (id, payload) => request(`/master-data/machines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteMachine: id => request(`/master-data/machines/${id}`, { method: 'DELETE' }),
+  getProductProcesses: productId => request(`/master-data/products/${productId}/processes`),
+  addProductProcess: (productId, payload) => request(`/master-data/products/${productId}/processes`, { method: 'POST', body: JSON.stringify(payload) }),
+  updateProcess: (id, payload) => request(`/master-data/processes/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteProcess: id => request(`/master-data/processes/${id}`, { method: 'DELETE' }),
 }
 
 export const productionApi = {
@@ -336,34 +328,9 @@ export const productionApi = {
 
   // Đã tối ưu hàm importV9 dùng chung request()
   importV9: async file => {
-    const token = normalizeToken(localStorage.getItem('swico_token'))
-
-    console.debug('[api] importV9 tokenPresent:', !!token, 'tokenSnippet:', token ? `${String(token).slice(0,8)}...` : null)
-
     const formData = new FormData()
     formData.append('file', file)
-
-    const headers = new Headers()
-    headers.set('Accept', 'application/json')
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`)
-    }
-
-    return fetch(buildApiUrl('/production-reports/import'), {
-      method: 'POST',
-      headers,
-      body: formData,
-    }).then(async response => {
-      const text = await response.text()
-      if (!response.ok) {
-        throw new Error(text || `Request failed with status ${response.status}`)
-      }
-      try {
-        return JSON.parse(text)
-      } catch {
-        return text
-      }
-    })
+    return request('/production-reports/import', { method: 'POST', body: formData })
   },
 }
 
@@ -384,4 +351,4 @@ export const authApi = {
   changePassword: payload => request(`${AUTH_PATH}/change-password`, { method: 'POST', body: JSON.stringify(payload) }, { handleAuthFailure: false }),
 }
 
-export { API_BASE_URL, AUTH_PATH, APP_ENV, API_TIMEOUT_MS, ENABLE_API_LOGS, buildApiUrl }
+export { API_BASE_URL, AUTH_PATH, API_TIMEOUT_MS, buildApiUrl }

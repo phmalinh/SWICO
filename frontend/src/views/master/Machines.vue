@@ -12,6 +12,7 @@
         <el-table-column prop="machineCode" :label="t('master.machines.table.machineCode')" width="140">
           <template #default="{ row }"><span class="font-mono font-black text-slate-800">{{ row.machineCode }}</span></template>
         </el-table-column>
+        <el-table-column prop="lineCode" :label="t('master.machines.table.lineCode')" width="120" />
         <el-table-column prop="description" :label="t('master.machines.table.description')" min-width="220" />
         <el-table-column :label="t('master.machines.table.actions')" width="150" align="center">
           <template #default="{ row }">
@@ -34,6 +35,11 @@
     <el-dialog v-model="dialogVisible" :title="editId ? t('master.machines.dialog.titleEdit') : t('master.machines.dialog.titleCreate')" width="480px" destroy-on-close>
       <el-form :model="form" label-position="top">
         <el-form-item :label="t('master.machines.dialog.machineCode')" required><el-input v-model="form.machineCode" placeholder="TC-31" /></el-form-item>
+        <el-form-item :label="t('master.machines.dialog.lineCode')">
+          <el-select v-model="form.lineCode" clearable placeholder="A1" class="w-full">
+            <el-option v-for="line in lineOptions" :key="line.value" :label="line.label" :value="line.value" />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="t('master.machines.dialog.description')"><el-input v-model="form.description" /></el-form-item>
       </el-form>
       <template #footer>
@@ -54,10 +60,11 @@ import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
 const machines = ref([])
+const lineOptions = ref([])
 const dialogVisible = ref(false)
 const editId = ref(null)
 const loading = ref(false)
-const form = ref({ machineCode: '', description: '' })
+const form = ref({ machineCode: '', description: '', lineCode: '' })
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -72,14 +79,22 @@ function normalizeMachine(item) {
     id: item.id,
     machineCode: item.machineCode,
     description: item.description,
+    lineCode: item.lineCode || '',
   }
 }
 
 async function loadMachines() {
   loading.value = true
   try {
-    const data = await masterApi.getMachines()
-    machines.value = data.map(normalizeMachine)
+    const [machinesRes, linesRes] = await Promise.all([
+      masterApi.getMachines(),
+      masterApi.getLines(),
+    ])
+    machines.value = machinesRes.map(normalizeMachine)
+    lineOptions.value = (linesRes || []).map(item => ({
+      value: item.code ?? item.lineCode ?? item.name,
+      label: `${item.code ?? item.lineCode ?? item.name} - ${item.name ?? item.description ?? ''}`.trim(),
+    }))
   } catch (error) {
     ElMessage.error(`${t('master.machines.messages.loadFailed')}: ${error.message}`)
   } finally {
@@ -89,7 +104,7 @@ async function loadMachines() {
 
 function openDialog(row) {
   editId.value = row?.id || null
-  form.value = row ? { ...row } : { machineCode: '', description: '' }
+  form.value = row ? { ...row } : { machineCode: '', description: '', lineCode: '' }
   dialogVisible.value = true
 }
 
@@ -99,6 +114,7 @@ async function save() {
     const payload = {
       machineCode: form.value.machineCode.trim(),
       description: form.value.description?.trim() || '',
+      lineCode: form.value.lineCode?.trim() || '',
     }
     if (editId.value) {
       await masterApi.updateMachine(editId.value, payload)

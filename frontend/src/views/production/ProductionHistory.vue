@@ -23,6 +23,9 @@
         <el-table-column prop="machineCode" :label="t('productionHistory.table.machine')" width="96" align="center" />
         <el-table-column prop="partNumber" :label="t('productionHistory.table.partNumber')" width="120" />
         <el-table-column prop="partName" :label="t('productionHistory.table.partName')" min-width="150" show-overflow-tooltip />
+        <el-table-column :label="t('productionHistory.table.processIds')" min-width="130" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
+        </el-table-column>
         <el-table-column :label="t('productionHistory.table.runDowntime')" width="120" align="center">
           <template #default="{ row }">
             <span class="font-bold text-emerald-600">{{ row.totalOperatingMinutes }}</span>
@@ -33,6 +36,8 @@
         <el-table-column :label="t('productionHistory.table.inputGoodDefect')" width="150" align="center">
           <template #default="{ row }">{{ row.inputQuantity }} / {{ row.goodQuantity }} / {{ row.defectQuantity }}</template>
         </el-table-column>
+        <el-table-column prop="internalDefectQuantity" :label="t('productionHistory.table.internalDefectQuantity')" width="130" align="center" />
+        <el-table-column prop="externalDefectQuantity" :label="t('productionHistory.table.externalDefectQuantity')" width="130" align="center" />
         <el-table-column :label="t('productionHistory.table.oee')" width="95" align="center">
           <template #default="{ row }">
             <span class="rounded-full px-2.5 py-1 text-sm font-black" :class="oeeClass(row.oee)">
@@ -87,7 +92,7 @@ import { computed, onMounted, ref } from 'vue'
 import { Edit } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
-import { productionApi } from '@/services/api'
+import { masterApi, productionApi } from '@/services/api'
 import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
@@ -100,6 +105,7 @@ const editVisible = ref(false)
 const editForm = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
+const processNameById = ref({})
 
 const paginatedReports = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -123,6 +129,31 @@ function oeeClass(oee) {
   return 'bg-rose-100 text-rose-700'
 }
 
+function mergeProcessNames(processes = []) {
+  processNameById.value = {
+    ...processNameById.value,
+    ...processes.reduce((map, process) => {
+      if (process?.id) map[process.id] = process.process
+      return map
+    }, {}),
+  }
+}
+
+async function loadProcessNames() {
+  const products = await masterApi.getProducts()
+  const processGroups = await Promise.all(
+    products
+      .filter(product => product.id)
+      .map(product => masterApi.getProductProcesses(product.id).catch(() => []))
+  )
+  processGroups.forEach(mergeProcessNames)
+}
+
+function formatProcessIds(processIds) {
+  if (!Array.isArray(processIds) || processIds.length === 0) return '-'
+  return processIds.map(id => processNameById.value[id]).filter(Boolean).join('； ') || '-'
+}
+
 async function loadReports() {
   loading.value = true
   try {
@@ -144,11 +175,14 @@ function openEdit(row) {
     partNumber: row.partNumber,
     partName: row.partName,
     cycleTimeSeconds: row.cycleTimeSeconds,
+    processIds: row.processIds || [],
     totalOperatingMinutes: row.totalOperatingMinutes,
     downtimeMinutes: row.downtimeMinutes,
     inputQuantity: row.inputQuantity,
     goodQuantity: row.goodQuantity,
     defectQuantity: row.defectQuantity,
+    internalDefectQuantity: row.internalDefectQuantity,
+    externalDefectQuantity: row.externalDefectQuantity,
   }
   editVisible.value = true
 }
@@ -165,11 +199,14 @@ async function saveEdit() {
       partNumber: editForm.value.partNumber,
       partName: editForm.value.partName,
       cycleTimeSeconds: Number(editForm.value.cycleTimeSeconds || 0),
+      processIds: editForm.value.processIds || [],
       totalOperatingMinutes: Number(editForm.value.totalOperatingMinutes || 0),
       downtimeMinutes: Number(editForm.value.downtimeMinutes || 0),
       inputQuantity: Number(editForm.value.inputQuantity || 0),
       goodQuantity: Number(editForm.value.goodQuantity || 0),
       defectQuantity: Number(editForm.value.defectQuantity || 0),
+      internalDefectQuantity: Number(editForm.value.internalDefectQuantity || 0),
+      externalDefectQuantity: Number(editForm.value.externalDefectQuantity || 0),
     }
     await productionApi.update(editForm.value.id, payload)
     ElMessage.success(t('productionHistory.messages.saveSuccess'))
@@ -182,5 +219,8 @@ async function saveEdit() {
   }
 }
 
-onMounted(loadReports)
+onMounted(async () => {
+  await loadProcessNames()
+  await loadReports()
+})
 </script>

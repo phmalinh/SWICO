@@ -28,10 +28,11 @@
         <el-table-column prop="active" :label="t('users.table.status')" width="120" align="center">
           <template #default="{ row }"><el-tag :type="row.active ? 'success' : 'info'" size="small">{{ row.active ? t('users.table.active') : t('users.table.locked') }}</el-tag></template>
         </el-table-column>
-        <el-table-column :label="t('users.table.actions')" width="150" align="center">
+        <el-table-column :label="t('users.table.actions')" width="210" align="center">
           <template #default="{ row }">
             <el-button type="primary" link @click="openDialog(row)">{{ t('users.table.edit') }}</el-button>
             <el-button type="danger" link @click="toggleActive(row)">{{ row.active ? t('users.table.lock') : t('users.table.unlock') }}</el-button>
+            <el-button type="danger" link @click="deleteUser(row)">{{ t('users.table.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -194,6 +195,23 @@ async function toggleActive(row) {
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error(error.message || 'Không thể thay đổi trạng thái')
+    }
+  }
+}
+
+async function deleteUser(row) {
+  try {
+    await ElMessageBox.confirm(t('users.messages.deleteConfirm', { username: row.username }), t('common.confirm'), {
+      type: 'warning',
+      confirmButtonText: t('users.table.delete'),
+      cancelButtonText: t('common.cancel'),
+    })
+    await userApi.delete(row.id)
+    users.value = users.value.filter(user => user.id !== row.id)
+    ElMessage.success(t('users.messages.deleted'))
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || t('users.messages.deleteFailed'))
     }
   }
 }

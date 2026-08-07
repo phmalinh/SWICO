@@ -66,6 +66,9 @@
         <el-table-column prop="company" :label="t('reports.search.table.company')" min-width="80" show-overflow-tooltip />
         <el-table-column prop="partNumber" :label="t('reports.search.table.partNumber')" width="120" />
         <el-table-column prop="partName" :label="t('reports.search.table.partName')" min-width="80" show-overflow-tooltip />
+        <el-table-column :label="t('reports.search.table.processIds')" min-width="130" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
+        </el-table-column>
         <el-table-column prop="cycleTimeSeconds" :label="t('reports.search.table.cycleTime')" width="70" align="center" />
         <el-table-column prop="totalOperatingMinutes" :label="t('reports.search.table.totalOperatingMinutes')" width="70" align="center" />
         <el-table-column prop="downtimeMinutes" :label="t('reports.search.table.downtimeMinutes')" width="80" align="center" />
@@ -75,6 +78,8 @@
         <el-table-column :label="t('reports.search.table.inputGoodDefect')" width="130" align="center">
           <template #default="{ row }">{{ row.inputQuantity }}/{{ row.goodQuantity }}/{{ row.defectQuantity }}</template>
         </el-table-column>
+        <el-table-column prop="internalDefectQuantity" :label="t('reports.search.table.internalDefectQuantity')" width="130" align="center" />
+        <el-table-column prop="externalDefectQuantity" :label="t('reports.search.table.externalDefectQuantity')" width="130" align="center" />
         <el-table-column prop="productionEfficiency" :label="t('reports.search.table.productionEfficiency')" width="80" align="center" />
         <el-table-column :label="t('reports.search.table.rates')" width="80" align="center">
           <template #default="{ row }">
@@ -125,20 +130,46 @@ const loading = ref(false)
 const lines = ref([])
 const shifts = ref([])
 const reports = ref([])
+const processNameById = ref({})
 const selectedIds = ref([])
 const fileInput = ref(null)
 
 async function loadOptions() {
   try {
-    const [linesRes, shiftsRes] = await Promise.all([masterApi.getLines(), masterApi.getShifts()])
+    const [linesRes, shiftsRes, productsRes] = await Promise.all([masterApi.getLines(), masterApi.getShifts(), masterApi.getProducts()])
     lines.value = linesRes.map(item => ({
       lineCode: item.code,
       description: item.name,
     }))
     shifts.value = shiftsRes.map(item => ({ shiftName: item.name }))
+    await loadProcessNamesForProducts(productsRes)
   } catch (error) {
     ElMessage.error(`${t('reports.search.messages.loadFailed')}: ${error.message}`)
   }
+}
+
+function mergeProcessNames(processes = []) {
+  processNameById.value = {
+    ...processNameById.value,
+    ...processes.reduce((map, process) => {
+      if (process?.id) map[process.id] = process.process
+      return map
+    }, {}),
+  }
+}
+
+async function loadProcessNamesForProducts(products = []) {
+  const processGroups = await Promise.all(
+    products
+      .filter(product => product.id)
+      .map(product => masterApi.getProductProcesses(product.id).catch(() => []))
+  )
+  processGroups.forEach(mergeProcessNames)
+}
+
+function formatProcessIds(processIds) {
+  if (!Array.isArray(processIds) || processIds.length === 0) return '-'
+  return processIds.map(id => processNameById.value[id]).filter(Boolean).join('； ') || '-'
 }
 
 async function exportExcel(params = null) {

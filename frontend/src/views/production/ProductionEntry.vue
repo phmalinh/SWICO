@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto w-full px-3 py-2 max-h-screen overflow-hidden">
+  <div class="mx-auto w-full px-3 py-2">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
       <section class="lg:col-span-9 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
         <!-- Header rút gọn -->
@@ -56,16 +56,34 @@
               <el-form-item :label="t('productionEntry.partName')" class="!mb-0 md:col-span-4">
                 <el-input v-model="form.partName" size="default" readonly placeholder="-" />
               </el-form-item>
-
+              
               <el-form-item :label="t('productionEntry.cycleTime')" class="!mb-0 md:col-span-3">
                 <el-input v-model="form.cycleTime" size="default" readonly placeholder="-" />
+              </el-form-item>
+
+              <el-form-item :label="t('productionEntry.processes')" class="!mb-0 md:col-span-12">
+                <el-select
+                  v-model="form.processes"
+                  multiple
+                  filterable
+                  size="default"
+                  class="w-full"
+                  :placeholder="t('productionEntry.selectProcesses')"
+                >
+                  <el-option
+                    v-for="process in processOptions"
+                    :key="process.id"
+                    :label="`${process.process}${process.lineCode ? ` (${process.lineCode}${process.machineCode ? ` / ${process.machineCode}` : ''})` : ''}`"
+                    :value="process.id"
+                  />
+                </el-select>
               </el-form-item>
             </div>
           </div>
 
           <!-- Dòng 3: Số liệu sản xuất thực tế -->
           <!-- Dòng 3: Thông số thời gian & Mục tiêu ca -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5">
             <el-form-item :label="t('productionEntry.shiftTime')" class="!mb-0">
               <el-input 
                 :model-value="formatNumber(selectedShiftMinutes, 0)" 
@@ -92,31 +110,155 @@
                 class="font-bold text-emerald-700" 
               />
             </el-form-item>
-
-            <el-form-item :label="t('productionEntry.downtimeReason')" class="!mb-0">
-              <el-select v-model="form.downtimeReason" size="default" class="w-full" :placeholder="t('productionEntry.downtimeReason')" filterable>
-                <el-option v-for="r in downtimeReasons" :key="r" :label="r" :value="r" />
-              </el-select>
-            </el-form-item>
           </div>
 
           <!-- Dòng 4: Số lượng nhập & kết quả sản xuất -->
           <div class="mt-2.5 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            <el-form-item :label="t('productionEntry.downtimeMinutes')" class="!mb-0">
-              <el-input-number v-model="form.downtimeMinutes" :min="0" :max="1440" size="default" class="!w-full" controls-position="right" />
-            </el-form-item>
-
             <el-form-item :label="t('productionEntry.inputQuantity')" class="!mb-0">
-              <el-input-number v-model="form.inputQuantity" :min="0" :max="999999" size="default" class="!w-full" controls-position="right" />
+              <div class="flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                  @click="decrementQuantity('inputQuantity')"
+                >
+                  <Minus class="h-4 w-4" />
+                </el-button>
+                <el-input-number
+                  v-model="form.inputQuantity"
+                  :min="0"
+                  :max="999999"
+                  size="default"
+                  class="min-w-0 flex-1 quantity-stepper-input"
+                  :controls="false"
+                />
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                  @click="incrementQuantity('inputQuantity')"
+                >
+                  <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
             </el-form-item>
 
             <el-form-item :label="t('productionEntry.goodQuantity')" class="!mb-0">
-              <el-input-number v-model="form.goodQuantity" :min="0" :max="999999" size="default" class="!w-full" controls-position="right" />
+              <el-input :model-value="formatNumber(calculatedGoodQuantity, 0)" size="default" readonly class="font-bold text-emerald-700" />
             </el-form-item>
 
-            <el-form-item :label="t('productionEntry.defectQuantity')" class="!mb-0">
-              <el-input :model-value="formatNumber(calculatedDefectQuantity, 0)" size="default" readonly class="font-bold text-rose-600" />
+            <el-form-item :label="t('productionEntry.internalDefectQuantity')" class="!mb-0">
+              <div class="flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                  @click="decrementQuantity('internalDefectQuantity')"
+                >
+                  <Minus class="h-4 w-4" />
+                </el-button>
+                <el-input-number
+                  v-model="form.internalDefectQuantity"
+                  :min="0"
+                  :max="form.inputQuantity || 999999"
+                  size="default"
+                  class="min-w-0 flex-1 quantity-stepper-input"
+                  :controls="false"
+                />
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                  @click="incrementQuantity('internalDefectQuantity')"
+                >
+                  <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
             </el-form-item>
+
+            <el-form-item :label="t('productionEntry.externalDefectQuantity')" class="!mb-0">
+              <div class="flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                  @click="decrementQuantity('externalDefectQuantity')"
+                >
+                  <Minus class="h-4 w-4" />
+                </el-button>
+                <el-input-number
+                  v-model="form.externalDefectQuantity"
+                  :min="0"
+                  :max="form.inputQuantity || 999999"
+                  size="default"
+                  class="min-w-0 flex-1 quantity-stepper-input"
+                  :controls="false"
+                />
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                  @click="incrementQuantity('externalDefectQuantity')"
+                >
+                  <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
+            </el-form-item>
+          </div>
+          <div class="mt-2.5 grid grid-cols-2 md:grid-cols-2 gap-2.5">
+            <template v-for="(item, index) in form.downtimeItems" :key="index">
+              <el-form-item :label="index === 0 ? t('productionEntry.downtimeReason') : ''" class="!mb-0">
+                <el-select
+                  v-model="item.reason"
+                  size="default"
+                  class="w-full"
+                  :placeholder="t('productionEntry.downtimeReason')"
+                  filterable
+                >
+                  <el-option v-for="r in downtimeReasons" :key="r" :label="r" :value="r" />
+                </el-select>
+              </el-form-item>
+              <el-form-item :label="index === 0 ? t('productionEntry.downtimeMinutes') : ''" class="!mb-0">
+                <div class="flex gap-1.5">
+                  <div class="flex min-w-0 flex-1 overflow-hidden rounded border border-slate-300 bg-white">
+                    <el-button
+                      size="default"
+                      class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                      @click="decrementDowntimeMinutes(index)"
+                    >
+                      <Minus class="h-4 w-4" />
+                    </el-button>
+                    <el-input-number
+                      v-model="item.minutes"
+                      :min="0"
+                      :max="1440"
+                      size="default"
+                      class="min-w-0 flex-1 downtime-minutes-input"
+                      :controls="false"
+                    />
+                    <el-button
+                      size="default"
+                      class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                      @click="incrementDowntimeMinutes(index)"
+                    >
+                      <Plus class="h-4 w-4" />
+                    </el-button>
+                  </div>
+                  <el-button
+                    type="primary"
+                    size="default"
+                    class="!h-[2.125rem] !w-[2.125rem] !p-0"
+                    @click="addDowntimeItem(index)"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                  <el-button
+                    v-if="form.downtimeItems.length > 1"
+                    type="danger"
+                    plain
+                    size="default"
+                    class="!h-[2.125rem] !w-[2.125rem] !p-0"
+                    @click="removeDowntimeItem(index)"
+                  >
+                    <Trash2 class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+            </template>
           </div>
 
           <!-- Nút bấm Action -->
@@ -162,12 +304,17 @@
               <el-table-column prop="machineCode" :label="t('productionEntry.table.machineCode')" width="70" align="center" />
               <el-table-column prop="partNumber" :label="t('productionEntry.table.partNumber')" width="80" />
               <el-table-column prop="partName" :label="t('productionEntry.table.partName')" min-width="80" show-overflow-tooltip />
+              <el-table-column :label="t('productionEntry.table.processIds')" min-width="120" show-overflow-tooltip>
+                <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
+              </el-table-column>
               <el-table-column prop="company" :label="t('productionEntry.table.company')" min-width="80" show-overflow-tooltip />
               <el-table-column prop="downtimeReason" :label="t('productionEntry.table.downtimeReason')" min-width="160" show-overflow-tooltip />
               <el-table-column prop="totalOperatingMinutes" :label="t('productionEntry.table.totalOperatingMinutes')" width="70" align="center" />
               <el-table-column prop="downtimeMinutes" :label="t('productionEntry.table.downtimeMinutes')" width="70" align="center" />
               <el-table-column prop="inputQuantity" :label="t('productionEntry.table.inputQuantity')" width="70" align="center" />
               <el-table-column prop="goodQuantity" :label="t('productionEntry.table.goodQuantity')" width="70" align="center" />
+              <el-table-column prop="internalDefectQuantity" :label="t('productionEntry.table.internalDefectQuantity')" width="80" align="center" />
+              <el-table-column prop="externalDefectQuantity" :label="t('productionEntry.table.externalDefectQuantity')" width="80" align="center" />
               <el-table-column prop="defectQuantity" :label="t('productionEntry.table.defectQuantity')" width="70" align="center" />
               <el-table-column prop="shiftStandardTimeMinutes" :label="t('productionEntry.table.shiftStandardTimeMinutes')" width="70" align="center" />
               <el-table-column prop="dailyTargetQuantity" :label="t('productionEntry.table.dailyTargetQuantity')" width="70" align="center" />
@@ -230,7 +377,7 @@
 <script setup>
 import { computed, inject, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { RotateCcw, Save } from 'lucide-vue-next'
+import { Minus, Plus, RotateCcw, Save, Trash2 } from 'lucide-vue-next'
 import { masterApi, productionApi } from '@/services/api'
 import { formatPercent, getOeeColor } from '@/composables/useOee'
 import { useI18n } from '@/i18n'
@@ -240,6 +387,8 @@ const { t } = useI18n()
 const products = ref([])
 const lines = ref([])
 const machines = ref([])
+const processOptions = ref([])
+const processNameById = ref({})
 const shifts = ref([])
 const saving = ref(false)
 const showResult = ref(false)
@@ -274,20 +423,115 @@ const form = ref({
   partNumber: '',
   partName: '',
   cycleTime: '',
+  processes: [],
   downtimeMinutes: 30,
   inputQuantity: 0,
   goodQuantity: 0,
+  defectQuantity: 0,
+  internalDefectQuantity: 0,
+  externalDefectQuantity: 0,
   company: 'SWICO',
   downtimeReason: '',
+  downtimeReasons: [''],
+  downtimeItems: [{ reason: '', minutes: 30 }],
 })
 
 const downtimeReasons = [
-  '砂輪用盡 / Hết đá',
-  '更換砂輪（針對磨床組） / Thay đá ( đối với tổ Mài)',
-  '其他 / Khác',
+  'A. 換刀（粗／精面銑刀、內孔鏜刀、鑽頭等） / Thay dao (dao phay mặt thô + tinh, dao móc lỗ, mũi khoan, ...)',
+  'B. 砂輪用盡、更換砂輪（針對磨床組） / Hết đá, thay đá (đối với tổ Mài)',
+  'C. 停機等料（等待毛坯） / Ngưng máy chờ phôi',
+  'D. 等待前工序來料（針對前工序 C/T 長於後工序） / Chờ hàng công đoạn trước (đối với công đoạn đầu C/T lâu hơn công đoạn sau)',
+  'E. 等待調機人員（技術員）調機 / Chờ cán bộ chỉnh máy',
+  'F. 等待品檢（QC）首件確認／調機品確認 / Chờ QC xác nhận hàng chỉnh máy',
+  'G. 操作人員請假（無替代人員時） / Nhân viên thao tác nghỉ phép (khi không có người thay thế)',
+  'H. 其他 / Khác',
 ]
 
-const filteredMachines = computed(() => machines.value)
+function normalizeDowntimeReasons(value) {
+  if (Array.isArray(value)) {
+    const reasons = value.map(item => String(item || '').trim()).filter(Boolean)
+    return reasons.length ? reasons : ['']
+  }
+  const reasons = String(value || '')
+    .split(/\s*[;；]\s*/)
+    .map(item => item.trim())
+    .filter(Boolean)
+  return reasons.length ? reasons : ['']
+}
+
+function normalizeDowntimeItems(reasonValue, minutesValue = 0) {
+  const reasons = normalizeDowntimeReasons(reasonValue)
+  const minutes = Number(minutesValue || 0)
+  return reasons.map((value, index) => {
+    const match = String(value).match(/^(.*?)(?:\s+-\s+(\d+))$/)
+    if (match) {
+      return {
+        reason: match[1].trim(),
+        minutes: Number(match[2] || 0),
+      }
+    }
+    return {
+      reason: value,
+      minutes: index === 0 ? minutes : 0,
+    }
+  })
+}
+
+function addDowntimeItem(index = form.value.downtimeItems.length - 1) {
+  form.value.downtimeItems.splice(index + 1, 0, { reason: '', minutes: 0 })
+}
+
+function decrementDowntimeMinutes(index) {
+  const item = form.value.downtimeItems[index]
+  if (!item) return
+  item.minutes = Math.max(Number(item.minutes || 0) - 1, 0)
+}
+
+function incrementDowntimeMinutes(index) {
+  const item = form.value.downtimeItems[index]
+  if (!item) return
+  item.minutes = Math.min(Number(item.minutes || 0) + 1, 1440)
+}
+
+function maxQuantityForField(field) {
+  if (field === 'inputQuantity') return 999999
+  return Number(form.value.inputQuantity || 999999)
+}
+
+function decrementQuantity(field) {
+  form.value[field] = Math.max(Number(form.value[field] || 0) - 1, 0)
+}
+
+function incrementQuantity(field) {
+  form.value[field] = Math.min(Number(form.value[field] || 0) + 1, maxQuantityForField(field))
+}
+
+function removeDowntimeItem(index) {
+  if (form.value.downtimeItems.length === 1) {
+    form.value.downtimeItems = [{ reason: '', minutes: 0 }]
+    return
+  }
+  form.value.downtimeItems.splice(index, 1)
+}
+
+function formatDowntimeReasonsForSave() {
+  return form.value.downtimeItems
+    .map(item => {
+      const reason = String(item.reason || '').trim()
+      if (!reason) return ''
+      return `${reason} - ${Number(item.minutes || 0)}`
+    })
+    .filter(Boolean)
+    .join('； ')
+}
+
+const totalDowntimeMinutes = computed(() => form.value.downtimeItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0))
+
+const filteredMachines = computed(() => {
+  if (!form.value.lineCode) return machines.value
+  const selectedLine = form.value.lineCode.toLowerCase()
+  return machines.value.filter(machine => (machine.lineCode || '').toLowerCase() === selectedLine)
+})
 
 const selectedShiftMinutes = computed(() => {
   const shift = shifts.value.find(s => s.shiftName === form.value.shiftName)
@@ -296,16 +540,18 @@ const selectedShiftMinutes = computed(() => {
 
 const actualOperatingMinutes = computed(() => {
   const shiftMinutes = Number(selectedShiftMinutes.value || 0)
-  const downtime = Number(form.value.downtimeMinutes || 0)
+  const downtime = Number(totalDowntimeMinutes.value || 0)
   if (shiftMinutes <= 0) return 0
   return Math.max(shiftMinutes - downtime, 0)
 })
 
-const calculatedDefectQuantity = computed(() => {
+const calculatedGoodQuantity = computed(() => {
   const input = Number(form.value.inputQuantity || 0)
-  const good = Number(form.value.goodQuantity || 0)
-  return Math.max(input - good, 0)
+  const defect = Number(totalDefectQuantity.value || 0)
+  return Math.max(input - defect, 0)
 })
+
+const totalDefectQuantity = computed(() => Number(form.value.internalDefectQuantity || 0) + Number(form.value.externalDefectQuantity || 0))
 
 const dailyTargetPreview = computed(() => {
   const actualMinutes = Number(actualOperatingMinutes.value || 0)
@@ -356,8 +602,13 @@ function populateFormForEdit(report) {
   form.value.downtimeMinutes = report.downtimeMinutes ?? 30
   form.value.inputQuantity = report.inputQuantity ?? 0
   form.value.goodQuantity = report.goodQuantity ?? 0
+  form.value.defectQuantity = report.defectQuantity ?? Math.max(Number(report.inputQuantity || 0) - Number(report.goodQuantity || 0), 0)
+  form.value.internalDefectQuantity = report.internalDefectQuantity ?? form.value.defectQuantity
+  form.value.externalDefectQuantity = report.externalDefectQuantity ?? 0
   form.value.company = report.company || 'SWICO'
   form.value.downtimeReason = report.downtimeReason || ''
+  form.value.downtimeReasons = normalizeDowntimeReasons(report.downtimeReason)
+  form.value.downtimeItems = normalizeDowntimeItems(report.downtimeReason, report.downtimeMinutes)
 }
 
 async function editSelectedReport() {
@@ -404,24 +655,129 @@ function onProductChange(partNumber) {
   if (product) {
     form.value.partName = product.partName
     form.value.cycleTime = product.cycleTimeSeconds
+    form.value.processes = []
+    loadProductProcesses(product.id)
+  } else {
+    form.value.partName = ''
+    form.value.cycleTime = ''
+    form.value.processes = []
+    processOptions.value = []
   }
 }
 
-function onLineChange(lineCode) {
-  if (machines.value.length) {
-    form.value.machineCode = machines.value[0].machineCode
+function onLineChange() {
+  const options = filteredMachines.value
+  const currentStillValid = options.some(machine => machine.machineCode === form.value.machineCode)
+  if (!form.value.lineCode) {
+    form.value.machineCode = ''
+    return
   }
+  if (!currentStillValid) {
+    form.value.machineCode = options[0]?.machineCode || ''
+  }
+}
+
+async function loadProductProcesses(productId) {
+  try {
+    processOptions.value = await masterApi.getProductProcesses(productId)
+    mergeProcessNames(processOptions.value)
+  } catch (error) {
+    processOptions.value = []
+    console.warn('Không tải được danh sách công đoạn', error)
+  }
+}
+
+function mergeProcessNames(processes = []) {
+  processNameById.value = {
+    ...processNameById.value,
+    ...processes.reduce((map, process) => {
+      if (process?.id) map[process.id] = process.process
+      return map
+    }, {}),
+  }
+}
+
+async function loadProcessNamesForProducts(productList = products.value) {
+  const processGroups = await Promise.all(
+    productList
+      .filter(product => product.id)
+      .map(product => masterApi.getProductProcesses(product.id).catch(() => []))
+  )
+  processGroups.forEach(mergeProcessNames)
+}
+
+function formatProcessIds(processIds) {
+  if (!Array.isArray(processIds) || processIds.length === 0) return '-'
+  return processIds.map(id => processNameById.value[id]).filter(Boolean).join('； ') || '-'
 }
 
 function resetForm() {
   form.value.partNumber = ''
   form.value.partName = ''
   form.value.cycleTime = ''
+  form.value.processes = []
+  processOptions.value = []
   form.value.downtimeMinutes = 30
+  form.value.downtimeReason = ''
+  form.value.downtimeReasons = ['']
+  form.value.downtimeItems = [{ reason: '', minutes: 30 }]
   form.value.inputQuantity = 0
   form.value.goodQuantity = 0
+  form.value.defectQuantity = 0
+  form.value.internalDefectQuantity = 0
+  form.value.externalDefectQuantity = 0
   showResult.value = false
   result.value = null
+}
+
+function autoSelectShiftByTime() {
+  if (!shifts.value.length || form.value.shiftName) return
+
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+  const matchingShift = shifts.value.find(shift => {
+    const range = extractShiftRange(shift)
+    if (!range) return false
+    const [startMinutes, endMinutes] = range
+
+    if (startMinutes <= endMinutes) {
+      return currentMinutes >= startMinutes && currentMinutes < endMinutes
+    }
+    return currentMinutes >= startMinutes || currentMinutes < endMinutes
+  })
+
+  if (matchingShift) {
+    form.value.shiftName = matchingShift.shiftName
+  }
+}
+
+function extractShiftRange(shift) {
+  const startMinutes = shift.startTime ? parseTimeString(shift.startTime) : null
+  const endMinutes = shift.endTime ? parseTimeString(shift.endTime) : null
+  if (startMinutes != null && endMinutes != null) {
+    return [startMinutes, endMinutes]
+  }
+
+  const label = shift.shiftName || ''
+  const match = label.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/)
+  if (!match) return null
+
+  const parsedStart = parseTimeString(match[1])
+  const parsedEnd = parseTimeString(match[2])
+  if (parsedStart == null || parsedEnd == null) return null
+
+  return [parsedStart, parsedEnd]
+}
+
+function parseTimeString(value) {
+  if (!value) return null
+  const match = String(value).match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return null
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null
+  return hours * 60 + minutes
 }
 
 async function loadInitialData() {
@@ -439,16 +795,35 @@ async function loadInitialData() {
       partName: item.name,
       cycleTimeSeconds: item.cycleTimeSeconds,
     }))
+    await loadProcessNamesForProducts(products.value)
     lines.value = linesRes.map(item => ({ id: item.id, lineCode: item.code, description: item.name }))
-    machines.value = machinesRes.map(item => ({ id: item.id, machineCode: item.machineCode, description: item.description }))
-    shifts.value = shiftsRes.map(item => ({ id: item.id, shiftName: item.name, standardTimeMinutes: item.standardTimeMinutes }))
+    machines.value = machinesRes.map(item => ({
+      id: item.id,
+      machineCode: item.machineCode,
+      description: item.description,
+      lineCode: item.lineCode || '',
+    }))
+    shifts.value = shiftsRes.map(item => ({
+      id: item.id,
+      shiftName: item.name,
+      standardTimeMinutes: item.standardTimeMinutes,
+      startTime: item.startTime || null,
+      endTime: item.endTime || null,
+    }))
 
     if (!form.value.lineCode && lines.value.length) form.value.lineCode = lines.value[0].lineCode
     if (!form.value.machineCode && machines.value.length) {
       const machine = machines.value.find(m => m.lineCode === form.value.lineCode) || machines.value[0]
       form.value.machineCode = machine?.machineCode || ''
     }
-    if (!form.value.shiftName && shifts.value.length) form.value.shiftName = shifts.value[0].shiftName
+    if (form.value.partNumber) {
+      const product = products.value.find(p => p.partNumber === form.value.partNumber)
+      if (product) await loadProductProcesses(product.id)
+    }
+    if (!form.value.shiftName && shifts.value.length) {
+      autoSelectShiftByTime()
+      if (!form.value.shiftName) form.value.shiftName = shifts.value[0].shiftName
+    }
     await loadMyReports()
   } catch (error) {
     ElMessage.error(`${t('productionEntry.messages.loadFailed')}: ${error.message}`)
@@ -470,13 +845,16 @@ async function saveReport() {
       partNumber: form.value.partNumber,
       partName: form.value.partName,
       cycleTimeSeconds: Number(form.value.cycleTime),
+      processIds: form.value.processes,
       totalOperatingMinutes: Number(actualOperatingMinutes.value),
-      downtimeMinutes: Number(form.value.downtimeMinutes),
+      downtimeMinutes: Number(totalDowntimeMinutes.value),
       inputQuantity: Number(form.value.inputQuantity),
-      goodQuantity: Number(form.value.goodQuantity),
-      defectQuantity: Number(calculatedDefectQuantity.value),
+      goodQuantity: Number(calculatedGoodQuantity.value),
+      defectQuantity: Number(totalDefectQuantity.value),
+      internalDefectQuantity: Number(form.value.internalDefectQuantity || 0),
+      externalDefectQuantity: Number(form.value.externalDefectQuantity || 0),
       company: form.value.company,
-      downtimeReason: form.value.downtimeReason,
+      downtimeReason: formatDowntimeReasonsForSave(),
     }
 
     const saved = editedReportId.value
@@ -526,10 +904,8 @@ const resultBadgeClass = computed(() => {
   return 'bg-rose-100 text-rose-800'
 })
 
-watch(() => form.value.lineCode, lineCode => {
-  if (!lineCode) return
-  const machine = machines.value.find(m => m.lineCode === lineCode)
-  if (machine) form.value.machineCode = machine.machineCode
+watch(() => form.value.lineCode, () => {
+  onLineChange()
 })
 
 watch([() => form.value.partNumber, products], ([partNumber]) => {
@@ -581,5 +957,15 @@ onMounted(loadInitialData)
 
 :deep(.el-input-number) {
   width: 100% !important;
+}
+
+:deep(.downtime-minutes-input .el-input__wrapper) {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+:deep(.quantity-stepper-input .el-input__wrapper) {
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 </style>

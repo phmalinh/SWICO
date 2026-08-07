@@ -15,8 +15,9 @@ const routes = [
       { path: 'production/history', name: 'ProductionHistory', component: () => import('@/views/production/ProductionHistory.vue'), meta: { title: 'routes.productionHistory', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/oee-dashboard', name: 'OeeDashboard', component: () => import('@/views/reports/OeeDashboard.vue'), meta: { title: 'routes.oeeDashboard', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/search', name: 'ReportSearch', component: ExportV9View, meta: { title: 'routes.reportSearch', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
-      // { path: 'reports/export-v9', name: 'ExportV9', component: ExportV9View, meta: { title: 'routes.exportV9', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
+      { path: 'reports/export-v9', name: 'ExportV9', component: ExportV9View, meta: { title: 'routes.exportV9', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/products', name: 'Products', component: () => import('@/views/master/Products.vue'), meta: { title: 'routes.products', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
+      { path: 'master/processes', name: 'Processes', component: () => import('@/views/master/Processes.vue'), meta: { title: 'routes.processes', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/lines', name: 'Lines', component: () => import('@/views/master/Lines.vue'), meta: { title: 'routes.lines', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/shifts', name: 'Shifts', component: () => import('@/views/master/Shifts.vue'), meta: { title: 'routes.shifts', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/machines', name: 'Machines', component: () => import('@/views/master/Machines.vue'), meta: { title: 'routes.machines', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
@@ -49,6 +50,11 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'Login' })
+    return
+  }
+
+  if (isAuthenticated && session.mustChangePassword && to.name !== 'Profile') {
+    next({ name: 'Profile' })
     return
   }
 

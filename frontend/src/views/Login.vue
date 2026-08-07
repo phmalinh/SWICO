@@ -79,7 +79,7 @@ async function doLogin() {
     const auth = await login(form.value.username, form.value.password)
     setSession(auth)
     ElMessage.success(t('login.success'))
-    router.push('/')
+    router.push(auth.mustChangePassword ? '/profile' : '/')
   } catch (error) {
     ElMessage.error(t('login.failed'))
   } finally {

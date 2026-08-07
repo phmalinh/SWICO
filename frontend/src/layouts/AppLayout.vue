@@ -230,6 +230,7 @@ const allMenuItems = computed(() => [
     id: '3', title: t('menu.master'), icon: Database,
     children: [
       { id: '3.1', title: t('menu.products'), icon: Package, path: '/master/products' },
+      { id: '3.5', title: t('menu.processes'), icon: FileSpreadsheet, path: '/master/processes' },
       { id: '3.2', title: t('menu.lines'), icon: GitFork, path: '/master/lines' },
       { id: '3.3', title: t('menu.shifts'), icon: Clock, path: '/master/shifts' },
       { id: '3.4', title: t('menu.machines'), icon: Cpu, path: '/master/machines' },

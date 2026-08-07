@@ -2,6 +2,16 @@
   <div class="page-card p-6">
     <PageHeader :eyebrow="t('profile.eyebrow')" :title="t('profile.pageTitle')" :subtitle="t('profile.pageSubtitle')" />
 
+    <el-alert
+      v-if="profileForm.mustChangePassword"
+      :title="t('profile.mustChangePasswordTitle')"
+      :description="t('profile.mustChangePasswordDescription')"
+      type="warning"
+      show-icon
+      :closable="false"
+      class="mb-5"
+    />
+
     <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
       <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-lg font-bold text-slate-900">{{ t('profile.personalInfo') }}</h2>
@@ -49,6 +59,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
 import { authApi, masterApi } from '@/services/api'
 import { setSession } from '@/services/auth'
@@ -56,8 +67,9 @@ import { ElMessage } from 'element-plus'
 import { useI18n } from '@/i18n'
 
 const { t } = useI18n()
+const router = useRouter()
 
-const profileForm = ref({ username: '', fullName: '', role: '', lineCode: '' })
+const profileForm = ref({ username: '', fullName: '', role: '', lineCode: '', mustChangePassword: false })
 const passwordForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
 const lines = ref([])
 const savingProfile = ref(false)
@@ -98,6 +110,7 @@ async function saveProfile() {
       username: updated.username,
       fullName: updated.fullName,
       role: updated.role,
+      mustChangePassword: updated.mustChangePassword,
     })
     ElMessage.success(t('profile.messages.saveSuccess'))
   } catch (error) {
@@ -121,7 +134,16 @@ async function changePassword() {
   try {
     await authApi.changePassword({ currentPassword: passwordForm.value.currentPassword, newPassword: passwordForm.value.newPassword })
     passwordForm.value = { currentPassword: '', newPassword: '', confirmPassword: '' }
+    profileForm.value.mustChangePassword = false
+    setSession({
+      token: localStorage.getItem('swico_token'),
+      username: profileForm.value.username,
+      fullName: profileForm.value.fullName,
+      role: profileForm.value.role,
+      mustChangePassword: false,
+    })
     ElMessage.success(t('profile.messages.passwordSuccess'))
+    router.push('/')
   } catch (error) {
     ElMessage.error(error.message || t('profile.messages.passwordFailed'))
   } finally {
