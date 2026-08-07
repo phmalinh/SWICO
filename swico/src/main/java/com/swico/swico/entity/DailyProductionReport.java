@@ -31,6 +31,9 @@ public class DailyProductionReport {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @Column(name = "process_ids", length = 255)
+    private String processIds;
+
     @Column(name = "total_operating_minutes", nullable = false)
     private Integer totalOperatingMinutes;
 
@@ -46,13 +49,19 @@ public class DailyProductionReport {
     @Column(name = "defect_quantity")
     private Integer defectQuantity;
 
+    @Column(name = "internal_defect_quantity")
+    private Integer internalDefectQuantity;
+
+    @Column(name = "external_defect_quantity")
+    private Integer externalDefectQuantity;
+
     @Column(name = "company", length = 100)
     private String company;
 
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
-    @Column(name = "downtime_reason", length = 200)
+    @Column(name = "downtime_reason", length = 2000)
     private String downtimeReason;
 
     @Column(name = "target_quantity", precision = 10, scale = 2)
@@ -181,6 +190,22 @@ public class DailyProductionReport {
         this.defectQuantity = defectQuantity;
     }
 
+    public Integer getInternalDefectQuantity() {
+        return internalDefectQuantity;
+    }
+
+    public void setInternalDefectQuantity(Integer internalDefectQuantity) {
+        this.internalDefectQuantity = internalDefectQuantity;
+    }
+
+    public Integer getExternalDefectQuantity() {
+        return externalDefectQuantity;
+    }
+
+    public void setExternalDefectQuantity(Integer externalDefectQuantity) {
+        this.externalDefectQuantity = externalDefectQuantity;
+    }
+
     public BigDecimal getTargetQuantity() {
         return targetQuantity;
     }
@@ -243,6 +268,14 @@ public class DailyProductionReport {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public String getProcessIds() {
+        return processIds;
+    }
+
+    public void setProcessIds(String processIds) {
+        this.processIds = processIds;
     }
 
     public String getCreatedBy() {

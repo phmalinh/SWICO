@@ -51,4 +51,5 @@ public class Product {
     public void setCycleTimeSeconds(BigDecimal cycleTimeSeconds) {
         this.cycleTimeSeconds = cycleTimeSeconds;
     }
+
 }

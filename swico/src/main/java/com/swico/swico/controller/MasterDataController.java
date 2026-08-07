@@ -80,4 +80,24 @@ public class MasterDataController {
     public void deleteShift(@PathVariable Long id) {
         masterDataService.deleteShift(id);
     }
+
+    @GetMapping("/products/{productId}/processes")
+    public java.util.List<com.swico.swico.dto.ProcessDto> getProductProcesses(@PathVariable Long productId) {
+        return masterDataService.getProcessesByProduct(productId);
+    }
+
+    @PostMapping("/products/{productId}/processes")
+    public com.swico.swico.dto.ProcessDto addProductProcess(@PathVariable Long productId, @Valid @RequestBody com.swico.swico.dto.ProcessUpsertRequest req) {
+        return masterDataService.addProcessToProduct(productId, req);
+    }
+
+    @PutMapping("/processes/{id}")
+    public com.swico.swico.dto.ProcessDto updateProductProcess(@PathVariable Long id, @Valid @RequestBody com.swico.swico.dto.ProcessUpsertRequest req) {
+        return masterDataService.updateProcess(id, req);
+    }
+
+    @DeleteMapping("/processes/{id}")
+    public void deleteProductProcess(@PathVariable Long id) {
+        masterDataService.deleteProcess(id);
+    }
 }

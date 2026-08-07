@@ -50,8 +50,8 @@ public class ProductionFormulaService {
         BigDecimal qualityRate = null;
         BigDecimal oee = null;
 
-        if (downtimeMinutes != null && shiftMinutes != null && shiftMinutes > 0) {
-            availabilityRate = BigDecimal.valueOf(Math.max(shiftMinutes - downtimeMinutes, 0))
+        if (operatingMinutes != null && shiftMinutes != null && shiftMinutes > 0) {
+            availabilityRate = BigDecimal.valueOf(Math.max(operatingMinutes, 0))
                     .divide(BigDecimal.valueOf(shiftMinutes), 4, RoundingMode.HALF_UP);
         } else if (operatingMinutes != null && operatingMinutes > 0 && downtimeMinutes != null) {
             availabilityRate = BigDecimal.valueOf(Math.max(operatingMinutes - downtimeMinutes, 0))

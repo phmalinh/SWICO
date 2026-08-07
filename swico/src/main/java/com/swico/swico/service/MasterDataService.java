@@ -7,9 +7,11 @@ import com.swico.swico.dto.ShiftUpsertRequest;
 import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Product;
 import com.swico.swico.entity.Shift;
+import com.swico.swico.entity.ProductProcess;
 import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.ProductRepository;
 import com.swico.swico.repository.ShiftRepository;
+import com.swico.swico.repository.ProductProcessRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,16 +23,24 @@ public class MasterDataService {
     private final ProductRepository productRepository;
     private final LineRepository lineRepository;
     private final ShiftRepository shiftRepository;
+    private final ProductProcessRepository productProcessRepository;
 
-    public MasterDataService(ProductRepository productRepository, LineRepository lineRepository, ShiftRepository shiftRepository) {
+    public MasterDataService(ProductRepository productRepository, LineRepository lineRepository, ShiftRepository shiftRepository, ProductProcessRepository productProcessRepository) {
         this.productRepository = productRepository;
         this.lineRepository = lineRepository;
         this.shiftRepository = shiftRepository;
+        this.productProcessRepository = productProcessRepository;
     }
 
     public List<MasterDataResponse> getProducts() {
         return productRepository.findAll().stream()
-                .map(p -> new MasterDataResponse(p.getId(), p.getPartNumber(), p.getPartName(), p.getCycleTimeSeconds(), null))
+                .map(p -> new MasterDataResponse(
+                        p.getId(),
+                        p.getPartNumber(),
+                        p.getPartName(),
+                        p.getCycleTimeSeconds(),
+                        null
+                ))
                 .toList();
     }
 
@@ -47,8 +57,18 @@ public class MasterDataService {
     }
 
     public MasterDataResponse saveProduct(ProductUpsertRequest request) {
-        Product saved = upsertProduct(request.partNumber(), request.partName(), request.cycleTimeSeconds());
-        return new MasterDataResponse(saved.getId(), saved.getPartNumber(), saved.getPartName(), saved.getCycleTimeSeconds(), null);
+        Product saved = upsertProduct(
+                request.partNumber(),
+                request.partName(),
+                request.cycleTimeSeconds()
+        );
+        return new MasterDataResponse(
+                saved.getId(),
+                saved.getPartNumber(),
+                saved.getPartName(),
+                saved.getCycleTimeSeconds(),
+                null
+        );
     }
 
     public MasterDataResponse saveLine(LineUpsertRequest request) {
@@ -67,7 +87,47 @@ public class MasterDataService {
         product.setPartName(request.partName());
         product.setCycleTimeSeconds(request.cycleTimeSeconds());
         Product saved = productRepository.save(product);
-        return new MasterDataResponse(saved.getId(), saved.getPartNumber(), saved.getPartName(), saved.getCycleTimeSeconds(), null);
+        return new MasterDataResponse(
+                saved.getId(),
+                saved.getPartNumber(),
+                saved.getPartName(),
+                saved.getCycleTimeSeconds(),
+                null
+        );
+    }
+
+    public java.util.List<com.swico.swico.dto.ProcessDto> getProcessesByProduct(Long productId) {
+        return productProcessRepository.findByProductIdOrderBySequence(productId).stream()
+                .map(pp -> new com.swico.swico.dto.ProcessDto(pp.getId(), pp.getProduct().getId(), pp.getProcess(), pp.getSequence(), pp.getLineCode(), pp.getMachineCode(), pp.getCycleTimeSeconds()))
+                .toList();
+    }
+
+    public com.swico.swico.dto.ProcessDto addProcessToProduct(Long productId, com.swico.swico.dto.ProcessUpsertRequest req) {
+        Product product = productRepository.findById(productId).orElseThrow();
+        ProductProcess pp = new ProductProcess();
+        pp.setProduct(product);
+        pp.setProcess(req.process());
+        pp.setSequence(req.sequence());
+        pp.setLineCode(req.lineCode());
+        pp.setMachineCode(req.machineCode());
+        pp.setCycleTimeSeconds(req.cycleTimeSeconds());
+        ProductProcess saved = productProcessRepository.save(pp);
+        return new com.swico.swico.dto.ProcessDto(saved.getId(), product.getId(), saved.getProcess(), saved.getSequence(), saved.getLineCode(), saved.getMachineCode(), saved.getCycleTimeSeconds());
+    }
+
+    public com.swico.swico.dto.ProcessDto updateProcess(Long id, com.swico.swico.dto.ProcessUpsertRequest req) {
+        ProductProcess pp = productProcessRepository.findById(id).orElseThrow();
+        pp.setProcess(req.process());
+        pp.setSequence(req.sequence());
+        pp.setLineCode(req.lineCode());
+        pp.setMachineCode(req.machineCode());
+        pp.setCycleTimeSeconds(req.cycleTimeSeconds());
+        ProductProcess saved = productProcessRepository.save(pp);
+        return new com.swico.swico.dto.ProcessDto(saved.getId(), saved.getProduct().getId(), saved.getProcess(), saved.getSequence(), saved.getLineCode(), saved.getMachineCode(), saved.getCycleTimeSeconds());
+    }
+
+    public void deleteProcess(Long id) {
+        productProcessRepository.deleteById(id);
     }
 
     public MasterDataResponse updateLine(Long id, LineUpsertRequest request) {

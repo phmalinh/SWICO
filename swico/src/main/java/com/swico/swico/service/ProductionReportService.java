@@ -4,10 +4,12 @@ import com.swico.swico.dto.*;
 import com.swico.swico.entity.DailyProductionReport;
 import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Product;
+import com.swico.swico.entity.ProductProcess;
 import com.swico.swico.entity.Shift;
 import com.swico.swico.repository.DailyProductionReportRepository;
 import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.ProductRepository;
+import com.swico.swico.repository.ProductProcessRepository;
 import com.swico.swico.repository.ShiftRepository;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -26,10 +28,12 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -40,6 +44,7 @@ public class ProductionReportService {
     private final DailyProductionReportRepository reportRepository;
     private final LineRepository lineRepository;
     private final ProductRepository productRepository;
+    private final ProductProcessRepository productProcessRepository;
     private final ShiftRepository shiftRepository;
     private final MasterDataService masterDataService;
     private final ProductionFormulaService formulaService;
@@ -48,6 +53,7 @@ public class ProductionReportService {
             DailyProductionReportRepository reportRepository,
             LineRepository lineRepository,
             ProductRepository productRepository,
+            ProductProcessRepository productProcessRepository,
             ShiftRepository shiftRepository,
             MasterDataService masterDataService,
             ProductionFormulaService formulaService
@@ -55,6 +61,7 @@ public class ProductionReportService {
         this.reportRepository = reportRepository;
         this.lineRepository = lineRepository;
         this.productRepository = productRepository;
+        this.productProcessRepository = productProcessRepository;
         this.shiftRepository = shiftRepository;
         this.masterDataService = masterDataService;
         this.formulaService = formulaService;
@@ -84,11 +91,14 @@ public class ProductionReportService {
         entity.setShift(shift);
         entity.setMachineCode(request.machineCode());
         entity.setProduct(product);
+        entity.setProcessIds(joinProcessIds(request.processIds()));
         entity.setTotalOperatingMinutes(request.totalOperatingMinutes());
         entity.setDowntimeMinutes(request.downtimeMinutes());
         entity.setInputQuantity(request.inputQuantity());
         entity.setGoodQuantity(request.goodQuantity());
         entity.setDefectQuantity(request.defectQuantity());
+        entity.setInternalDefectQuantity(request.internalDefectQuantity());
+        entity.setExternalDefectQuantity(request.externalDefectQuantity());
         entity.setCompany(request.company());
         entity.setCreatedBy(createdBy);
         entity.setDowntimeReason(request.downtimeReason());
@@ -99,6 +109,64 @@ public class ProductionReportService {
 
         DailyProductionReport saved = reportRepository.save(entity);
         return toResponse(saved, effective);
+    }
+
+    private String joinProcessIds(java.util.List<Long> processIds) {
+        if (processIds == null || processIds.isEmpty()) {
+            return null;
+        }
+        return processIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+    }
+
+    private java.util.List<Long> parseProcessIds(String processIds) {
+        if (processIds == null || processIds.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return java.util.Arrays.stream(processIds.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Long::valueOf)
+                .toList();
+    }
+
+    private java.util.List<Long> resolveImportedProcessIds(String partNumber, String processText) {
+        if (partNumber == null || partNumber.isBlank() || processText == null || processText.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+
+        Product product = productRepository.findByPartNumber(partNumber).orElse(null);
+        if (product == null || product.getId() == null) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<ProductProcess> productProcesses = productProcessRepository.findByProductIdOrderBySequence(product.getId());
+        if (productProcesses.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        Map<String, Long> processIdByName = productProcesses.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        process -> normalizeProcessName(process.getProcess()),
+                        ProductProcess::getId,
+                        (first, second) -> first
+                ));
+
+        return java.util.Arrays.stream(processText.split("[,;；\\n]+"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(this::normalizeProcessName)
+                .map(processIdByName::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private String normalizeProcessName(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("\\s+", " ");
     }
 
     @Transactional
@@ -127,11 +195,14 @@ public class ProductionReportService {
         entity.setShift(shift);
         entity.setMachineCode(request.machineCode());
         entity.setProduct(product);
+        entity.setProcessIds(joinProcessIds(request.processIds()));
         entity.setTotalOperatingMinutes(request.totalOperatingMinutes());
         entity.setDowntimeMinutes(request.downtimeMinutes());
         entity.setInputQuantity(request.inputQuantity());
         entity.setGoodQuantity(request.goodQuantity());
         entity.setDefectQuantity(request.defectQuantity());
+        entity.setInternalDefectQuantity(request.internalDefectQuantity());
+        entity.setExternalDefectQuantity(request.externalDefectQuantity());
         entity.setCompany(request.company());
         entity.setDowntimeReason(request.downtimeReason());
 
@@ -184,21 +255,28 @@ public class ProductionReportService {
                 BigDecimal dbgEfficiency = parseBigDecimal(getCell(row, headerIndex.getOrDefault("productionEfficiency", -1)));
                 Integer dbgInput = parseInteger(getCell(row, headerIndex.getOrDefault("inputQuantity", -1)));
                 Integer dbgGood = parseInteger(getCell(row, headerIndex.getOrDefault("goodQuantity", -1)));
-                LOG.info("ROW[{}] parsed: cycle={} , totalOp={} , target={} , availability={} , efficiency={} , input={} , good={}", rowIndex, dbgCycle, dbgTotalOp, dbgTarget, dbgAvailability, dbgEfficiency, dbgInput, dbgGood);
+                Integer dbgDowntime = resolveImportedDowntimeMinutes(row, headerIndex);
+                LOG.info("ROW[{}] parsed: cycle={} , totalOp={} , downtime={} , target={} , availability={} , efficiency={} , input={} , good={}", rowIndex, dbgCycle, dbgTotalOp, dbgDowntime, dbgTarget, dbgAvailability, dbgEfficiency, dbgInput, dbgGood);
+
+                String importedPartNumber = parseString(getCell(row, headerIndex.getOrDefault("partNumber", -1)));
+                String importedProcessText = parseString(getCell(row, headerIndex.getOrDefault("processIds", -1)));
 
                 ProductionCalculationRequest request = new ProductionCalculationRequest(
                     parseLocalDate(getCell(row, headerIndex.getOrDefault("reportDate", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("lineCode", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("shiftName", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("machineCode", -1))),
-                    parseString(getCell(row, headerIndex.getOrDefault("partNumber", -1))),
+                    importedPartNumber,
                     parseString(getCell(row, headerIndex.getOrDefault("partName", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("cycleTimeSeconds", -1))),
+                    resolveImportedProcessIds(importedPartNumber, importedProcessText),
                     parseInteger(getCell(row, headerIndex.getOrDefault("totalOperatingMinutes", -1))),
-                    parseInteger(getCell(row, headerIndex.getOrDefault("downtimeMinutes", -1))),
+                    resolveImportedDowntimeMinutes(row, headerIndex),
                     parseInteger(getCell(row, headerIndex.getOrDefault("inputQuantity", -1))),
                     parseInteger(getCell(row, headerIndex.getOrDefault("goodQuantity", -1))),
                     parseInteger(getCell(row, headerIndex.getOrDefault("defectQuantity", -1))),
+                    parseInteger(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1))),
+                    parseInteger(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("company", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
                     // optional calculated/override fields from import
@@ -248,7 +326,53 @@ public class ProductionReportService {
             sb.append("[col=").append(cell.getColumnIndex()).append(",val='").append(formatter.formatCellValue(cell).trim()).append("']");
         }
         LOG.debug("Header row cells: {}", sb.toString());
+        applyProductionBoardFallbackHeaderIndex(headerRow, indexMap);
         return indexMap;
+    }
+
+    private void applyProductionBoardFallbackHeaderIndex(Row headerRow, Map<String, Integer> indexMap) {
+        if (headerRow.getLastCellNum() < 23) {
+            return;
+        }
+        DataFormatter formatter = new DataFormatter();
+        String eighthHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(7)));
+        boolean hasOperationColumn = eighthHeader.equals("op") || eighthHeader.contains("工序");
+
+        indexMap.put("reportDate", 0);
+        indexMap.put("lineCode", 1);
+        indexMap.put("shiftName", 2);
+        indexMap.put("machineCode", 3);
+        indexMap.put("company", 4);
+        indexMap.put("partNumber", 5);
+        indexMap.put("partName", 6);
+
+        int offset = hasOperationColumn ? 1 : 0;
+        if (hasOperationColumn) {
+            indexMap.put("processIds", 7);
+        }
+        indexMap.put("cycleTimeSeconds", 7 + offset);
+        indexMap.put("totalOperatingMinutes", 8 + offset);
+        indexMap.put("downtimeMinutes", 9 + offset);
+        indexMap.put("downtimeReason", 10 + offset);
+        indexMap.put("shiftStandardTimeMinutes", 11 + offset);
+        indexMap.put("dailyTargetQuantity", 12 + offset);
+        indexMap.put("inputQuantity", 13 + offset);
+        indexMap.put("goodQuantity", 14 + offset);
+        indexMap.put("defectQuantity", 15 + offset);
+        String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + offset)));
+        boolean hasDefectSplitColumns = "internalDefectQuantity".equals(mapHeaderKey(internalDefectHeader));
+        int metricOffset = offset;
+        if (hasDefectSplitColumns) {
+            indexMap.put("internalDefectQuantity", 16 + offset);
+            indexMap.put("externalDefectQuantity", 17 + offset);
+            metricOffset += 2;
+        }
+        indexMap.put("productionEfficiency", 16 + metricOffset);
+        indexMap.put("availabilityRate", 17 + metricOffset);
+        indexMap.put("performanceRate", 18 + metricOffset);
+        indexMap.put("qualityRate", 19 + metricOffset);
+        indexMap.put("oee", 20 + metricOffset);
+        indexMap.put("evaluationLabel", 21 + metricOffset);
     }
 
     private Row findHeaderRow(Sheet sheet, int maxHeaderScanRows) {
@@ -282,6 +406,12 @@ public class ProductionReportService {
     }
 
     private String mapHeaderKey(String header) {
+        if (header.contains("工序") || header.contains("cong doan") || header.equals("op") || header.equals("process")) {
+            return "processIds";
+        }
+        if (header.contains("muc tieu") || header.contains("每日目標") || header.contains("目標") || header.contains("daily target") || header.contains("target qty") || header.contains("target quantity")) {
+            return "dailyTargetQuantity";
+        }
         if (header.contains("ngày") || header.contains("日期") || header.contains("report date") || header.contains("date")) {
             return "reportDate";
         }
@@ -309,7 +439,7 @@ public class ProductionReportService {
         if (header.contains("tổng giờ chạy") || header.contains("總動時間") || header.contains("tổng tg") || header.contains("working") || header.contains("run time") || header.contains("operating") || header.contains("稼働時間") || header.contains("稼動時間") || header.contains("runtime") || header.contains("operating time")) {
             return "totalOperatingMinutes";
         }
-        if (header.contains("tg dừng") || header.contains("停機(分)") || header.contains("downtime") || header.contains("stop time") || header.contains("stop") || header.contains("down time")) {
+        if (header.contains("tg dung") || (header.contains("停機") && (header.contains("分") || header.contains("分鐘"))) || header.contains("downtime") || header.contains("stop time") || header.contains("stop") || header.contains("down time")) {
             return "downtimeMinutes";
         }
         if (header.contains("lý do") || header.contains("原因") || header.contains("reason") || header.contains("cause") || header.contains("note")) {
@@ -323,6 +453,12 @@ public class ProductionReportService {
         }
         if (header.contains("良品數") || header.contains("sl đạt") || header.contains("good") || header.contains("good qty") || header.contains("good quantity")) {
             return "goodQuantity";
+        }
+        if (header.contains("內製") || header.contains("内製") || header.contains("noi che") || header.contains("nội chế") || header.contains("internal")) {
+            return "internalDefectQuantity";
+        }
+        if (header.contains("外製") || header.contains("外制") || header.contains("ngoai che") || header.contains("ngoại chế") || header.contains("external")) {
+            return "externalDefectQuantity";
         }
         if (header.contains("不良數") || header.contains("sl lỗi") || header.contains("defect") || header.contains("reject") || header.contains("bad")) {
             return "defectQuantity";
@@ -353,8 +489,9 @@ public class ProductionReportService {
 
     private String normalizeHeader(String header) {
         if (header == null) return "";
-        return header.trim()
-                .toLowerCase()
+        String normalized = Normalizer.normalize(header.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        return normalized
                 .replaceAll("[\u3000\uFEFF]", " ")
                 .replaceAll("[\\p{Punct}&&[^%]]", " ")
                 .replaceAll("\\s+", " ")
@@ -405,10 +542,25 @@ public class ProductionReportService {
         if (cell.getCellType() == CellType.NUMERIC) {
             return BigDecimal.valueOf(cell.getNumericCellValue());
         }
+        if (cell.getCellType() == CellType.FORMULA) {
+            if (cell.getCachedFormulaResultType() == CellType.NUMERIC) {
+                return BigDecimal.valueOf(cell.getNumericCellValue());
+            }
+            if (cell.getCachedFormulaResultType() == CellType.STRING) {
+                String cachedText = cell.getStringCellValue();
+                return parseBigDecimalText(cachedText);
+            }
+        }
         String text = parseString(cell);
+        return parseBigDecimalText(text);
+    }
+
+    private BigDecimal parseBigDecimalText(String text) {
         if (text == null) return null;
+        boolean percent = text.contains("%");
         try {
-            return new BigDecimal(text.replaceAll("[, %]", ""));
+            BigDecimal value = new BigDecimal(text.replaceAll("[, %]", ""));
+            return percent ? value.divide(BigDecimal.valueOf(100), 8, java.math.RoundingMode.HALF_UP) : value;
         } catch (Exception ignored) {
             return null;
         }
@@ -419,12 +571,39 @@ public class ProductionReportService {
         return row.getCell(index);
     }
 
+    private Integer resolveImportedDowntimeMinutes(Row row, Map<String, Integer> headerIndex) {
+        Integer downtime = parseInteger(getCell(row, headerIndex.getOrDefault("downtimeMinutes", -1)));
+        if (downtime != null) {
+            return downtime;
+        }
+
+        Integer shiftMinutes = parseInteger(getCell(row, headerIndex.getOrDefault("shiftStandardTimeMinutes", -1)));
+        Integer operatingMinutes = parseInteger(getCell(row, headerIndex.getOrDefault("totalOperatingMinutes", -1)));
+        if (shiftMinutes != null && operatingMinutes != null) {
+            return Math.max(shiftMinutes - operatingMinutes, 0);
+        }
+
+        return null;
+    }
+
     private Integer parseInteger(Cell cell) {
         if (cell == null) return null;
         if (cell.getCellType() == CellType.NUMERIC) {
             return (int) cell.getNumericCellValue();
         }
+        if (cell.getCellType() == CellType.FORMULA) {
+            if (cell.getCachedFormulaResultType() == CellType.NUMERIC) {
+                return (int) cell.getNumericCellValue();
+            }
+            if (cell.getCachedFormulaResultType() == CellType.STRING) {
+                return parseIntegerText(cell.getStringCellValue());
+            }
+        }
         String text = parseString(cell);
+        return parseIntegerText(text);
+    }
+
+    private Integer parseIntegerText(String text) {
         if (text == null) return null;
         try {
             return Integer.parseInt(text.replaceAll("[, ]", ""));
@@ -592,8 +771,11 @@ public class ProductionReportService {
                 report.getInputQuantity(),
                 report.getGoodQuantity(),
                 report.getDefectQuantity(),
+                report.getInternalDefectQuantity(),
+                report.getExternalDefectQuantity(),
                 calculated != null ? calculated.company() : report.getCompany(),
                 calculated != null ? calculated.downtimeReason() : report.getDowntimeReason(),
+                parseProcessIds(report.getProcessIds()),
                 shiftMinutes,
                 calculated != null ? calculated.dailyTargetQuantity() : report.getTargetQuantity(),
                 calculated != null ? calculated.productionEfficiency() : report.getProductionEfficiency(),

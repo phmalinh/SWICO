@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/change-password").authenticated()
                 .requestMatchers("/api/menu").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/production-reports/import").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/production-reports/import").permitAll()
                 .requestMatchers("/api/v1/production-reports/**").authenticated()
                 // Allow GET master-data endpoints to be called by frontend (operators/leaders need read access)
                 .requestMatchers(HttpMethod.GET, "/api/v1/master-data/**").permitAll()

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public record ProductionCalculationRequest(
         LocalDate reportDate,
@@ -15,11 +16,14 @@ public record ProductionCalculationRequest(
         @NotBlank String partNumber,
         @NotBlank String partName,
         @NotNull @Min(1) BigDecimal cycleTimeSeconds,
+        List<Long> processIds,
         @NotNull @Min(0) Integer totalOperatingMinutes,
         @NotNull @Min(0) Integer downtimeMinutes,
         @NotNull @Min(0) Integer inputQuantity,
         @NotNull @Min(0) Integer goodQuantity,
         @NotNull @Min(0) Integer defectQuantity,
+        @Min(0) Integer internalDefectQuantity,
+        @Min(0) Integer externalDefectQuantity,
         String company,
         String downtimeReason,
         // Optional: overrides supplied by import file. If present they will be used instead of calculated values.

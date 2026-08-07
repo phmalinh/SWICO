@@ -56,6 +56,7 @@ public class UserController {
         user.setRole(resolveRole(request.role()));
         user.setLineCode(request.lineCode());
         user.setActive(Boolean.TRUE.equals(request.active()));
+        user.setMustChangePassword(true);
 
         User saved = userRepository.save(user);
         auditLogService.record(
@@ -77,6 +78,7 @@ public class UserController {
                     }
                     if (request.password() != null && !request.password().isBlank()) {
                         existing.setPassword(passwordEncoder.encode(request.password()));
+                        existing.setMustChangePassword(true);
                     }
                     if (request.fullName() != null && !request.fullName().isBlank()) {
                         existing.setFullName(request.fullName());

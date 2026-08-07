@@ -8,7 +8,8 @@ public record UserResponse(
         String fullName,
         String role,
         String lineCode,
-        boolean active
+        boolean active,
+        boolean mustChangePassword
 ) {
     public static UserResponse fromEntity(User user) {
         return new UserResponse(
@@ -17,7 +18,8 @@ public record UserResponse(
                 user.getFullName(),
                 user.getRole().name(),
                 user.getLineCode(),
-                user.isActive()
+                user.isActive(),
+                user.isMustChangePassword()
         );
     }
 }

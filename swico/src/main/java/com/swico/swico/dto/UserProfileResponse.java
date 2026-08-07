@@ -7,7 +7,8 @@ public record UserProfileResponse(
         String fullName,
         String role,
         String lineCode,
-        boolean active
+        boolean active,
+        boolean mustChangePassword
 ) {
     public static UserProfileResponse fromEntity(User user) {
         return new UserProfileResponse(
@@ -15,7 +16,8 @@ public record UserProfileResponse(
                 user.getFullName(),
                 user.getRole().name(),
                 user.getLineCode(),
-                user.isActive()
+                user.isActive(),
+                user.isMustChangePassword()
         );
     }
 }

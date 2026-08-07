@@ -42,7 +42,7 @@ public class AuthController {
             );
             String token = tokenProvider.generateToken(authentication);
             User user = userRepository.findByUsername(request.username()).orElseThrow();
-            return ResponseEntity.ok(new AuthResponse(token, user.getUsername(), user.getFullName(), user.getRole().name()));
+            return ResponseEntity.ok(new AuthResponse(token, user.getUsername(), user.getFullName(), user.getRole().name(), user.isMustChangePassword()));
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(401).build();
         }
@@ -77,6 +77,7 @@ public class AuthController {
         }
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
 
         return ResponseEntity.noContent().build();

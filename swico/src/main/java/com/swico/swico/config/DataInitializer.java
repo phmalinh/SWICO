@@ -33,6 +33,9 @@ public class DataInitializer implements CommandLineRunner {
         user.setUsername(username);
         if (isNewUser) {
             user.setPassword(passwordEncoder.encode(rawPassword));
+            user.setMustChangePassword(true);
+        } else if (passwordEncoder.matches(rawPassword, user.getPassword())) {
+            user.setMustChangePassword(true);
         }
         user.setFullName(fullName);
         user.setRole(role);

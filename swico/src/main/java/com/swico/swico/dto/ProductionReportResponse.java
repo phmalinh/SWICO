@@ -2,6 +2,7 @@ package com.swico.swico.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProductionReportResponse(
         Long id,
@@ -17,8 +18,11 @@ public record ProductionReportResponse(
         Integer inputQuantity,
         Integer goodQuantity,
         Integer defectQuantity,
+        Integer internalDefectQuantity,
+        Integer externalDefectQuantity,
         String company,
         String downtimeReason,
+        List<Long> processIds,
         Integer shiftStandardTimeMinutes,
         BigDecimal dailyTargetQuantity,
         BigDecimal productionEfficiency,

@@ -1,39 +1,56 @@
 package com.swico.swico.service;
 
 import com.swico.swico.dto.ProductionReportResponse;
-import org.apache.poi.ss.usermodel.*;
+import com.swico.swico.entity.ProductProcess;
+import com.swico.swico.repository.ProductProcessRepository;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ProductionExportService {
 
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    private final ProductProcessRepository productProcessRepository;
+
+    public ProductionExportService(ProductProcessRepository productProcessRepository) {
+        this.productProcessRepository = productProcessRepository;
+    }
 
     public byte[] exportV9(List<ProductionReportResponse> reports) {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Sheet sheet = workbook.createSheet("每日填寫 V9");
+            Sheet sheet = workbook.createSheet("\u6bcf\u65e5\u586b\u5beb V9");
             sheet.setDefaultColumnWidth(16);
 
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle textStyle = createTextStyle(workbook);
+            CellStyle wrappedTextStyle = createWrappedTextStyle(workbook);
             CellStyle decimalStyle = createDecimalStyle(workbook);
             CellStyle intStyle = createIntStyle(workbook);
             CellStyle dateStyle = createDateStyle(workbook);
 
             String[] headers = {
-                    "日期\nNgày", "線別\nChuyền", "班別\nCa (Dropdown)", "機台\nMã Máy", "公司\nCông Ty", "料號\nMã Hàng",
-                    "品名\nTên Hàng", "C/T (秒)", "總動時間(分)\nTổng TG\n手動輸入", "停機(分)\nTG Dừng",
-                    "停機原因\nLý Do Dừng", "標準工時(分)\nTG Ca\n(自動)", "每日目標\nMục Tiêu\n=標準*60/C/T", "投入數\nSL Nhập",
-                    "良品數\nSL Đạt", "不良數\nSL Lỗi", "生產效率\nHiệu Suất\n=投入/目標",
-                    "稼動率 A\n=(總動-停機)/總動", "性能率 P\n=投入*C/T/((總動-停機)*60)",
-                    "良品率 Q\n=良品/投入", "OEE\n=A*P*Q", "評價\nĐánh Giá", "簽名"
+                    "\u65e5\u671f\nNgay", "\u7dda\u5225\nChuyen", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMa May", "\u516c\u53f8\nCong Ty", "\u6599\u865f\nMa Hang",
+                    "\u54c1\u540d\nTen Hang", "\u5de5\u5e8f\nCong doan", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTong TG", "\u505c\u6a5f(\u5206)\nTG Dung",
+                    "\u505c\u6a5f\u539f\u56e0\nLy Do Dung", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMuc Tieu", "\u6295\u5165\u6578\nSL Nhap",
+                    "\u826f\u54c1\u6578\nSL Dat", "\u4e0d\u826f\u6578\nSL Loi", "\u5167\u88fd\u7570\u5e38\u4e0d\u826f", "\u5916\u88fd\u7570\u5e38\u4e0d\u826f",
+                    "\u751f\u7522\u6548\u7387\nHieu Suat", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nDanh Gia", "\u7c3d\u540d"
             };
 
             Row header = sheet.createRow(0);
@@ -56,22 +73,25 @@ public class ProductionExportService {
                 setValue(row.createCell(4), report.company(), textStyle);
                 setValue(row.createCell(5), report.partNumber(), textStyle);
                 setValue(row.createCell(6), report.partName(), textStyle);
-                setValue(row.createCell(7), report.cycleTimeSeconds(), decimalStyle);
-                setValue(row.createCell(8), report.totalOperatingMinutes(), intStyle);
-                setValue(row.createCell(9), report.downtimeMinutes(), intStyle);
-                setValue(row.createCell(10), report.downtimeReason(), textStyle);
-                setValue(row.createCell(11), report.shiftStandardTimeMinutes(), intStyle);
-                setValue(row.createCell(12), report.dailyTargetQuantity(), decimalStyle);
-                setValue(row.createCell(13), report.inputQuantity(), intStyle);
-                setValue(row.createCell(14), report.goodQuantity(), intStyle);
-                setValue(row.createCell(15), report.defectQuantity(), intStyle);
-                setValue(row.createCell(16), report.productionEfficiency(), decimalStyle);
-                setValue(row.createCell(17), report.availabilityRate(), decimalStyle);
-                setValue(row.createCell(18), report.performanceRate(), decimalStyle);
-                setValue(row.createCell(19), report.qualityRate(), decimalStyle);
-                setValue(row.createCell(20), report.oee(), decimalStyle);
-                setValue(row.createCell(21), report.evaluationLabel(), textStyle);
-                row.createCell(22).setCellValue("");
+                setValue(row.createCell(7), formatProcesses(report.processIds()), wrappedTextStyle);
+                setValue(row.createCell(8), report.cycleTimeSeconds(), decimalStyle);
+                setValue(row.createCell(9), report.totalOperatingMinutes(), intStyle);
+                setValue(row.createCell(10), report.downtimeMinutes(), intStyle);
+                setValue(row.createCell(11), report.downtimeReason(), wrappedTextStyle);
+                setValue(row.createCell(12), report.shiftStandardTimeMinutes(), intStyle);
+                setValue(row.createCell(13), report.dailyTargetQuantity(), decimalStyle);
+                setValue(row.createCell(14), report.inputQuantity(), intStyle);
+                setValue(row.createCell(15), report.goodQuantity(), intStyle);
+                setValue(row.createCell(16), report.defectQuantity(), intStyle);
+                setValue(row.createCell(17), report.internalDefectQuantity(), intStyle);
+                setValue(row.createCell(18), report.externalDefectQuantity(), intStyle);
+                setValue(row.createCell(19), report.productionEfficiency(), decimalStyle);
+                setValue(row.createCell(20), report.availabilityRate(), decimalStyle);
+                setValue(row.createCell(21), report.performanceRate(), decimalStyle);
+                setValue(row.createCell(22), report.qualityRate(), decimalStyle);
+                setValue(row.createCell(23), report.oee(), decimalStyle);
+                setValue(row.createCell(24), report.evaluationLabel(), textStyle);
+                row.createCell(25).setCellValue("");
             }
 
             for (int i = 0; i < headers.length; i++) {
@@ -85,24 +105,31 @@ public class ProductionExportService {
         }
     }
 
-    private void setValue(Cell cell, String value, CellStyle style) {
-        if (value != null) {
-            cell.setCellValue(value);
+    private String formatProcesses(List<Long> processIds) {
+        if (processIds == null || processIds.isEmpty()) {
+            return null;
         }
+        List<ProductProcess> processes = productProcessRepository.findAllById(processIds);
+        Map<Long, String> processNameById = processes.stream()
+                .collect(java.util.stream.Collectors.toMap(ProductProcess::getId, ProductProcess::getProcess));
+        return processIds.stream()
+                .map(processNameById::get)
+                .filter(value -> value != null && !value.isBlank())
+                .collect(java.util.stream.Collectors.joining("\uff1b "));
+    }
+
+    private void setValue(Cell cell, String value, CellStyle style) {
+        if (value != null) cell.setCellValue(value);
         cell.setCellStyle(style);
     }
 
     private void setValue(Cell cell, Integer value, CellStyle style) {
-        if (value != null) {
-            cell.setCellValue(value);
-        }
+        if (value != null) cell.setCellValue(value);
         cell.setCellStyle(style);
     }
 
     private void setValue(Cell cell, BigDecimal value, CellStyle style) {
-        if (value != null) {
-            cell.setCellValue(value.doubleValue());
-        }
+        if (value != null) cell.setCellValue(value.doubleValue());
         cell.setCellStyle(style);
     }
 
@@ -127,6 +154,12 @@ public class ProductionExportService {
         CellStyle style = workbook.createCellStyle();
         style.setVerticalAlignment(VerticalAlignment.CENTER);
         setThinBorders(style);
+        return style;
+    }
+
+    private CellStyle createWrappedTextStyle(Workbook workbook) {
+        CellStyle style = createTextStyle(workbook);
+        style.setWrapText(true);
         return style;
     }
 
