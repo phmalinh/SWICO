@@ -27,6 +27,7 @@ public class ProductionFormulaService {
         Integer inputQuantity = request.inputQuantity();
         Integer goodQuantity = request.goodQuantity();
         Integer defectQuantity = request.defectQuantity();
+        Integer internalDefectQuantity = request.internalDefectQuantity() != null ? request.internalDefectQuantity() : 0;
 
         Integer shiftMinutes = resolvedShiftMinutes != null ? resolvedShiftMinutes : resolveShiftMinutes(request.shiftName());
 
@@ -72,6 +73,18 @@ public class ProductionFormulaService {
             oee = availabilityRate.multiply(performanceRate).multiply(qualityRate).setScale(4, RoundingMode.HALF_UP);
         }
 
+        BigDecimal responsibility = BigDecimal.ZERO;
+        if (inputQuantity != null && inputQuantity > 0) {
+            responsibility = BigDecimal.valueOf(internalDefectQuantity)
+                    .divide(BigDecimal.valueOf(inputQuantity), 4, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal deductionPercent = responsibility.subtract(new BigDecimal("0.0027"));
+        if (deductionPercent.compareTo(BigDecimal.ZERO) < 0) {
+            deductionPercent = BigDecimal.ZERO;
+        }
+        deductionPercent = deductionPercent.setScale(4, RoundingMode.HALF_UP);
+
         return new ProductionCalculationResponse(
                 request.reportDate() != null ? request.reportDate() : LocalDate.now(),
                 request.lineCode(),
@@ -94,6 +107,8 @@ public class ProductionFormulaService {
             oee,
             request.company(),
             request.downtimeReason(),
+            responsibility,
+            deductionPercent,
             evaluationLabel(oee)
         );
     }
