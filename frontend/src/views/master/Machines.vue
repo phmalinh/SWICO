@@ -9,11 +9,15 @@
     <div class="page-card overflow-hidden">
       <el-table :data="paginatedMachines" stripe style="width: 100%" size="large" v-loading="loading">
         <el-table-column type="index" label="#" width="60" />
+        <el-table-column prop="lineCode" :label="t('master.machines.table.lineCode')" width="120" />
+        <el-table-column prop="assetCode" :label="t('master.machines.table.assetCode')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="description" :label="t('master.machines.table.description')" min-width="220" />
         <el-table-column prop="machineCode" :label="t('master.machines.table.machineCode')" width="140">
           <template #default="{ row }"><span class="font-mono font-black text-slate-800">{{ row.machineCode }}</span></template>
         </el-table-column>
-        <el-table-column prop="lineCode" :label="t('master.machines.table.lineCode')" width="120" />
-        <el-table-column prop="description" :label="t('master.machines.table.description')" min-width="220" />
+        <el-table-column prop="purchaseDate" :label="t('master.machines.table.purchaseDate')" width="130" align="center" />
+        <el-table-column prop="custodyDepartment" :label="t('master.machines.table.custodyDepartment')" min-width="170" show-overflow-tooltip />
+        
         <el-table-column :label="t('master.machines.table.actions')" width="150" align="center">
           <template #default="{ row }">
             <el-button type="primary" link @click="openDialog(row)">{{ t('common.edit') }}</el-button>
@@ -41,6 +45,11 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="t('master.machines.dialog.description')"><el-input v-model="form.description" /></el-form-item>
+        <el-form-item :label="t('master.machines.dialog.assetCode')"><el-input v-model="form.assetCode" /></el-form-item>
+        <el-form-item :label="t('master.machines.dialog.purchaseDate')">
+          <el-date-picker v-model="form.purchaseDate" type="date" value-format="YYYY-MM-DD" class="!w-full" />
+        </el-form-item>
+        <el-form-item :label="t('master.machines.dialog.custodyDepartment')"><el-input v-model="form.custodyDepartment" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
@@ -64,7 +73,7 @@ const lineOptions = ref([])
 const dialogVisible = ref(false)
 const editId = ref(null)
 const loading = ref(false)
-const form = ref({ machineCode: '', description: '', lineCode: '' })
+const form = ref({ machineCode: '', description: '', lineCode: '', assetCode: '', purchaseDate: '', custodyDepartment: '' })
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -80,6 +89,9 @@ function normalizeMachine(item) {
     machineCode: item.machineCode,
     description: item.description,
     lineCode: item.lineCode || '',
+    assetCode: item.assetCode || '',
+    purchaseDate: item.purchaseDate || '',
+    custodyDepartment: item.custodyDepartment || '',
   }
 }
 
@@ -104,7 +116,7 @@ async function loadMachines() {
 
 function openDialog(row) {
   editId.value = row?.id || null
-  form.value = row ? { ...row } : { machineCode: '', description: '', lineCode: '' }
+  form.value = row ? { ...row } : { machineCode: '', description: '', lineCode: '', assetCode: '', purchaseDate: '', custodyDepartment: '' }
   dialogVisible.value = true
 }
 
@@ -115,6 +127,9 @@ async function save() {
       machineCode: form.value.machineCode.trim(),
       description: form.value.description?.trim() || '',
       lineCode: form.value.lineCode?.trim() || '',
+      assetCode: form.value.assetCode?.trim() || '',
+      purchaseDate: form.value.purchaseDate || null,
+      custodyDepartment: form.value.custodyDepartment?.trim() || '',
     }
     if (editId.value) {
       await masterApi.updateMachine(editId.value, payload)

@@ -73,6 +73,12 @@
         <el-table-column prop="totalOperatingMinutes" :label="t('reports.search.table.totalOperatingMinutes')" width="70" align="center" />
         <el-table-column prop="downtimeMinutes" :label="t('reports.search.table.downtimeMinutes')" width="80" align="center" />
         <el-table-column prop="downtimeReason" :label="t('reports.search.table.downtimeReason')" min-width="80" show-overflow-tooltip />
+        <el-table-column :label="t('reports.search.table.responsibility')" min-width="100" align="center">
+          <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.deductionPercent')" width="90" align="center">
+          <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
+        </el-table-column>
         <el-table-column prop="shiftStandardTimeMinutes" :label="t('reports.search.table.shiftStandardTimeMinutes')" width="80" align="center" />
         <el-table-column prop="dailyTargetQuantity" :label="t('reports.search.table.dailyTargetQuantity')" width="80" align="center" />
         <el-table-column :label="t('reports.search.table.inputGoodDefect')" width="130" align="center">

@@ -220,14 +220,21 @@ function handleAuthFailure() {
   localStorage.removeItem('swico_username')
   localStorage.removeItem('swico_user')
   localStorage.removeItem('swico_role')
-  if (window.location.pathname !== '/login') {
-    window.location.href = '/login'
-  }
+  localStorage.removeItem('swico_must_change_password')
+  window.dispatchEvent(new Event('swico-session-changed'))
+}
+
+function isPublicRequest(path, method) {
+  if (method === 'GET' && path.startsWith('/master-data/')) return true
+  if (method === 'POST' && path === '/master-data/products/import-production-info') return true
+  if (method === 'POST' && path === '/production-reports/import') return true
+  return false
 }
 
 async function request(path, options = {}, config = {}) {
   const token = normalizeToken(localStorage.getItem('swico_token'))
   const method = (options.method || 'GET').toUpperCase()
+  const skipAuth = config.skipAuth === true || isPublicRequest(path, method)
 
   const headers = new Headers(options.headers || {})
   headers.set('Accept', 'application/json')
@@ -237,9 +244,9 @@ async function request(path, options = {}, config = {}) {
     headers.set('Content-Type', 'application/json')
   }
 
-  if (token) {
+  if (token && !skipAuth) {
     headers.set('Authorization', `Bearer ${token}`)
-  } else if (!path.startsWith('/master-data/') || method !== 'GET') {
+  } else if (!skipAuth) {
     console.warn('[api] protected request without auth token', method, path)
   }
 
@@ -291,7 +298,12 @@ export const masterApi = {
   getProducts: () => request('/master-data/products'),
   createProduct: payload => request('/master-data/products', { method: 'POST', body: JSON.stringify(payload) }),
   updateProduct: (id, payload) => request(`/master-data/products/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteProduct: id => request(`/master-data/products/${id}`, { method: 'DELETE' }),
+  deleteProduct: id => request(`/master-data/products/${id}`, { method: 'DELETE' }, { handleAuthFailure: false }),
+  importProductionInfo: file => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request('/master-data/products/import-production-info', { method: 'POST', body: formData }, { handleAuthFailure: false, skipAuth: true })
+  },
 
   getLines: () => request('/master-data/lines'),
   createLine: payload => request('/master-data/lines', { method: 'POST', body: JSON.stringify(payload) }),
@@ -307,6 +319,10 @@ export const masterApi = {
   createMachine: payload => request('/master-data/machines', { method: 'POST', body: JSON.stringify(payload) }),
   updateMachine: (id, payload) => request(`/master-data/machines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteMachine: id => request(`/master-data/machines/${id}`, { method: 'DELETE' }),
+  getDowntimeReasons: () => request('/master-data/downtime-reasons'),
+  createDowntimeReason: payload => request('/master-data/downtime-reasons', { method: 'POST', body: JSON.stringify(payload) }),
+  updateDowntimeReason: (id, payload) => request(`/master-data/downtime-reasons/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteDowntimeReason: id => request(`/master-data/downtime-reasons/${id}`, { method: 'DELETE' }),
   getProductProcesses: productId => request(`/master-data/products/${productId}/processes`),
   addProductProcess: (productId, payload) => request(`/master-data/products/${productId}/processes`, { method: 'POST', body: JSON.stringify(payload) }),
   updateProcess: (id, payload) => request(`/master-data/processes/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
@@ -315,8 +331,8 @@ export const masterApi = {
 
 export const productionApi = {
   calculate: payload => request('/production-reports/calculate', { method: 'POST', body: JSON.stringify(payload) }),
-  create: payload => request('/production-reports', { method: 'POST', body: JSON.stringify(payload) }),
-  update: (id, payload) => request(`/production-reports/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  create: payload => request('/production-reports', { method: 'POST', body: JSON.stringify(payload) }, { handleAuthFailure: false }),
+  update: (id, payload) => request(`/production-reports/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, { handleAuthFailure: false }),
   deleteReports: ids => request('/production-reports', { method: 'DELETE', body: JSON.stringify(ids) }),
   today: params => request(`/production-reports/today${buildQuery(params)}`),
   search: params => request(`/production-reports${buildQuery(params)}`),

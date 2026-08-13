@@ -17,6 +17,9 @@ public class Product {
     @Column(name = "part_name", nullable = false, length = 255)
     private String partName;
 
+    @Column(name = "customer", length = 255)
+    private String customer;
+
     @Column(name = "cycle_time_seconds", nullable = false, precision = 10, scale = 2)
     private BigDecimal cycleTimeSeconds;
 
@@ -42,6 +45,14 @@ public class Product {
 
     public void setPartName(String partName) {
         this.partName = partName;
+    }
+
+    public String getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(String customer) {
+        this.customer = customer;
     }
 
     public BigDecimal getCycleTimeSeconds() {

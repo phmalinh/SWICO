@@ -38,6 +38,12 @@
         </el-table-column>
         <el-table-column prop="internalDefectQuantity" :label="t('productionHistory.table.internalDefectQuantity')" width="130" align="center" />
         <el-table-column prop="externalDefectQuantity" :label="t('productionHistory.table.externalDefectQuantity')" width="130" align="center" />
+        <el-table-column :label="t('productionHistory.table.responsibility')" min-width="100" align="center">
+          <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('productionHistory.table.deductionPercent')" width="90" align="center">
+          <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
+        </el-table-column>
         <el-table-column :label="t('productionHistory.table.oee')" width="95" align="center">
           <template #default="{ row }">
             <span class="rounded-full px-2.5 py-1 text-sm font-black" :class="oeeClass(row.oee)">
@@ -183,6 +189,8 @@ function openEdit(row) {
     defectQuantity: row.defectQuantity,
     internalDefectQuantity: row.internalDefectQuantity,
     externalDefectQuantity: row.externalDefectQuantity,
+    company: row.company || '',
+    downtimeReason: row.downtimeReason || '',
   }
   editVisible.value = true
 }
@@ -207,6 +215,8 @@ async function saveEdit() {
       defectQuantity: Number(editForm.value.defectQuantity || 0),
       internalDefectQuantity: Number(editForm.value.internalDefectQuantity || 0),
       externalDefectQuantity: Number(editForm.value.externalDefectQuantity || 0),
+      company: editForm.value.company,
+      downtimeReason: editForm.value.downtimeReason,
     }
     await productionApi.update(editForm.value.id, payload)
     ElMessage.success(t('productionHistory.messages.saveSuccess'))

@@ -30,6 +30,9 @@ public class MachineService {
         machine.setMachineCode(request.machineCode());
         machine.setDescription(request.description());
         machine.setLine(resolveLine(request.lineCode()));
+        machine.setAssetCode(request.assetCode());
+        machine.setPurchaseDate(request.purchaseDate());
+        machine.setCustodyDepartment(request.custodyDepartment());
         Machine saved = machineRepository.save(machine);
         return toResponse(saved);
     }
@@ -39,6 +42,9 @@ public class MachineService {
         machine.setMachineCode(request.machineCode());
         machine.setDescription(request.description());
         machine.setLine(resolveLine(request.lineCode()));
+        machine.setAssetCode(request.assetCode());
+        machine.setPurchaseDate(request.purchaseDate());
+        machine.setCustodyDepartment(request.custodyDepartment());
         return toResponse(machineRepository.save(machine));
     }
 
@@ -58,7 +64,10 @@ public class MachineService {
                 machine.getId(),
                 machine.getMachineCode(),
                 machine.getDescription(),
-                machine.getLine() != null ? machine.getLine().getLineCode() : null
+                machine.getLine() != null ? machine.getLine().getLineCode() : null,
+                machine.getAssetCode(),
+                machine.getPurchaseDate() != null ? machine.getPurchaseDate().toString() : null,
+                machine.getCustodyDepartment()
         );
     }
 }

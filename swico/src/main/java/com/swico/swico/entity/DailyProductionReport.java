@@ -64,6 +64,12 @@ public class DailyProductionReport {
     @Column(name = "downtime_reason", length = 2000)
     private String downtimeReason;
 
+    @Column(name = "responsibility", precision = 6, scale = 4)
+    private BigDecimal responsibility;
+
+    @Column(name = "deduction_percent", precision = 6, scale = 4)
+    private BigDecimal deductionPercent;
+
     @Column(name = "target_quantity", precision = 10, scale = 2)
     private BigDecimal targetQuantity;
 
@@ -292,6 +298,22 @@ public class DailyProductionReport {
 
     public void setDowntimeReason(String downtimeReason) {
         this.downtimeReason = downtimeReason;
+    }
+
+    public BigDecimal getResponsibility() {
+        return responsibility;
+    }
+
+    public void setResponsibility(BigDecimal responsibility) {
+        this.responsibility = responsibility;
+    }
+
+    public BigDecimal getDeductionPercent() {
+        return deductionPercent;
+    }
+
+    public void setDeductionPercent(BigDecimal deductionPercent) {
+        this.deductionPercent = deductionPercent;
     }
 
     public LocalDateTime getCreatedAt() {

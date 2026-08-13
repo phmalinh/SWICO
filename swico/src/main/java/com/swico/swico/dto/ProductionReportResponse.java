@@ -22,6 +22,8 @@ public record ProductionReportResponse(
         Integer externalDefectQuantity,
         String company,
         String downtimeReason,
+        BigDecimal responsibility,
+        BigDecimal deductionPercent,
         List<Long> processIds,
         Integer shiftStandardTimeMinutes,
         BigDecimal dailyTargetQuantity,

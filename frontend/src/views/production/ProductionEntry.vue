@@ -69,11 +69,12 @@
                   size="default"
                   class="w-full"
                   :placeholder="t('productionEntry.selectProcesses')"
+                  @change="onProcessSelectionChange"
                 >
                   <el-option
                     v-for="process in processOptions"
                     :key="process.id"
-                    :label="`${process.process}${process.lineCode ? ` (${process.lineCode}${process.machineCode ? ` / ${process.machineCode}` : ''})` : ''}`"
+                    :label="formatProcessOption(process)"
                     :value="process.id"
                   />
                 </el-select>
@@ -199,6 +200,7 @@
               </div>
             </el-form-item>
           </div>
+
           <div class="mt-2.5 grid grid-cols-2 md:grid-cols-2 gap-2.5">
             <template v-for="(item, index) in form.downtimeItems" :key="index">
               <el-form-item :label="index === 0 ? t('productionEntry.downtimeReason') : ''" class="!mb-0">
@@ -260,7 +262,6 @@
               </el-form-item>
             </template>
           </div>
-
           <!-- Nút bấm Action -->
             <div class="pt-2 flex flex-wrap items-center gap-3">
               <el-button type="primary" size="large" class="flex-1 !h-10 text-base font-bold" :loading="saving" @click="saveReport">
@@ -309,6 +310,12 @@
               </el-table-column>
               <el-table-column prop="company" :label="t('productionEntry.table.company')" min-width="80" show-overflow-tooltip />
               <el-table-column prop="downtimeReason" :label="t('productionEntry.table.downtimeReason')" min-width="160" show-overflow-tooltip />
+              <el-table-column :label="t('productionEntry.table.responsibility')" min-width="100" align="center">
+                <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.deductionPercent')" width="90" align="center">
+                <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
+              </el-table-column>
               <el-table-column prop="totalOperatingMinutes" :label="t('productionEntry.table.totalOperatingMinutes')" width="70" align="center" />
               <el-table-column prop="downtimeMinutes" :label="t('productionEntry.table.downtimeMinutes')" width="70" align="center" />
               <el-table-column prop="inputQuantity" :label="t('productionEntry.table.inputQuantity')" width="70" align="center" />
@@ -436,7 +443,7 @@ const form = ref({
   downtimeItems: [{ reason: '', minutes: 30 }],
 })
 
-const downtimeReasons = [
+const defaultDowntimeReasons = [
   'A. 換刀（粗／精面銑刀、內孔鏜刀、鑽頭等） / Thay dao (dao phay mặt thô + tinh, dao móc lỗ, mũi khoan, ...)',
   'B. 砂輪用盡、更換砂輪（針對磨床組） / Hết đá, thay đá (đối với tổ Mài)',
   'C. 停機等料（等待毛坯） / Ngưng máy chờ phôi',
@@ -446,6 +453,7 @@ const downtimeReasons = [
   'G. 操作人員請假（無替代人員時） / Nhân viên thao tác nghỉ phép (khi không có người thay thế)',
   'H. 其他 / Khác',
 ]
+const downtimeReasons = ref([...defaultDowntimeReasons])
 
 function normalizeDowntimeReasons(value) {
   if (Array.isArray(value)) {
@@ -552,6 +560,14 @@ const calculatedGoodQuantity = computed(() => {
 })
 
 const totalDefectQuantity = computed(() => Number(form.value.internalDefectQuantity || 0) + Number(form.value.externalDefectQuantity || 0))
+
+const responsibilityPreview = computed(() => {
+  const input = Number(form.value.inputQuantity || 0)
+  if (input <= 0) return 0
+  return Number(form.value.internalDefectQuantity || 0) / input
+})
+
+const deductionPercentPreview = computed(() => Math.max(Number(responsibilityPreview.value || 0) - 0.0027, 0))
 
 const dailyTargetPreview = computed(() => {
   const actualMinutes = Number(actualOperatingMinutes.value || 0)
@@ -665,6 +681,18 @@ function onProductChange(partNumber) {
   }
 }
 
+function formatProcessOption(process) {
+  return process?.processCode || ''
+}
+
+function onProcessSelectionChange(selectedIds = []) {
+  if (!selectedIds.length) return
+  const selectedProcess = processOptions.value.find(process => process.id === selectedIds[selectedIds.length - 1])
+  if (selectedProcess?.cycleTimeSeconds != null) {
+    form.value.cycleTime = selectedProcess.cycleTimeSeconds
+  }
+}
+
 function onLineChange() {
   const options = filteredMachines.value
   const currentStillValid = options.some(machine => machine.machineCode === form.value.machineCode)
@@ -691,7 +719,7 @@ function mergeProcessNames(processes = []) {
   processNameById.value = {
     ...processNameById.value,
     ...processes.reduce((map, process) => {
-      if (process?.id) map[process.id] = process.process
+      if (process?.id) map[process.id] = process.processCode || process.process || ''
       return map
     }, {}),
   }
@@ -782,17 +810,19 @@ function parseTimeString(value) {
 
 async function loadInitialData() {
   try {
-    const [productsRes, linesRes, machinesRes, shiftsRes] = await Promise.all([
+    const [productsRes, linesRes, machinesRes, shiftsRes, downtimeReasonsRes] = await Promise.all([
       masterApi.getProducts(),
       masterApi.getLines(),
       masterApi.getMachines(),
       masterApi.getShifts(),
+      masterApi.getDowntimeReasons().catch(() => []),
     ])
 
     products.value = productsRes.map(item => ({
       id: item.id,
       partNumber: item.code,
       partName: item.name,
+      customer: item.customer || '',
       cycleTimeSeconds: item.cycleTimeSeconds,
     }))
     await loadProcessNamesForProducts(products.value)
@@ -810,6 +840,11 @@ async function loadInitialData() {
       startTime: item.startTime || null,
       endTime: item.endTime || null,
     }))
+    const activeDowntimeReasons = (downtimeReasonsRes || [])
+      .filter(item => item.active !== false)
+      .map(item => `${item.reasonCode}. ${item.reasonText}`.trim())
+      .filter(Boolean)
+    downtimeReasons.value = activeDowntimeReasons.length ? activeDowntimeReasons : [...defaultDowntimeReasons]
 
     if (!form.value.lineCode && lines.value.length) form.value.lineCode = lines.value[0].lineCode
     if (!form.value.machineCode && machines.value.length) {
@@ -884,6 +919,8 @@ const oeeCards = computed(() => {
     { key: 'a', label: t('reports.dashboard.sections.availability'), value: formatPercent(Number(r.availabilityRate || 0)), textClass: 'text-sky-600', cardClass: 'border-sky-100 bg-sky-50' },
     { key: 'p', label: t('reports.dashboard.sections.performance'), value: formatPercent(Number(r.performanceRate || 0)), textClass: 'text-indigo-600', cardClass: 'border-indigo-100 bg-indigo-50' },
     { key: 'q', label: t('reports.dashboard.sections.quality'), value: formatPercent(Number(r.qualityRate || 0)), textClass: 'text-emerald-600', cardClass: 'border-emerald-100 bg-emerald-50' },
+    { key: 'responsibility', label: t('productionEntry.responsibility'), value: formatPercent(Number(r.responsibility || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
+    { key: 'deduction', label: t('productionEntry.deductionPercent'), value: formatPercent(Number(r.deductionPercent || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
     { key: 'signature', label: t('productionEntry.createdBy'), value: currentUser.value?.fullName || currentUser.value?.name || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
   ]
 })

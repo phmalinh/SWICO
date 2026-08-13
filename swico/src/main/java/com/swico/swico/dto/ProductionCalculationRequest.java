@@ -26,6 +26,8 @@ public record ProductionCalculationRequest(
         @Min(0) Integer externalDefectQuantity,
         String company,
         String downtimeReason,
+        String responsibility,
+        BigDecimal deductionPercent,
         // Optional: overrides supplied by import file. If present they will be used instead of calculated values.
         Integer shiftStandardTimeMinutes,
         BigDecimal dailyTargetQuantity,

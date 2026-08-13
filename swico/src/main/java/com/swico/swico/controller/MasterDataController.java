@@ -2,11 +2,16 @@ package com.swico.swico.controller;
 
 import com.swico.swico.dto.MasterDataResponse;
 import com.swico.swico.dto.LineUpsertRequest;
+import com.swico.swico.dto.ProductionInfoImportResponse;
 import com.swico.swico.dto.ProductUpsertRequest;
 import com.swico.swico.dto.ShiftUpsertRequest;
 import com.swico.swico.service.MasterDataService;
+import com.swico.swico.service.ProductionInfoImportService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,9 +21,11 @@ import java.util.List;
 public class MasterDataController {
 
     private final MasterDataService masterDataService;
+    private final ProductionInfoImportService productionInfoImportService;
 
-    public MasterDataController(MasterDataService masterDataService) {
+    public MasterDataController(MasterDataService masterDataService, ProductionInfoImportService productionInfoImportService) {
         this.masterDataService = masterDataService;
+        this.productionInfoImportService = productionInfoImportService;
     }
 
     @GetMapping("/products")
@@ -41,14 +48,28 @@ public class MasterDataController {
         return masterDataService.saveProduct(request);
     }
 
+    @PostMapping(value = "/products/import-production-info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> importProductionInfo(@RequestParam("file") MultipartFile file) {
+        try {
+            return ResponseEntity.ok(productionInfoImportService.importWorkbook(file));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
     @PutMapping("/products/{id}")
     public MasterDataResponse updateProduct(@PathVariable Long id, @Valid @RequestBody ProductUpsertRequest request) {
         return masterDataService.updateProduct(id, request);
     }
 
     @DeleteMapping("/products/{id}")
-    public void deleteProduct(@PathVariable Long id) {
-        masterDataService.deleteProduct(id);
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        try {
+            masterDataService.deleteProduct(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
     }
 
     @PostMapping("/lines")

@@ -171,7 +171,7 @@ import {
   ChevronRight as ChevronRightIcon,
   ClipboardList, BarChart3, Database, ShieldCheck,
   FileEdit, History, LayoutDashboard, Search, FileSpreadsheet,
-  Package, GitFork, Clock, Cpu, Users, FileText,
+  Package, GitFork, Clock, Cpu, Users, FileText, CirclePause,
 } from 'lucide-vue-next'
 import { getSession, logout } from '@/services/auth'
 import { roleMenus, roleLabels as roleLabelsMap } from '@/data/mockData'
@@ -182,7 +182,7 @@ const router = useRouter()
 const { t, locale, setLocale } = useI18n()
 
 const session = ref(getSession() || {})
-const userRole = computed(() => session.value?.role || 'ROLE_MANAGER')
+const userRole = computed(() => session.value?.role || '')
 const isCollapsed = ref(false)
 const expandedGroups = ref(['1', '2', '3'])
 const activeGroupId = ref('1')
@@ -234,6 +234,7 @@ const allMenuItems = computed(() => [
       { id: '3.2', title: t('menu.lines'), icon: GitFork, path: '/master/lines' },
       { id: '3.3', title: t('menu.shifts'), icon: Clock, path: '/master/shifts' },
       { id: '3.4', title: t('menu.machines'), icon: Cpu, path: '/master/machines' },
+      { id: '3.6', title: t('menu.downtimeReasons'), icon: CirclePause, path: '/master/downtime-reasons' },
     ],
   },
   {
@@ -250,7 +251,7 @@ const isWorkshopMode = computed(() => ['ROLE_OPERATOR', 'ROLE_LEADER'].includes(
 const roleShortName = computed(() => roleLabels[userRole.value]?.label?.slice(0, 2).toUpperCase() || 'SW')
 const currentUser = computed(() => ({
   role: userRole.value,
-  name: roleLabels[userRole.value]?.label || 'Người đăng nhập',
+  name: session.value?.username || 'NgÆ°á»i Ä‘Äƒng nháº­p',
   fullName: session.value?.fullName || session.value?.username || 'Người dùng',
 }))
 

@@ -1,6 +1,7 @@
 package com.swico.swico.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "machines")
@@ -19,6 +20,15 @@ public class Machine {
 
     @Column(name = "description", length = 255)
     private String description;
+
+    @Column(name = "asset_code", length = 100)
+    private String assetCode;
+
+    @Column(name = "purchase_date")
+    private LocalDate purchaseDate;
+
+    @Column(name = "custody_department", length = 255)
+    private String custodyDepartment;
 
     public Long getId() {
         return id;
@@ -50,5 +60,29 @@ public class Machine {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAssetCode() {
+        return assetCode;
+    }
+
+    public void setAssetCode(String assetCode) {
+        this.assetCode = assetCode;
+    }
+
+    public LocalDate getPurchaseDate() {
+        return purchaseDate;
+    }
+
+    public void setPurchaseDate(LocalDate purchaseDate) {
+        this.purchaseDate = purchaseDate;
+    }
+
+    public String getCustodyDepartment() {
+        return custodyDepartment;
+    }
+
+    public void setCustodyDepartment(String custodyDepartment) {
+        this.custodyDepartment = custodyDepartment;
     }
 }

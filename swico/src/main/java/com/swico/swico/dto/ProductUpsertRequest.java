@@ -8,5 +8,6 @@ import java.math.BigDecimal;
 public record ProductUpsertRequest(
         @NotBlank String partNumber,
         @NotBlank String partName,
+        String customer,
         @NotNull BigDecimal cycleTimeSeconds
 ) {}

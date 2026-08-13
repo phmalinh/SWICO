@@ -36,7 +36,7 @@ class MachineServiceTest {
             return machine;
         });
 
-        MachineResponse response = service.create(new MachineUpsertRequest("TC-01", "Test machine", "A1"));
+        MachineResponse response = service.create(new MachineUpsertRequest("TC-01", "Test machine", "A1", null, null, null));
 
         ArgumentCaptor<Machine> machineCaptor = ArgumentCaptor.forClass(Machine.class);
         verify(machineRepository).save(machineCaptor.capture());

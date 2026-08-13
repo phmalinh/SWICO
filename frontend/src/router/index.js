@@ -21,6 +21,7 @@ const routes = [
       { path: 'master/lines', name: 'Lines', component: () => import('@/views/master/Lines.vue'), meta: { title: 'routes.lines', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/shifts', name: 'Shifts', component: () => import('@/views/master/Shifts.vue'), meta: { title: 'routes.shifts', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/machines', name: 'Machines', component: () => import('@/views/master/Machines.vue'), meta: { title: 'routes.machines', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
+      { path: 'master/downtime-reasons', name: 'DowntimeReasons', component: () => import('@/views/master/DowntimeReasons.vue'), meta: { title: 'routes.downtimeReasons', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'profile', name: 'Profile', component: () => import('@/views/Profile.vue'), meta: { title: 'routes.profile', roles: ['ROLE_OPERATOR','ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'system/users', name: 'Users', component: () => import('@/views/system/Users.vue'), meta: { title: 'routes.users', roles: ['ROLE_ADMIN'] } },
       { path: 'system/logs', name: 'AuditLogs', component: () => import('@/views/system/AuditLogs.vue'), meta: { title: 'routes.auditLogs', roles: ['ROLE_ADMIN'] } },

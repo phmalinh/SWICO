@@ -31,6 +31,7 @@ public class ReferenceDataSeeder {
     private final MachineRepository machineRepository;
     private final DailyProductionReportRepository reportRepository;
     private final ProductionFormulaService formulaService;
+    private final DowntimeReasonService downtimeReasonService;
 
     public ReferenceDataSeeder(
             LineRepository lineRepository,
@@ -38,7 +39,8 @@ public class ReferenceDataSeeder {
             ProductRepository productRepository,
             MachineRepository machineRepository,
             DailyProductionReportRepository reportRepository,
-            ProductionFormulaService formulaService
+            ProductionFormulaService formulaService,
+            DowntimeReasonService downtimeReasonService
     ) {
         this.lineRepository = lineRepository;
         this.shiftRepository = shiftRepository;
@@ -46,6 +48,7 @@ public class ReferenceDataSeeder {
         this.machineRepository = machineRepository;
         this.reportRepository = reportRepository;
         this.formulaService = formulaService;
+        this.downtimeReasonService = downtimeReasonService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -61,6 +64,7 @@ public class ReferenceDataSeeder {
         ensureShift("Ca Dem 22:00-06:00", 425);
         ensureShift("Ca 1 06:00-18:00", 670);
         ensureShift("Ca 2 18:00-06:00", 635);
+        seedDowntimeReasons();
 
         Product p1 = ensureProduct("PN-001", "Vo hop A1", new BigDecimal("12.5"));
         Product p2 = ensureProduct("PN-002", "Nap day B2", new BigDecimal("8"));
@@ -94,6 +98,17 @@ public class ReferenceDataSeeder {
 
     private Product ensureProduct(String partNumber, String partName, BigDecimal cycleTimeSeconds) {
         return productRepository.findByPartNumber(partNumber).orElseGet(() -> saveProduct(partNumber, partName, cycleTimeSeconds));
+    }
+
+    private void seedDowntimeReasons() {
+        downtimeReasonService.ensure("A", "\u63db\u5200\uff08\u7c97\uff0f\u7cbe\u9762\u92d1\u5200\u3001\u5167\u5b54\u93dc\u5200\u3001\u947d\u982d\u7b49\uff09 / Thay dao (dao phay mat tho + tinh, dao moc lo, mui khoan, ...)", 1);
+        downtimeReasonService.ensure("B", "\u7802\u8f2a\u7528\u76e1\u3001\u66f4\u63db\u7802\u8f2a\uff08\u91dd\u5c0d\u78e8\u5e8a\u7d44\uff09 / Het da, thay da (doi voi to Mai)", 2);
+        downtimeReasonService.ensure("C", "\u505c\u6a5f\u7b49\u6599\uff08\u7b49\u5f85\u6bdb\u576f\uff09 / Ngung may cho phoi", 3);
+        downtimeReasonService.ensure("D", "\u7b49\u5f85\u524d\u5de5\u5e8f\u4f86\u6599\uff08\u91dd\u5c0d\u524d\u5de5\u5e8f C/T \u9577\u65bc\u5f8c\u5de5\u5e8f\uff09 / Cho hang cong doan truoc (doi voi cong doan dau C/T lau hon cong doan sau)", 4);
+        downtimeReasonService.ensure("E", "\u7b49\u5f85\u8abf\u6a5f\u4eba\u54e1\uff08\u6280\u8853\u54e1\uff09\u8abf\u6a5f / Cho can bo chinh may", 5);
+        downtimeReasonService.ensure("F", "\u7b49\u5f85\u54c1\u6aa2\uff08QC\uff09\u9996\u4ef6\u78ba\u8a8d\uff0f\u8abf\u6a5f\u54c1\u78ba\u8a8d / Cho QC xac nhan hang chinh may", 6);
+        downtimeReasonService.ensure("G", "\u64cd\u4f5c\u4eba\u54e1\u8acb\u5047\uff08\u7121\u66ff\u4ee3\u4eba\u54e1\u6642\uff09 / Nhan vien thao tac nghi phep (khi khong co nguoi thay the)", 7);
+        downtimeReasonService.ensure("H", "\u5176\u4ed6 / Khac", 8);
     }
 
     private Line saveLine(String code, String description) {
@@ -142,6 +157,8 @@ public class ReferenceDataSeeder {
                 inputQuantity,
                 goodQuantity,
                 defectQuantity,
+                null,
+                null,
                 null,
                 null,
                 null,

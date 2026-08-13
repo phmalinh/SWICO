@@ -73,6 +73,12 @@
         <el-table-column :label="t('reports.search.table.inputGoodDefect')" width="140" align="center">
           <template #default="{ row }">{{ row.inputQuantity }}/{{ row.goodQuantity }}/{{ row.defectQuantity }}</template>
         </el-table-column>
+        <el-table-column :label="t('reports.search.table.responsibility')" min-width="100" align="center">
+          <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.deductionPercent')" width="90" align="center">
+          <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
+        </el-table-column>
         <el-table-column prop="internalDefectQuantity" :label="t('reports.search.table.internalDefectQuantity')" width="130" align="center" />
         <el-table-column prop="externalDefectQuantity" :label="t('reports.search.table.externalDefectQuantity')" width="130" align="center" />
       </el-table>

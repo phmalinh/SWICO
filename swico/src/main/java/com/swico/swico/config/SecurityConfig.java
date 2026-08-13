@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/production-reports/**").authenticated()
                 // Allow GET master-data endpoints to be called by frontend (operators/leaders need read access)
                 .requestMatchers(HttpMethod.GET, "/api/v1/master-data/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/master-data/products/import-production-info").permitAll()
                 // Keep write access restricted to managers and admins
                 .requestMatchers(HttpMethod.POST, "/api/v1/master-data/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/master-data/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")

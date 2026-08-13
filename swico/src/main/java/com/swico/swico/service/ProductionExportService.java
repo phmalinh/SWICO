@@ -42,6 +42,7 @@ public class ProductionExportService {
             CellStyle textStyle = createTextStyle(workbook);
             CellStyle wrappedTextStyle = createWrappedTextStyle(workbook);
             CellStyle decimalStyle = createDecimalStyle(workbook);
+            CellStyle percentStyle = createPercentStyle(workbook);
             CellStyle intStyle = createIntStyle(workbook);
             CellStyle dateStyle = createDateStyle(workbook);
 
@@ -49,8 +50,8 @@ public class ProductionExportService {
                     "\u65e5\u671f\nNgay", "\u7dda\u5225\nChuyen", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMa May", "\u516c\u53f8\nCong Ty", "\u6599\u865f\nMa Hang",
                     "\u54c1\u540d\nTen Hang", "\u5de5\u5e8f\nCong doan", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTong TG", "\u505c\u6a5f(\u5206)\nTG Dung",
                     "\u505c\u6a5f\u539f\u56e0\nLy Do Dung", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMuc Tieu", "\u6295\u5165\u6578\nSL Nhap",
-                    "\u826f\u54c1\u6578\nSL Dat", "\u4e0d\u826f\u6578\nSL Loi", "\u5167\u88fd\u7570\u5e38\u4e0d\u826f", "\u5916\u88fd\u7570\u5e38\u4e0d\u826f",
-                    "\u751f\u7522\u6548\u7387\nHieu Suat", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nDanh Gia", "\u7c3d\u540d"
+                    "\u826f\u54c1\u6578\nSL Dat", "\u4e0d\u826f\u6578\nSL Loi\n(\u5167\u88fd)", "\u4e0d\u826f\u6578\nSL Loi\n(\u5916\u88fd)",
+                    "\u8cac\u4efb\nTrach nhiem", "\u6263\u9ede\u6578\n% tru", "\u751f\u7522\u6548\u7387\nHieu Suat", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nDanh Gia", "\u7c3d\u540d"
             };
 
             Row header = sheet.createRow(0);
@@ -82,16 +83,18 @@ public class ProductionExportService {
                 setValue(row.createCell(13), report.dailyTargetQuantity(), decimalStyle);
                 setValue(row.createCell(14), report.inputQuantity(), intStyle);
                 setValue(row.createCell(15), report.goodQuantity(), intStyle);
-                setValue(row.createCell(16), report.defectQuantity(), intStyle);
-                setValue(row.createCell(17), report.internalDefectQuantity(), intStyle);
-                setValue(row.createCell(18), report.externalDefectQuantity(), intStyle);
-                setValue(row.createCell(19), report.productionEfficiency(), decimalStyle);
-                setValue(row.createCell(20), report.availabilityRate(), decimalStyle);
-                setValue(row.createCell(21), report.performanceRate(), decimalStyle);
-                setValue(row.createCell(22), report.qualityRate(), decimalStyle);
-                setValue(row.createCell(23), report.oee(), decimalStyle);
-                setValue(row.createCell(24), report.evaluationLabel(), textStyle);
-                row.createCell(25).setCellValue("");
+                setValue(row.createCell(16), report.internalDefectQuantity(), intStyle);
+                setValue(row.createCell(17), report.externalDefectQuantity(), intStyle);
+                int excelRow = row.getRowNum() + 1;
+                setFormula(row.createCell(18), "Q" + excelRow + "/O" + excelRow, percentStyle);
+                setFormula(row.createCell(19), "IF(S" + excelRow + ">0.27%,S" + excelRow + "-0.27%,0)", percentStyle);
+                setValue(row.createCell(20), report.productionEfficiency(), percentStyle);
+                setValue(row.createCell(21), report.availabilityRate(), percentStyle);
+                setValue(row.createCell(22), report.performanceRate(), percentStyle);
+                setValue(row.createCell(23), report.qualityRate(), percentStyle);
+                setValue(row.createCell(24), report.oee(), percentStyle);
+                setValue(row.createCell(25), report.evaluationLabel(), textStyle);
+                row.createCell(26).setCellValue("");
             }
 
             for (int i = 0; i < headers.length; i++) {
@@ -133,6 +136,11 @@ public class ProductionExportService {
         cell.setCellStyle(style);
     }
 
+    private void setFormula(Cell cell, String formula, CellStyle style) {
+        cell.setCellFormula(formula);
+        cell.setCellStyle(style);
+    }
+
     private CellStyle createHeaderStyle(Workbook workbook) {
         Font font = workbook.createFont();
         font.setBold(true);
@@ -168,6 +176,14 @@ public class ProductionExportService {
         style.setAlignment(HorizontalAlignment.RIGHT);
         DataFormat format = workbook.createDataFormat();
         style.setDataFormat(format.getFormat("0.00"));
+        return style;
+    }
+
+    private CellStyle createPercentStyle(Workbook workbook) {
+        CellStyle style = createTextStyle(workbook);
+        style.setAlignment(HorizontalAlignment.RIGHT);
+        DataFormat format = workbook.createDataFormat();
+        style.setDataFormat(format.getFormat("0.00%"));
         return style;
     }
 

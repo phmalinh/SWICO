@@ -81,7 +81,7 @@ public class ProductionReportService {
         Line line = lineRepository.findByLineCode(request.lineCode())
                 .orElseGet(() -> masterDataService.upsertLine(request.lineCode(), request.lineCode()));
         Product product = productRepository.findByPartNumber(request.partNumber())
-                .orElseGet(() -> masterDataService.upsertProduct(request.partNumber(), request.partName(), request.cycleTimeSeconds()));
+                .orElseGet(() -> masterDataService.upsertProduct(request.partNumber(), request.partName(), null, request.cycleTimeSeconds()));
         Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
             .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
@@ -186,7 +186,7 @@ public class ProductionReportService {
         Line line = lineRepository.findByLineCode(request.lineCode())
                 .orElseGet(() -> masterDataService.upsertLine(request.lineCode(), request.lineCode()));
         Product product = productRepository.findByPartNumber(request.partNumber())
-                .orElseGet(() -> masterDataService.upsertProduct(request.partNumber(), request.partName(), request.cycleTimeSeconds()));
+                .orElseGet(() -> masterDataService.upsertProduct(request.partNumber(), request.partName(), null, request.cycleTimeSeconds()));
         Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
             .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
@@ -274,11 +274,13 @@ public class ProductionReportService {
                     resolveImportedDowntimeMinutes(row, headerIndex),
                     parseInteger(getCell(row, headerIndex.getOrDefault("inputQuantity", -1))),
                     parseInteger(getCell(row, headerIndex.getOrDefault("goodQuantity", -1))),
-                    parseInteger(getCell(row, headerIndex.getOrDefault("defectQuantity", -1))),
+                    resolveImportedDefectQuantity(row, headerIndex),
                     parseInteger(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1))),
                     parseInteger(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("company", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
+                    parseString(getCell(row, headerIndex.getOrDefault("responsibility", -1))),
+                    parsePercentPoints(getCell(row, headerIndex.getOrDefault("deductionPercent", -1))),
                     // optional calculated/override fields from import
                     parseInteger(getCell(row, headerIndex.getOrDefault("shiftStandardTimeMinutes", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("dailyTargetQuantity", -1))),
@@ -358,14 +360,35 @@ public class ProductionReportService {
         indexMap.put("dailyTargetQuantity", 12 + offset);
         indexMap.put("inputQuantity", 13 + offset);
         indexMap.put("goodQuantity", 14 + offset);
-        indexMap.put("defectQuantity", 15 + offset);
-        String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + offset)));
-        boolean hasDefectSplitColumns = "internalDefectQuantity".equals(mapHeaderKey(internalDefectHeader));
+
         int metricOffset = offset;
-        if (hasDefectSplitColumns) {
-            indexMap.put("internalDefectQuantity", 16 + offset);
-            indexMap.put("externalDefectQuantity", 17 + offset);
+        String defectOrInternalHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + offset)));
+        boolean firstDefectColumnIsInternal = "internalDefectQuantity".equals(mapHeaderKey(defectOrInternalHeader));
+        if (firstDefectColumnIsInternal) {
+            indexMap.put("internalDefectQuantity", 15 + offset);
+            indexMap.put("externalDefectQuantity", 16 + offset);
             metricOffset += 2;
+        } else {
+            indexMap.put("defectQuantity", 15 + offset);
+            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + offset)));
+            boolean hasDefectSplitColumns = "internalDefectQuantity".equals(mapHeaderKey(internalDefectHeader));
+            metricOffset += 1;
+            if (hasDefectSplitColumns) {
+                indexMap.put("internalDefectQuantity", 16 + offset);
+                indexMap.put("externalDefectQuantity", 17 + offset);
+                metricOffset += 2;
+            }
+        }
+
+        String responsibilityHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+        if ("responsibility".equals(mapHeaderKey(responsibilityHeader))) {
+            indexMap.put("responsibility", 15 + metricOffset);
+            metricOffset++;
+        }
+        String deductionHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+        if ("deductionPercent".equals(mapHeaderKey(deductionHeader))) {
+            indexMap.put("deductionPercent", 15 + metricOffset);
+            metricOffset++;
         }
         indexMap.put("productionEfficiency", 16 + metricOffset);
         indexMap.put("availabilityRate", 17 + metricOffset);
@@ -444,6 +467,12 @@ public class ProductionReportService {
         }
         if (header.contains("lý do") || header.contains("原因") || header.contains("reason") || header.contains("cause") || header.contains("note")) {
             return "downtimeReason";
+        }
+        if (header.contains("\u8cac\u4efb") || header.contains("trach nhiem") || header.contains("responsibility")) {
+            return "responsibility";
+        }
+        if (header.contains("\u6263\u9ede\u6578") || header.contains("\u6263\u70b9\u6570") || header.contains("% tru") || header.contains("deduction") || header.contains("deduct")) {
+            return "deductionPercent";
         }
         if (header.contains("標準時間") || header.contains("標準") || header.contains("shift standard") || header.contains("standard time") || header.contains("standard minutes") || header.contains("shift standard time")) {
             return "shiftStandardTimeMinutes";
@@ -566,6 +595,19 @@ public class ProductionReportService {
         }
     }
 
+    private BigDecimal parsePercentPoints(Cell cell) {
+        if (cell == null) return null;
+        String text = parseString(cell);
+        if (text != null && text.contains("%")) {
+            try {
+                return new BigDecimal(text.replaceAll("[, %]", ""));
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+        return parseBigDecimal(cell);
+    }
+
     private Cell getCell(Row row, int index) {
         if (index < 0) return null;
         return row.getCell(index);
@@ -584,6 +626,25 @@ public class ProductionReportService {
         }
 
         return null;
+    }
+
+    private Integer resolveImportedDefectQuantity(Row row, Map<String, Integer> headerIndex) {
+        Integer defectQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("defectQuantity", -1)));
+        if (defectQuantity != null) {
+            return defectQuantity;
+        }
+        Integer internalDefectQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1)));
+        Integer externalDefectQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1)));
+        if (internalDefectQuantity != null || externalDefectQuantity != null) {
+            return Math.max(internalDefectQuantity != null ? internalDefectQuantity : 0, 0)
+                    + Math.max(externalDefectQuantity != null ? externalDefectQuantity : 0, 0);
+        }
+        Integer inputQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("inputQuantity", -1)));
+        Integer goodQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("goodQuantity", -1)));
+        if (inputQuantity != null && goodQuantity != null) {
+            return Math.max(inputQuantity - goodQuantity, 0);
+        }
+        return 0;
     }
 
     private Integer parseInteger(Cell cell) {
@@ -713,6 +774,8 @@ public class ProductionReportService {
         entity.setPerformanceRate(calculated.performanceRate());
         entity.setQualityRate(calculated.qualityRate());
         entity.setOee(calculated.oee());
+        entity.setResponsibility(calculated.responsibility());
+        entity.setDeductionPercent(calculated.deductionPercent());
         entity.setEvaluationLabel(calculated.evaluationLabel());
     }
 
@@ -750,6 +813,8 @@ public class ProductionReportService {
                 request.oee() != null ? request.oee() : calculated.oee(),
                 request.company() != null ? request.company() : calculated.company(),
                 request.downtimeReason() != null ? request.downtimeReason() : calculated.downtimeReason(),
+                calculated.responsibility(),
+                calculated.deductionPercent(),
                 request.evaluationLabel() != null ? request.evaluationLabel() : calculated.evaluationLabel()
         );
     }
@@ -775,6 +840,8 @@ public class ProductionReportService {
                 report.getExternalDefectQuantity(),
                 calculated != null ? calculated.company() : report.getCompany(),
                 calculated != null ? calculated.downtimeReason() : report.getDowntimeReason(),
+                calculated != null ? calculated.responsibility() : report.getResponsibility(),
+                calculated != null ? calculated.deductionPercent() : report.getDeductionPercent(),
                 parseProcessIds(report.getProcessIds()),
                 shiftMinutes,
                 calculated != null ? calculated.dailyTargetQuantity() : report.getTargetQuantity(),

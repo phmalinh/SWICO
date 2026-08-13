@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 
 public record ProcessUpsertRequest(
+        String processCode,
         @NotBlank String process,
         Integer sequence,
         String lineCode,

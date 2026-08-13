@@ -63,7 +63,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { login, setSession } from '@/services/auth'
+import { login } from '@/services/auth'
 import { useI18n } from '@/i18n'
 
 const router = useRouter()
@@ -77,7 +77,6 @@ async function doLogin() {
   loading.value = true
   try {
     const auth = await login(form.value.username, form.value.password)
-    setSession(auth)
     ElMessage.success(t('login.success'))
     router.push(auth.mustChangePassword ? '/profile' : '/')
   } catch (error) {

@@ -25,5 +25,7 @@ public record ProductionCalculationResponse(
         BigDecimal oee,
         String company,
         String downtimeReason,
+        BigDecimal responsibility,
+        BigDecimal deductionPercent,
         String evaluationLabel
 ) {}

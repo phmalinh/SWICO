@@ -18,13 +18,16 @@ public class ProductProcess {
     @Column(name = "process", length = 150, nullable = false)
     private String process;
 
+    @Column(name = "process_code", length = 100)
+    private String processCode;
+
     @Column(name = "sequence_order")
     private Integer sequence;
 
-    @Column(name = "line_code", length = 50)
+    @Column(name = "line_code", length = 1000)
     private String lineCode;
 
-    @Column(name = "machine_code", length = 50)
+    @Column(name = "machine_code", length = 1000)
     private String machineCode;
 
     @Column(name = "cycle_time_seconds", precision = 10, scale = 2)
@@ -52,6 +55,14 @@ public class ProductProcess {
 
     public void setProcess(String process) {
         this.process = process;
+    }
+
+    public String getProcessCode() {
+        return processCode;
+    }
+
+    public void setProcessCode(String processCode) {
+        this.processCode = processCode;
     }
 
     public Integer getSequence() {

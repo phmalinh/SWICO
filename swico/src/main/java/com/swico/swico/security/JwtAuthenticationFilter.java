@@ -42,10 +42,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null) {
             boolean valid = tokenProvider.validateToken(token);
-            logger.info("JWT filter path={} authHeaderPresent={} tokenValid={}", request.getRequestURI(), header != null, valid);
             if (valid) {
                 String username = tokenProvider.getUsernameFromToken(token);
-                logger.info("JWT filter resolved username={} for {}", username, request.getRequestURI());
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -53,8 +51,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } else {
-            logger.info("JWT filter path={} no auth header", request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);
