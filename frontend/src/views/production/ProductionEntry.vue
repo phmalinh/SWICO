@@ -300,7 +300,7 @@
               v-loading="myReportsLoading"
             >
               <el-table-column prop="reportDate" :label="t('productionEntry.table.reportDate')" width="90" align="center" />
-              <el-table-column prop="lineCode" :label="t('productionEntry.table.lineCode')" width="70" align="center" />
+              <el-table-column prop="lineCode" :label="t('productionEntry.table.lineCode')" width="100" align="center" />
               <el-table-column prop="shiftName" :label="t('productionEntry.table.shiftName')" width="90" align="center" />
               <el-table-column prop="machineCode" :label="t('productionEntry.table.machineCode')" width="70" align="center" />
               <el-table-column prop="partNumber" :label="t('productionEntry.table.partNumber')" width="80" />

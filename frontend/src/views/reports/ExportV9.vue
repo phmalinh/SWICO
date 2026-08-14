@@ -57,7 +57,7 @@
     </div>
 
     <div class="page-card overflow-hidden">
-      <el-table :data="reports" stripe style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
+      <el-table :data="paginatedReports" stripe style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="56" />
         <el-table-column prop="reportDate" :label="t('reports.search.table.date')" width="100" />
         <el-table-column prop="lineCode" :label="t('reports.search.table.line')" width="60" align="center" />
@@ -99,15 +99,22 @@
         </el-table-column>
         <el-table-column prop="evaluationLabel" :label="t('reports.search.table.evaluationLabel')" min-width="120" />
       </el-table>
-      <div class="border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-500">
-        {{ t('reports.search.results', { count: reports.length }) }}
+      <div class="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-500 md:flex-row md:items-center md:justify-between">
+        <span>{{ t('reports.search.results', { count: reports.length }) }}</span>
+        <div class="flex items-center gap-3">
+          <span>{{ t('common.units.rows') || 'Dòng/trang' }}</span>
+          <el-select v-model="pageSize" size="small" style="width: 96px">
+            <el-option v-for="size in pageSizeOptions" :key="size" :label="String(size)" :value="size" />
+          </el-select>
+          <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="reports.length" layout="prev, pager, next" background />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { Download, Search, Upload } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
@@ -139,6 +146,14 @@ const reports = ref([])
 const processNameById = ref({})
 const selectedIds = ref([])
 const fileInput = ref(null)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const pageSizeOptions = [10, 20, 50, 100]
+
+const paginatedReports = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return reports.value.slice(start, start + pageSize.value)
+})
 
 async function loadOptions() {
   try {
@@ -259,6 +274,7 @@ async function search() {
       partNumber: filters.value.partNumber,
     })
     selectedIds.value = []
+    currentPage.value = 1
   } catch (error) {
     ElMessage.error(`${t('reports.search.messages.searchFailed')}: ${error.message}`)
   } finally {
@@ -301,5 +317,10 @@ function resetFilters() {
 onMounted(async () => {
   await loadOptions()
   await search()
+})
+
+watch([reports, pageSize], () => {
+  const maxPage = Math.max(1, Math.ceil(reports.value.length / pageSize.value))
+  if (currentPage.value > maxPage) currentPage.value = maxPage
 })
 </script>
