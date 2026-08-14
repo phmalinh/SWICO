@@ -297,6 +297,7 @@ public class EmployeeSkillService {
     }
 
     private String normalizeProcess(String value) {
+        if (value == null) return "";
         return value.replace("\r", " ")
                 .replace("\n", " ")
                 .replaceAll("\\s+", "")
