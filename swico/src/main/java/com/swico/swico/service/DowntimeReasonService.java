@@ -3,6 +3,7 @@ package com.swico.swico.service;
 import com.swico.swico.dto.DowntimeReasonResponse;
 import com.swico.swico.dto.DowntimeReasonUpsertRequest;
 import com.swico.swico.entity.DowntimeReason;
+import com.swico.swico.repository.DailyProductionReportRepository;
 import com.swico.swico.repository.DowntimeReasonRepository;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +13,11 @@ import java.util.List;
 public class DowntimeReasonService {
 
     private final DowntimeReasonRepository downtimeReasonRepository;
+    private final DailyProductionReportRepository reportRepository;
 
-    public DowntimeReasonService(DowntimeReasonRepository downtimeReasonRepository) {
+    public DowntimeReasonService(DowntimeReasonRepository downtimeReasonRepository, DailyProductionReportRepository reportRepository) {
         this.downtimeReasonRepository = downtimeReasonRepository;
+        this.reportRepository = reportRepository;
     }
 
     public List<DowntimeReasonResponse> getAll() {
@@ -36,6 +39,11 @@ public class DowntimeReasonService {
     }
 
     public void delete(Long id) {
+        DowntimeReason reason = downtimeReasonRepository.findById(id).orElseThrow();
+        if (reportRepository.existsByDowntimeReasonContaining(reason.getReasonCode())
+                || reportRepository.existsByDowntimeReasonContaining(reason.getReasonText())) {
+            throw new IllegalStateException("Không thể xóa lý do dừng " + reason.getReasonCode() + " vì vẫn còn dữ liệu liên quan: báo cáo sản xuất. Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
         downtimeReasonRepository.deleteById(id);
     }
 

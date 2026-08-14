@@ -6,6 +6,8 @@ import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Machine;
 import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.MachineRepository;
+import com.swico.swico.repository.DailyProductionReportRepository;
+import com.swico.swico.repository.ProductProcessRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,10 +17,14 @@ public class MachineService {
 
     private final MachineRepository machineRepository;
     private final LineRepository lineRepository;
+    private final DailyProductionReportRepository reportRepository;
+    private final ProductProcessRepository productProcessRepository;
 
-    public MachineService(MachineRepository machineRepository, LineRepository lineRepository) {
+    public MachineService(MachineRepository machineRepository, LineRepository lineRepository, DailyProductionReportRepository reportRepository, ProductProcessRepository productProcessRepository) {
         this.machineRepository = machineRepository;
         this.lineRepository = lineRepository;
+        this.reportRepository = reportRepository;
+        this.productProcessRepository = productProcessRepository;
     }
 
     public List<MachineResponse> getAll() {
@@ -49,6 +55,17 @@ public class MachineService {
     }
 
     public void delete(Long id) {
+        Machine machine = machineRepository.findById(id).orElseThrow();
+        java.util.List<String> blockers = new java.util.ArrayList<>();
+        if (reportRepository.existsByMachineCode(machine.getMachineCode())) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (productProcessRepository.existsByMachineCodeToken(machine.getMachineCode())) {
+            blockers.add("công đoạn");
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalStateException("Không thể xóa thiết bị " + machine.getMachineCode() + " vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
         machineRepository.deleteById(id);
     }
 

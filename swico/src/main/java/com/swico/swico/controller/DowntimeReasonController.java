@@ -4,6 +4,7 @@ import com.swico.swico.dto.DowntimeReasonResponse;
 import com.swico.swico.dto.DowntimeReasonUpsertRequest;
 import com.swico.swico.service.DowntimeReasonService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +36,12 @@ public class DowntimeReasonController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        downtimeReasonService.delete(id);
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            downtimeReasonService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
     }
 }

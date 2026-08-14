@@ -319,6 +319,17 @@ export const masterApi = {
   createMachine: payload => request('/master-data/machines', { method: 'POST', body: JSON.stringify(payload) }),
   updateMachine: (id, payload) => request(`/master-data/machines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteMachine: id => request(`/master-data/machines/${id}`, { method: 'DELETE' }),
+  getEmployeeSkills: () => request('/master-data/employee-skills'),
+  getEmployeeSkillUsers: () => request('/master-data/employee-skills/users'),
+  createEmployeeSkill: payload => request('/master-data/employee-skills', { method: 'POST', body: JSON.stringify(payload) }),
+  updateEmployeeSkill: (id, payload) => request(`/master-data/employee-skills/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  deleteEmployeeSkill: id => request(`/master-data/employee-skills/${id}`, { method: 'DELETE' }),
+  deleteAllEmployeeSkills: () => request('/master-data/employee-skills', { method: 'DELETE' }),
+  importEmployeeSkills: file => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request('/master-data/employee-skills/import', { method: 'POST', body: formData }, { handleAuthFailure: false })
+  },
   getDowntimeReasons: () => request('/master-data/downtime-reasons'),
   createDowntimeReason: payload => request('/master-data/downtime-reasons', { method: 'POST', body: JSON.stringify(payload) }),
   updateDowntimeReason: (id, payload) => request(`/master-data/downtime-reasons/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),

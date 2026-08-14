@@ -23,5 +23,12 @@ public class DatabaseSchemaUpdater {
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ALTER COLUMN responsibility TYPE numeric(6,4) USING NULLIF(responsibility::text, '')::numeric");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS deduction_percent numeric(6,4)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ALTER COLUMN deduction_percent TYPE numeric(6,4)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS team varchar(100)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS user_id bigint");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS product_id bigint");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS process_id bigint");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS job_title varchar(255)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS team varchar(100)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS hire_date date");
     }
 }

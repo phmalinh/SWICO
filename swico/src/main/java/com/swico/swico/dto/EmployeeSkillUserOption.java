@@ -1,16 +1,12 @@
 package com.swico.swico.dto;
 
-import java.time.LocalDate;
-
-public record UserUpsertRequest(
+public record EmployeeSkillUserOption(
+        Long id,
         String username,
         String fullName,
-        String password,
         String role,
         String lineCode,
         String jobTitle,
         String team,
-        LocalDate hireDate,
-        Boolean active
-) {
-}
+        String hireDate
+) {}

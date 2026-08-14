@@ -229,12 +229,11 @@ const allMenuItems = computed(() => [
   {
     id: '3', title: t('menu.master'), icon: Database,
     children: [
-      { id: '3.1', title: t('menu.products'), icon: Package, path: '/master/products' },
-      { id: '3.5', title: t('menu.processes'), icon: FileSpreadsheet, path: '/master/processes' },
-      { id: '3.2', title: t('menu.lines'), icon: GitFork, path: '/master/lines' },
+      { id: '3.1', title: masterTitle('productProcesses'), icon: Package, path: '/master/product-processes' },
+      { id: '3.2', title: masterTitle('lineMachines'), icon: GitFork, path: '/master/line-machines' },
       { id: '3.3', title: t('menu.shifts'), icon: Clock, path: '/master/shifts' },
-      { id: '3.4', title: t('menu.machines'), icon: Cpu, path: '/master/machines' },
       { id: '3.6', title: t('menu.downtimeReasons'), icon: CirclePause, path: '/master/downtime-reasons' },
+      { id: '3.7', title: masterTitle('employeeSkills'), icon: Users, path: '/master/employee-skills' },
     ],
   },
   {
@@ -285,10 +284,32 @@ const roleBadgeClass = computed(() => {
 })
 
 const currentPageTitle = computed(() => {
+  const customTitle = {
+    ProductProcessManagement: masterTitle('productProcesses'),
+    LineMachineManagement: masterTitle('lineMachines'),
+    EmployeeSkills: masterTitle('employeeSkills'),
+  }[route.name]
+  if (customTitle) return customTitle
   const title = route.meta?.title
   if (!title) return 'SWICO MES'
   return title.startsWith('routes.') ? t(title) : title
 })
+
+function masterTitle(key) {
+  const labels = {
+    vi: {
+      productProcesses: 'Quản lý mã hàng & công đoạn',
+      lineMachines: 'Quản lý chuyền & thiết bị',
+      employeeSkills: 'Theo dõi năng lực nhân viên',
+    },
+    'zh-Hant': {
+      productProcesses: '料號及工序管理',
+      lineMachines: '產線與設備管理',
+      employeeSkills: '人員能力追蹤表',
+    },
+  }
+  return (labels[locale.value] || labels.vi)[key] || key
+}
 
 function toggleGroup(id) {
   if (isCollapsed.value) isCollapsed.value = false

@@ -4,6 +4,8 @@ import com.swico.swico.dto.UserResponse;
 import com.swico.swico.dto.UserUpsertRequest;
 import com.swico.swico.entity.Role;
 import com.swico.swico.entity.User;
+import com.swico.swico.repository.DailyProductionReportRepository;
+import com.swico.swico.repository.EmployeeSkillRepository;
 import com.swico.swico.repository.UserRepository;
 import com.swico.swico.service.AuditLogService;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +23,15 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final DailyProductionReportRepository reportRepository;
+    private final EmployeeSkillRepository employeeSkillRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
 
-    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, AuditLogService auditLogService) {
+    public UserController(UserRepository userRepository, DailyProductionReportRepository reportRepository, EmployeeSkillRepository employeeSkillRepository, PasswordEncoder passwordEncoder, AuditLogService auditLogService) {
         this.userRepository = userRepository;
+        this.reportRepository = reportRepository;
+        this.employeeSkillRepository = employeeSkillRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
     }
@@ -55,6 +61,9 @@ public class UserController {
         user.setFullName(request.fullName());
         user.setRole(resolveRole(request.role()));
         user.setLineCode(request.lineCode());
+        user.setJobTitle(request.jobTitle());
+        user.setTeam(request.team());
+        user.setHireDate(request.hireDate());
         user.setActive(Boolean.TRUE.equals(request.active()));
         user.setMustChangePassword(true);
 
@@ -85,6 +94,9 @@ public class UserController {
                     }
                     existing.setRole(resolveRole(request.role()));
                     existing.setLineCode(request.lineCode());
+                    existing.setJobTitle(request.jobTitle());
+                    existing.setTeam(request.team());
+                    existing.setHireDate(request.hireDate());
                     existing.setActive(Boolean.TRUE.equals(request.active()));
                     User saved = userRepository.save(existing);
                     auditLogService.record(
@@ -115,9 +127,20 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
-        if (!userRepository.existsById(id)) {
+    public ResponseEntity<?> delete(@PathVariable Long id, Authentication authentication) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
             return ResponseEntity.notFound().build();
+        }
+        java.util.List<String> blockers = new java.util.ArrayList<>();
+        if (reportRepository.existsByCreatedBy(user.getUsername())) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (employeeSkillRepository.existsByUserId(id)) {
+            blockers.add("theo dõi năng lực nhân viên");
+        }
+        if (!blockers.isEmpty()) {
+            return ResponseEntity.status(409).body("Không thể xóa tài khoản " + user.getUsername() + " vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
         }
         userRepository.deleteById(id);
         auditLogService.record(

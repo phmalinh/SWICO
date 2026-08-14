@@ -9,9 +9,13 @@ import com.swico.swico.entity.Product;
 import com.swico.swico.entity.Shift;
 import com.swico.swico.entity.ProductProcess;
 import com.swico.swico.repository.LineRepository;
+import com.swico.swico.repository.MachineRepository;
 import com.swico.swico.repository.ProductRepository;
+import com.swico.swico.repository.DailyProductionReportRepository;
+import com.swico.swico.repository.EmployeeSkillRepository;
 import com.swico.swico.repository.ShiftRepository;
 import com.swico.swico.repository.ProductProcessRepository;
+import com.swico.swico.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,14 +27,22 @@ public class MasterDataService {
 
     private final ProductRepository productRepository;
     private final LineRepository lineRepository;
+    private final MachineRepository machineRepository;
+    private final DailyProductionReportRepository reportRepository;
+    private final EmployeeSkillRepository employeeSkillRepository;
     private final ShiftRepository shiftRepository;
     private final ProductProcessRepository productProcessRepository;
+    private final UserRepository userRepository;
 
-    public MasterDataService(ProductRepository productRepository, LineRepository lineRepository, ShiftRepository shiftRepository, ProductProcessRepository productProcessRepository) {
+    public MasterDataService(ProductRepository productRepository, LineRepository lineRepository, MachineRepository machineRepository, DailyProductionReportRepository reportRepository, EmployeeSkillRepository employeeSkillRepository, ShiftRepository shiftRepository, ProductProcessRepository productProcessRepository, UserRepository userRepository) {
         this.productRepository = productRepository;
         this.lineRepository = lineRepository;
+        this.machineRepository = machineRepository;
+        this.reportRepository = reportRepository;
+        this.employeeSkillRepository = employeeSkillRepository;
         this.shiftRepository = shiftRepository;
         this.productProcessRepository = productProcessRepository;
+        this.userRepository = userRepository;
     }
 
     public List<MasterDataResponse> getProducts() {
@@ -135,6 +147,17 @@ public class MasterDataService {
     }
 
     public void deleteProcess(Long id) {
+        ProductProcess process = productProcessRepository.findById(id).orElseThrow();
+        java.util.List<String> blockers = new java.util.ArrayList<>();
+        if (reportRepository.existsByProcessIdToken(String.valueOf(id))) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (employeeSkillRepository.existsByProductProcessId(id)) {
+            blockers.add("theo dõi năng lực nhân viên");
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalStateException("Không thể xóa công đoạn " + process.getProcess() + " vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
         productProcessRepository.deleteById(id);
     }
 
@@ -156,17 +179,47 @@ public class MasterDataService {
 
     @Transactional
     public void deleteProduct(Long id) {
+        java.util.List<String> blockers = new java.util.ArrayList<>();
         if (productProcessRepository.existsByProductId(id)) {
-            throw new IllegalStateException("Không thể xóa mã hàng này vì vẫn còn dữ liệu công đoạn. Vui lòng xóa công đoạn liên quan trước.");
+            blockers.add("công đoạn");
+        }
+        if (reportRepository.existsByProductId(id)) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (employeeSkillRepository.existsByProductId(id)) {
+            blockers.add("theo dõi năng lực nhân viên");
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalStateException("Không thể xóa mã hàng này vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
         }
         productRepository.deleteById(id);
     }
 
     public void deleteLine(Long id) {
+        Line line = lineRepository.findById(id).orElseThrow();
+        java.util.List<String> blockers = new java.util.ArrayList<>();
+        if (machineRepository.existsByLineId(id)) {
+            blockers.add("thiết bị");
+        }
+        if (productProcessRepository.existsByLineCodeToken(line.getLineCode())) {
+            blockers.add("công đoạn");
+        }
+        if (reportRepository.existsByLineId(id)) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (userRepository.existsByLineCode(line.getLineCode())) {
+            blockers.add("tài khoản người dùng");
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalStateException("Không thể xóa chuyền " + line.getLineCode() + " vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
         lineRepository.deleteById(id);
     }
 
     public void deleteShift(Long id) {
+        if (reportRepository.existsByShiftId(id)) {
+            throw new IllegalStateException("Không thể xóa ca này vì vẫn còn dữ liệu liên quan: báo cáo sản xuất. Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
         shiftRepository.deleteById(id);
     }
 

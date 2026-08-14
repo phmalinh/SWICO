@@ -1,6 +1,7 @@
 package com.swico.swico.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "users")
@@ -25,6 +26,15 @@ public class User {
 
     @Column(name = "line_code")
     private String lineCode;
+
+    @Column(name = "job_title", length = 255)
+    private String jobTitle;
+
+    @Column(name = "team", length = 100)
+    private String team;
+
+    @Column(name = "hire_date")
+    private LocalDate hireDate;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -90,6 +100,30 @@ public class User {
 
     public void setLineCode(String lineCode) {
         this.lineCode = lineCode;
+    }
+
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
+    public void setJobTitle(String jobTitle) {
+        this.jobTitle = jobTitle;
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
+
+    public LocalDate getHireDate() {
+        return hireDate;
+    }
+
+    public void setHireDate(LocalDate hireDate) {
+        this.hireDate = hireDate;
     }
 
     public boolean isActive() {

@@ -19,6 +19,15 @@
           <template #default="{ row }"><span class="font-mono font-bold">{{ row.username }}</span></template>
         </el-table-column>
         <el-table-column prop="fullName" :label="t('users.table.fullName')" min-width="170" />
+        <el-table-column prop="jobTitle" :label="t('users.table.jobTitle')" min-width="130" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.jobTitle || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="team" :label="t('users.table.team')" width="110" align="center">
+          <template #default="{ row }">{{ row.team || '-' }}</template>
+        </el-table-column>
+        <el-table-column prop="hireDate" :label="t('users.table.hireDate')" width="130" align="center">
+          <template #default="{ row }">{{ row.hireDate || '-' }}</template>
+        </el-table-column>
         <el-table-column prop="role" :label="t('users.table.role')" width="150" align="center">
           <template #default="{ row }"><el-tag :type="roleTagType(row.role)" effect="dark" size="small">{{ row.role }}</el-tag></template>
         </el-table-column>
@@ -66,6 +75,11 @@
             <el-option v-for="l in lines" :key="l.lineCode" :label="l.lineCode" :value="l.lineCode" />
           </el-select>
         </el-form-item>
+        <el-form-item :label="t('users.dialog.jobTitle')"><el-input v-model="form.jobTitle" /></el-form-item>
+        <el-form-item :label="t('users.dialog.team')"><el-input v-model="form.team" /></el-form-item>
+        <el-form-item :label="t('users.dialog.hireDate')">
+          <el-date-picker v-model="form.hireDate" type="date" value-format="YYYY-MM-DD" class="w-full" />
+        </el-form-item>
         <el-form-item :label="t('users.dialog.password')" :required="!editId">
           <el-input type="password" v-model="form.password" autocomplete="new-password" :placeholder="t('users.dialog.password')" />
           <p class="text-xs text-slate-500 mt-1">{{ t('users.dialog.passwordHint') }}</p>
@@ -93,7 +107,8 @@ const users = ref([])
 const lines = ref([])
 const dialogVisible = ref(false)
 const editId = ref(null)
-const form = ref({ username: '', fullName: '', password: '', role: 'ROLE_OPERATOR', lineCode: null, active: true })
+const defaultForm = () => ({ username: '', fullName: '', password: '', role: 'ROLE_OPERATOR', lineCode: null, jobTitle: '', team: '', hireDate: '', active: true })
+const form = ref(defaultForm())
 
 const roleSummary = computed(() => [
   { key: 'ROLE_OPERATOR', label: t('users.summary.operator'), count: users.value.filter(u => u.role === 'ROLE_OPERATOR').length, color: 'text-sky-600' },
@@ -137,8 +152,8 @@ async function loadLines() {
 function openDialog(row) {
   editId.value = row?.id || null
   form.value = row
-    ? { ...row, password: '' }
-    : { username: '', fullName: '', password: '', role: 'ROLE_OPERATOR', lineCode: null, active: true }
+    ? { ...defaultForm(), ...row, password: '' }
+    : defaultForm()
   dialogVisible.value = true
 }
 
@@ -154,6 +169,9 @@ async function save() {
     password: form.value.password || undefined,
     role: form.value.role,
     lineCode: form.value.lineCode,
+    jobTitle: form.value.jobTitle || '',
+    team: form.value.team || '',
+    hireDate: form.value.hireDate || null,
     active: form.value.active,
   }
 
@@ -187,6 +205,9 @@ async function toggleActive(row) {
       password: undefined,
       role: row.role,
       lineCode: row.lineCode,
+      jobTitle: row.jobTitle || '',
+      team: row.team || '',
+      hireDate: row.hireDate || null,
       active: !row.active,
     }
     const updated = await userApi.update(row.id, payload)

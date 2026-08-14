@@ -83,8 +83,13 @@ public class MasterDataController {
     }
 
     @DeleteMapping("/lines/{id}")
-    public void deleteLine(@PathVariable Long id) {
-        masterDataService.deleteLine(id);
+    public ResponseEntity<?> deleteLine(@PathVariable Long id) {
+        try {
+            masterDataService.deleteLine(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
     }
 
     @PostMapping("/shifts")
@@ -98,8 +103,13 @@ public class MasterDataController {
     }
 
     @DeleteMapping("/shifts/{id}")
-    public void deleteShift(@PathVariable Long id) {
-        masterDataService.deleteShift(id);
+    public ResponseEntity<?> deleteShift(@PathVariable Long id) {
+        try {
+            masterDataService.deleteShift(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
     }
 
     @GetMapping("/products/{productId}/processes")
@@ -118,7 +128,12 @@ public class MasterDataController {
     }
 
     @DeleteMapping("/processes/{id}")
-    public void deleteProductProcess(@PathVariable Long id) {
-        masterDataService.deleteProcess(id);
+    public ResponseEntity<?> deleteProductProcess(@PathVariable Long id) {
+        try {
+            masterDataService.deleteProcess(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
     }
 }

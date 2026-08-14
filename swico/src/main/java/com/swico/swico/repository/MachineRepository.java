@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface MachineRepository extends JpaRepository<Machine, Long> {
     Optional<Machine> findByMachineCode(String machineCode);
+    boolean existsByLineId(Long lineId);
 }

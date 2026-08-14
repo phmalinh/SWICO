@@ -4,6 +4,7 @@ import com.swico.swico.dto.MachineResponse;
 import com.swico.swico.dto.MachineUpsertRequest;
 import com.swico.swico.service.MachineService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +36,12 @@ public class MachineController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        machineService.delete(id);
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            machineService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
     }
 }
