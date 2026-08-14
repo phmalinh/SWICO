@@ -4,8 +4,10 @@ import com.swico.swico.dto.MachineResponse;
 import com.swico.swico.dto.MachineUpsertRequest;
 import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Machine;
+import com.swico.swico.repository.DailyProductionReportRepository;
 import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.MachineRepository;
+import com.swico.swico.repository.ProductProcessRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -23,7 +25,9 @@ class MachineServiceTest {
     void createShouldPersistLineCodeWhenProvided() {
         MachineRepository machineRepository = mock(MachineRepository.class);
         LineRepository lineRepository = mock(LineRepository.class);
-        MachineService service = new MachineService(machineRepository, lineRepository);
+        DailyProductionReportRepository reportRepository = mock(DailyProductionReportRepository.class);
+        ProductProcessRepository productProcessRepository = mock(ProductProcessRepository.class);
+        MachineService service = new MachineService(machineRepository, lineRepository, reportRepository, productProcessRepository);
 
         Line line = new Line();
         line.setId(7L);
