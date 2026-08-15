@@ -22,22 +22,25 @@
           <template #header><HeaderCell zh="客戶" vi="Khách Hàng" /></template>
         </el-table-column>
         <el-table-column prop="partNumber" min-width="150" show-overflow-tooltip>
-          <template #header><HeaderCell zh="品號" vi="Mã Hàng" /></template>
+          <template #header><HeaderCell zh="料號" vi="Mã Hàng" /></template>
+        </el-table-column>
+        <el-table-column prop="partName" min-width="150" show-overflow-tooltip>
+          <template #header><HeaderCell zh="品名" vi="Tên Sản Phẩm" /></template>
         </el-table-column>
         <el-table-column prop="processCode" min-width="130" show-overflow-tooltip>
           <template #header><HeaderCell zh="工序" vi="Công Đoạn" /></template>
         </el-table-column>
-        <el-table-column prop="process" min-width="180" show-overflow-tooltip>
+        <!-- <el-table-column prop="process" min-width="180" show-overflow-tooltip>
           <template #header><HeaderCell zh="製程" vi="Lưu Trình" /></template>
-        </el-table-column>
-        <el-table-column prop="cycleTimeSeconds" width="140" align="center">
-          <template #header><HeaderCell zh="工時(秒)" vi="Thời Gian Thao Tác (giây)" /></template>
+        </el-table-column> -->
+        <el-table-column prop="machineCode" min-width="180" show-overflow-tooltip>
+          <template #header><HeaderCell zh="設備編號" vi="Mã Số Máy" /></template>
         </el-table-column>
         <el-table-column prop="lineCode" min-width="170" show-overflow-tooltip>
-          <template #header><HeaderCell zh="線別" vi="Dây Chuyền" /></template>
+          <template #header><HeaderCell zh="產線" vi="Chuyền" /></template>
         </el-table-column>
-        <el-table-column prop="machineCode" min-width="180" show-overflow-tooltip>
-          <template #header><HeaderCell zh="機台編號" vi="Mã Số Máy" /></template>
+        <el-table-column prop="cycleTimeSeconds" width="140" align="center">
+          <template #header><HeaderCell zh="C/T" vi="Thời Gian Thao Tác (giây)" /></template>
         </el-table-column>
         <el-table-column prop="sequence" width="120" align="center">
           <template #header><HeaderCell zh="順序" vi="Thứ Tự" /></template>

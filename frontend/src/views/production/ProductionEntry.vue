@@ -736,7 +736,7 @@ async function loadProcessNamesForProducts(productList = products.value) {
 
 function formatProcessIds(processIds) {
   if (!Array.isArray(processIds) || processIds.length === 0) return '-'
-  return processIds.map(id => processNameById.value[id]).filter(Boolean).join('； ') || '-'
+  return processIds.map(id => processNameById.value[id]).filter(Boolean).join(' + ') || '-'
 }
 
 function resetForm() {

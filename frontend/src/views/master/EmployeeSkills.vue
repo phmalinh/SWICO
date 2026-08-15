@@ -29,12 +29,13 @@
             <el-table-column prop="employeeCode" :label="l('employeeCode')" min-width="130" show-overflow-tooltip />
             <el-table-column prop="employeeName" :label="l('employeeName')" min-width="150" show-overflow-tooltip />
             <el-table-column prop="jobTitle" :label="l('jobTitle')" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="team" :label="l('team')" min-width="110" show-overflow-tooltip />
+            <el-table-column prop="skill" :label="l('skill')" min-width="130" show-overflow-tooltip />
+            <!-- <el-table-column prop="team" :label="l('team')" min-width="110" show-overflow-tooltip /> -->
             <el-table-column prop="hireDate" :label="l('hireDate')" width="135" align="center" />
             <el-table-column prop="partName" :label="l('partName')" min-width="150" show-overflow-tooltip />
             <el-table-column prop="partNumber" :label="l('partNumber')" min-width="140" show-overflow-tooltip />
             <el-table-column prop="process" :label="l('process')" min-width="140" show-overflow-tooltip />
-            <el-table-column prop="skill" :label="l('skill')" min-width="130" show-overflow-tooltip />
+            <!-- <el-table-column prop="skill" :label="l('skill')" min-width="130" show-overflow-tooltip /> -->
             <el-table-column :label="l('actions')" width="120" fixed="right" align="center">
               <template #default="{ row }">
                 <el-dropdown trigger="click">
@@ -206,8 +207,8 @@ const text = {
   },
   'zh-Hant': {
     eyebrow: '3.7 主資料',
-    title: '人員能力追蹤表',
-    addSkill: '新增能力',
+    title: '人員技能追蹤表',
+    addSkill: '新增技能',
     deleteSelected: '刪除已選',
     deleteAll: '全部刪除',
     importExcel: '匯入 Excel',
@@ -223,7 +224,7 @@ const text = {
     employeeName: '姓名',
     jobTitle: '職稱',
     team: '組',
-    skill: '能力',
+    skill: '技能',
     hireDate: '入職日期',
     partName: '品名',
     partNumber: '料號',
@@ -231,24 +232,24 @@ const text = {
     actions: '操作',
     edit: '編輯',
     delete: '刪除',
-    createTitle: '新增能力',
-    editTitle: '編輯能力',
+    createTitle: '新增技能',
+    editTitle: '編輯技能',
     cancel: '取消',
     save: '儲存',
     missingEmployeeCode: '請輸入工號',
     confirmTitle: '確認',
     deleteConfirm: '刪除',
-    deleteSelectedConfirm: '刪除已選擇的人員能力資料？',
-    deleteAllConfirm: '刪除全部人員能力追蹤資料？',
+    deleteSelectedConfirm: '刪除已選擇的人員技能資料？',
+    deleteAllConfirm: '刪除全部人員技能追蹤資料？',
     saved: '已儲存',
     deleted: '已刪除',
     deletedAll: '已全部刪除',
-    imported: '已匯入 {employees} 位人員，共 {skills} 筆能力資料',
+    imported: '已匯入 {employees} 位人員，共 {skills} 筆技能資料',
     importFailed: '匯入失敗',
     total: '總筆數',
     rowsPerPage: '每頁筆數',
     employees: '人員',
-    skills: '能力',
+    skills: '技能',
   },
 }
 

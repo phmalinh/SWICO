@@ -305,7 +305,7 @@ function masterTitle(key) {
     'zh-Hant': {
       productProcesses: '料號及工序管理',
       lineMachines: '產線與設備管理',
-      employeeSkills: '人員能力追蹤表',
+      employeeSkills: '人員技能追蹤表',
     },
   }
   return (labels[locale.value] || labels.vi)[key] || key

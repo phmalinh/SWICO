@@ -144,7 +144,7 @@ function mergeProcessNames(processes = []) {
   processNameById.value = {
     ...processNameById.value,
     ...processes.reduce((map, process) => {
-      if (process?.id) map[process.id] = process.process
+      if (process?.id) map[process.id] = process.processCode || process.process || ''
       return map
     }, {}),
   }
@@ -161,7 +161,7 @@ async function loadProcessNamesForProducts(products = []) {
 
 function formatProcessIds(processIds) {
   if (!Array.isArray(processIds) || processIds.length === 0) return '-'
-  return processIds.map(id => processNameById.value[id]).filter(Boolean).join('； ') || '-'
+  return processIds.map(id => processNameById.value[id]).filter(Boolean).join(' + ') || '-'
 }
 
 function formatPercent(value) {
