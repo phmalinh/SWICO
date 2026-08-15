@@ -40,7 +40,7 @@
           <template #header><HeaderCell zh="產線" vi="Chuyền" /></template>
         </el-table-column>
         <el-table-column prop="cycleTimeSeconds" width="140" align="center">
-          <template #header><HeaderCell zh="C/T" vi="Thời Gian Thao Tác (giây)" /></template>
+          <template #header><HeaderCell zh="CT" vi="Thời Gian Thao Tác (giây)" /></template>
         </el-table-column>
         <el-table-column prop="sequence" width="120" align="center">
           <template #header><HeaderCell zh="順序" vi="Thứ Tự" /></template>
