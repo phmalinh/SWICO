@@ -35,6 +35,7 @@
             </el-button>
             <el-button type="warning" :loading="importing" @click="triggerImport">
               {{ t('master.downtimeReasons.importExcel') }}
+              <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
             </el-button>
             <!-- <el-button type="info" @click="categoryKeyword = ''">{{ t('common.reset') }}</el-button> -->
           </div>
