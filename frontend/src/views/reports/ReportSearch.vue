@@ -50,6 +50,12 @@
         <el-table-column prop="lineCode" :label="t('reports.search.table.line')" width="82" align="center" />
         <el-table-column prop="shiftName" :label="t('reports.search.table.shift')" width="86" />
         <el-table-column prop="machineCode" :label="t('reports.search.table.machine')" width="92" />
+        <el-table-column :label="t('reports.search.table.operatorName')" width="150" align="center" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.responsibleLeader')" width="160" align="center" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
+        </el-table-column>
         <el-table-column prop="partNumber" :label="t('reports.search.table.partNumber')" width="120" />
         <el-table-column prop="partName" :label="t('reports.search.table.partName')" min-width="150" show-overflow-tooltip />
         <el-table-column :label="t('reports.search.table.processIds')" min-width="130" show-overflow-tooltip>

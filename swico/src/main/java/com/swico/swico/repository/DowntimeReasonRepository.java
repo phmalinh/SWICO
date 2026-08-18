@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface DowntimeReasonRepository extends JpaRepository<DowntimeReason, Long> {
     Optional<DowntimeReason> findByReasonCode(String reasonCode);
-    List<DowntimeReason> findAllByOrderBySortOrderAscReasonCodeAsc();
+    List<DowntimeReason> findAllByOrderByReasonCategoryCodeAscSortOrderAscReasonCodeAsc();
+    boolean existsByReasonCategoryCode(String reasonCategoryCode);
 }

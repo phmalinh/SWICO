@@ -269,4 +269,47 @@ public class MasterDataService {
                     return shiftRepository.save(shift);
                 });
     }
+    @Transactional
+    public void deleteAllProcesses() {
+        for (ProductProcess process : productProcessRepository.findAll()) {
+            assertProcessCanBeDeleted(process);
+        }
+        productProcessRepository.deleteAll();
+    }
+
+    @Transactional
+    public void deleteAllProducts() {
+        for (Product product : productRepository.findAll()) {
+            assertProductCanBeDeleted(product.getId());
+        }
+        deleteAllProcesses();
+        productRepository.deleteAll();
+    }
+
+    private void assertProcessCanBeDeleted(ProductProcess process) {
+        java.util.List<String> blockers = new java.util.ArrayList<>();
+        Long id = process.getId();
+        if (reportRepository.existsByProcessIdToken(String.valueOf(id))) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (employeeSkillRepository.existsByProductProcessId(id)) {
+            blockers.add("theo dõi năng lực nhân viên");
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalStateException("Không thể xóa công đoạn " + process.getProcess() + " vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
+    }
+
+    private void assertProductCanBeDeleted(Long id) {
+        java.util.List<String> blockers = new java.util.ArrayList<>();
+        if (reportRepository.existsByProductId(id)) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (employeeSkillRepository.existsByProductId(id)) {
+            blockers.add("theo dõi năng lực nhân viên");
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalStateException("Không thể xóa mã hàng này vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
+    }
 }

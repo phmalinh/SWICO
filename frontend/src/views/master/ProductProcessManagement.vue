@@ -12,6 +12,8 @@
         <el-button type="success" :disabled="!products.length" @click="openProcessDialog()">{{ l('addProcess') }}</el-button>
         <el-button type="warning" :loading="importing" @click="triggerImport">{{ l('importExcel') }}</el-button>
         <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
+        <el-button type="danger" :disabled="!products.length === 0" @click="deleteAllProduct">{{ l('deleteAllProducts') }}</el-button>
+        <el-button type="danger" :disabled="!products.length === 0" @click="deleteAllProcess">{{ l('deleteAllProcess') }}</el-button>
         <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
       </div>
     </div>
@@ -147,6 +149,7 @@ const rows = ref([])
 const fileInput = ref(null)
 const lineOptions = ref([])
 const machineOptions = ref([])
+const selectedRows = ref([])
 const filters = ref({ keyword: '', customer: '' })
 const productDialogVisible = ref(false)
 const processDialogVisible = ref(false)
@@ -178,6 +181,8 @@ const text = {
     editProcess: 'Sửa công đoạn',
     deleteProduct: 'Xóa mã hàng',
     deleteProcess: 'Xóa công đoạn',
+    deleteAllProducts: 'Xóa tất cả mã hàng',
+    deleteAllProcess: 'Xóa tất cả công đoạn',
     productCreateTitle: 'Thêm mã hàng',
     productEditTitle: 'Sửa mã hàng',
     processCreateTitle: 'Thêm công đoạn',
@@ -193,6 +198,8 @@ const text = {
     deleteProcessConfirm: 'Xóa công đoạn',
     saved: 'Đã lưu',
     deleted: 'Đã xóa',
+    deletedAllProducts: 'Đã xóa tất cả mã hàng',
+    deletedAllProcess: 'Đã xóa tất cả công đoạn',
     total: 'Tổng',
     rowsPerPage: 'Dòng/trang',
     productsCount: 'Mã hàng',
@@ -222,6 +229,8 @@ const text = {
     editProcess: '編輯工序',
     deleteProduct: '刪除料號',
     deleteProcess: '刪除工序',
+    deleteAllProducts: '刪除所有料號',
+    deleteAllProcess: '刪除所有工序',
     productCreateTitle: '新增料號',
     productEditTitle: '編輯料號',
     processCreateTitle: '新增工序',
@@ -237,6 +246,8 @@ const text = {
     deleteProcessConfirm: '刪除工序',
     saved: '已儲存',
     deleted: '已刪除',
+    deletedAllProducts: '已刪除所有料號',
+    deletedAllProcess: '已刪除所有工序',
     total: '總筆數',
     rowsPerPage: '每頁筆數',
     productsCount: '料號',
@@ -363,7 +374,6 @@ async function handleImportFile(event) {
     importing.value = false
   }
 }
-
 function csvValue(value) {
   return `"${String(value ?? '').replaceAll('"', '""')}"`
 }
@@ -494,7 +504,28 @@ async function deleteProduct(row) {
     ElMessage.error(error.message)
   }
 }
-
+async function deleteAllProduct() {
+  await ElMessageBox.confirm(l('deleteProductConfirm'), l('confirmTitle'), { type: 'warning' })
+  try {
+    await masterApi.deleteAllProducts()
+    selectedRows.value = []
+    ElMessage.success(l('deletedAllProducts'))
+    await loadData()
+  } catch (error) {
+    ElMessage.error(error.message)
+  }
+}
+async function deleteAllProcess() {
+  await ElMessageBox.confirm(l('deleteProcessConfirm'), l('confirmTitle'), { type: 'warning' })
+  try {
+    await masterApi.deleteAllProcesses()
+    selectedRows.value = []
+    ElMessage.success(l('deletedAllProcess'))
+    await loadData()
+  } catch (error) {
+    ElMessage.error(error.message)
+  }
+}
 function handleRowCommand(command, row) {
   if (command === 'editProduct') {
     openProductDialog(row)
@@ -522,7 +553,7 @@ watch(() => [filters.value.keyword, filters.value.customer], () => {
 <style scoped>
 .toolbar-row {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) 220px repeat(5, max-content);
+  grid-template-columns: minmax(280px, 1fr) 220px repeat(7, max-content);
   gap: 12px;
   align-items: center;
   overflow-x: auto;

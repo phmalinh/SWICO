@@ -14,7 +14,7 @@
         </div>
         <el-form :model="form" label-position="top" class="p-3 space-y-2.5">
           <!-- Dòng 1: Cấu hình chung (Chuyền, Máy, Ca, Công ty) -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5">
             <el-form-item :label="t('productionEntry.line')" class="!mb-0">
               <el-select v-model="form.lineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectLine')" @change="onLineChange">
                 <el-option v-for="l in lines" :key="l.lineCode" :label="`${l.lineCode} - ${l.description}`" :value="l.lineCode" />
@@ -33,6 +33,9 @@
             </el-form-item>
             <el-form-item :label="t('productionEntry.company')" class="!mb-0">
               <el-input v-model="form.company" size="default" :placeholder="t('productionEntry.enterCompany')" />
+            </el-form-item>
+            <el-form-item :label="t('productionEntry.responsibleLeader')" class="!mb-0">
+              <el-input v-model="form.responsibleLeader" size="default" :placeholder="t('productionEntry.enterResponsibleLeader')" />
             </el-form-item>
           </div>
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
@@ -201,8 +204,21 @@
             </el-form-item>
           </div>
 
-          <div class="mt-2.5 grid grid-cols-2 md:grid-cols-2 gap-2.5">
+          <div class="mt-2.5 grid grid-cols-1 md:grid-cols-3 gap-2.5">
             <template v-for="(item, index) in form.downtimeItems" :key="index">
+              <el-form-item :label="index === 0 ? t('productionEntry.downtimeCategory') : ''" class="!mb-0">
+                <el-select
+                  v-model="item.reasonCategoryCode"
+                  size="default"
+                  class="w-full"
+                  :placeholder="t('productionEntry.downtimeCategory')"
+                  clearable
+                  filterable
+                  @change="item.reason = ''"
+                >
+                  <el-option v-for="category in downtimeCategories" :key="category.reasonCategoryCode" :label="category.label" :value="category.reasonCategoryCode" />
+                </el-select>
+              </el-form-item>
               <el-form-item :label="index === 0 ? t('productionEntry.downtimeReason') : ''" class="!mb-0">
                 <el-select
                   v-model="item.reason"
@@ -211,7 +227,7 @@
                   :placeholder="t('productionEntry.downtimeReason')"
                   filterable
                 >
-                  <el-option v-for="r in downtimeReasons" :key="r" :label="r" :value="r" />
+                  <el-option v-for="r in filteredDowntimeReasons(item.reasonCategoryCode)" :key="r.value" :label="r.label" :value="r.value" />
                 </el-select>
               </el-form-item>
               <el-form-item :label="index === 0 ? t('productionEntry.downtimeMinutes') : ''" class="!mb-0">
@@ -288,7 +304,6 @@
               <el-button link type="primary" size="small" @click="loadMyReports">{{ t('productionEntry.refresh') }}</el-button>
             </div>
             <el-table
-              type="selection"
               @selection-change="handleSelectionChange"
               @row-click="handleRowClick"
               :data="paginatedReports"
@@ -299,6 +314,7 @@
               size="small"
               v-loading="myReportsLoading"
             >
+              <el-table-column type="selection" width="48" />
               <el-table-column prop="reportDate" :label="t('productionEntry.table.reportDate')" width="90" align="center" />
               <el-table-column prop="lineCode" :label="t('productionEntry.table.lineCode')" width="100" align="center" />
               <el-table-column prop="shiftName" :label="t('productionEntry.table.shiftName')" width="90" align="center" />
@@ -309,6 +325,12 @@
                 <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
               </el-table-column>
               <el-table-column prop="company" :label="t('productionEntry.table.company')" min-width="80" show-overflow-tooltip />
+              <el-table-column :label="t('productionEntry.table.operatorName')" width="140" align="center" show-overflow-tooltip>
+                <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.responsibleLeader')" width="150" align="center" show-overflow-tooltip>
+                <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
+              </el-table-column>
               <el-table-column prop="downtimeReason" :label="t('productionEntry.table.downtimeReason')" min-width="160" show-overflow-tooltip />
               <el-table-column :label="t('productionEntry.table.responsibility')" min-width="100" align="center">
                 <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
@@ -331,7 +353,6 @@
               <el-table-column prop="qualityRate" :label="t('productionEntry.table.qualityRate')" width="70" align="center" />
               <el-table-column prop="oee" :label="t('productionEntry.table.oee')" width="90" align="center" />
               <el-table-column prop="evaluationLabel" :label="t('productionEntry.table.evaluationLabel')" width="70" align="center" />
-              <el-table-column prop="createdBy" :label="t('productionEntry.table.createdBy')" width="70" align="center" />
             </el-table>
             <div class="flex justify-end px-4 py-3 border-t border-slate-200 bg-slate-50">
               <el-pagination
@@ -386,6 +407,7 @@ import { computed, inject, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Minus, Plus, RotateCcw, Save, Trash2 } from 'lucide-vue-next'
 import { masterApi, productionApi } from '@/services/api'
+import { getSession } from '@/services/auth'
 import { formatPercent, getOeeColor } from '@/composables/useOee'
 import { useI18n } from '@/i18n'
 
@@ -438,9 +460,10 @@ const form = ref({
   internalDefectQuantity: 0,
   externalDefectQuantity: 0,
   company: 'SWICO',
+  responsibleLeader: '',
   downtimeReason: '',
   downtimeReasons: [''],
-  downtimeItems: [{ reason: '', minutes: 30 }],
+  downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: 30 }],
 })
 
 const defaultDowntimeReasons = [
@@ -453,7 +476,13 @@ const defaultDowntimeReasons = [
   'G. 操作人員請假（無替代人員時） / Nhân viên thao tác nghỉ phép (khi không có người thay thế)',
   'H. 其他 / Khác',
 ]
-const downtimeReasons = ref([...defaultDowntimeReasons])
+const downtimeCategories = ref([])
+const downtimeReasons = ref(defaultDowntimeReasons.map(value => ({ categoryCode: '', label: value, value })))
+
+function filteredDowntimeReasons(categoryCode) {
+  if (!categoryCode) return downtimeReasons.value
+  return downtimeReasons.value.filter(reason => reason.categoryCode === categoryCode)
+}
 
 function normalizeDowntimeReasons(value) {
   if (Array.isArray(value)) {
@@ -474,11 +503,13 @@ function normalizeDowntimeItems(reasonValue, minutesValue = 0) {
     const match = String(value).match(/^(.*?)(?:\s+-\s+(\d+))$/)
     if (match) {
       return {
+        reasonCategoryCode: resolveDowntimeCategoryCode(match[1].trim()),
         reason: match[1].trim(),
         minutes: Number(match[2] || 0),
       }
     }
     return {
+      reasonCategoryCode: resolveDowntimeCategoryCode(value),
       reason: value,
       minutes: index === 0 ? minutes : 0,
     }
@@ -486,7 +517,7 @@ function normalizeDowntimeItems(reasonValue, minutesValue = 0) {
 }
 
 function addDowntimeItem(index = form.value.downtimeItems.length - 1) {
-  form.value.downtimeItems.splice(index + 1, 0, { reason: '', minutes: 0 })
+  form.value.downtimeItems.splice(index + 1, 0, { reasonCategoryCode: '', reason: '', minutes: 0 })
 }
 
 function decrementDowntimeMinutes(index) {
@@ -516,7 +547,7 @@ function incrementQuantity(field) {
 
 function removeDowntimeItem(index) {
   if (form.value.downtimeItems.length === 1) {
-    form.value.downtimeItems = [{ reason: '', minutes: 0 }]
+    form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 0 }]
     return
   }
   form.value.downtimeItems.splice(index, 1)
@@ -534,6 +565,11 @@ function formatDowntimeReasonsForSave() {
 }
 
 const totalDowntimeMinutes = computed(() => form.value.downtimeItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0))
+
+function resolveDowntimeCategoryCode(reasonValue) {
+  const reason = downtimeReasons.value.find(item => item.value === reasonValue)
+  return reason?.categoryCode || ''
+}
 
 const filteredMachines = computed(() => {
   if (!form.value.lineCode) return machines.value
@@ -622,6 +658,7 @@ function populateFormForEdit(report) {
   form.value.internalDefectQuantity = report.internalDefectQuantity ?? form.value.defectQuantity
   form.value.externalDefectQuantity = report.externalDefectQuantity ?? 0
   form.value.company = report.company || 'SWICO'
+  form.value.responsibleLeader = report.responsibleLeader || ''
   form.value.downtimeReason = report.downtimeReason || ''
   form.value.downtimeReasons = normalizeDowntimeReasons(report.downtimeReason)
   form.value.downtimeItems = normalizeDowntimeItems(report.downtimeReason, report.downtimeMinutes)
@@ -748,12 +785,13 @@ function resetForm() {
   form.value.downtimeMinutes = 30
   form.value.downtimeReason = ''
   form.value.downtimeReasons = ['']
-  form.value.downtimeItems = [{ reason: '', minutes: 30 }]
+  form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 30 }]
   form.value.inputQuantity = 0
   form.value.goodQuantity = 0
   form.value.defectQuantity = 0
   form.value.internalDefectQuantity = 0
   form.value.externalDefectQuantity = 0
+  form.value.responsibleLeader = ''
   showResult.value = false
   result.value = null
 }
@@ -810,11 +848,12 @@ function parseTimeString(value) {
 
 async function loadInitialData() {
   try {
-    const [productsRes, linesRes, machinesRes, shiftsRes, downtimeReasonsRes] = await Promise.all([
+    const [productsRes, linesRes, machinesRes, shiftsRes, downtimeCategoriesRes, downtimeReasonsRes] = await Promise.all([
       masterApi.getProducts(),
       masterApi.getLines(),
       masterApi.getMachines(),
       masterApi.getShifts(),
+      masterApi.getDowntimeReasonCategories().catch(() => []),
       masterApi.getDowntimeReasons().catch(() => []),
     ])
 
@@ -840,11 +879,25 @@ async function loadInitialData() {
       startTime: item.startTime || null,
       endTime: item.endTime || null,
     }))
+    downtimeCategories.value = (downtimeCategoriesRes || [])
+      .filter(item => item.active !== false)
+      .map(item => ({
+        reasonCategoryCode: item.reasonCategoryCode || '',
+        label: `${item.reasonCategoryCode}. ${item.reasonCategoryText}`.trim(),
+      }))
+      .filter(item => item.reasonCategoryCode)
     const activeDowntimeReasons = (downtimeReasonsRes || [])
       .filter(item => item.active !== false)
-      .map(item => `${item.reasonCode}. ${item.reasonText}`.trim())
-      .filter(Boolean)
-    downtimeReasons.value = activeDowntimeReasons.length ? activeDowntimeReasons : [...defaultDowntimeReasons]
+      .map(item => {
+        const value = `${item.reasonCode}. ${item.reasonText}`.trim()
+        return {
+          categoryCode: item.reasonCategoryCode || '',
+          label: value,
+          value,
+        }
+      })
+      .filter(item => item.value)
+    downtimeReasons.value = activeDowntimeReasons.length ? activeDowntimeReasons : defaultDowntimeReasons.map(value => ({ categoryCode: '', label: value, value }))
 
     if (!form.value.lineCode && lines.value.length) form.value.lineCode = lines.value[0].lineCode
     if (!form.value.machineCode && machines.value.length) {
@@ -870,6 +923,10 @@ async function saveReport() {
     ElMessage.warning(t('productionEntry.messages.selectProduct'))
     return
   }
+  if (!getSession()?.token) {
+    ElMessage.error(t('productionEntry.messages.loginRequired'))
+    return
+  }
   saving.value = true
   try {
     const payload = {
@@ -889,6 +946,7 @@ async function saveReport() {
       internalDefectQuantity: Number(form.value.internalDefectQuantity || 0),
       externalDefectQuantity: Number(form.value.externalDefectQuantity || 0),
       company: form.value.company,
+      responsibleLeader: form.value.responsibleLeader,
       downtimeReason: formatDowntimeReasonsForSave(),
     }
 
@@ -921,7 +979,8 @@ const oeeCards = computed(() => {
     { key: 'q', label: t('reports.dashboard.sections.quality'), value: formatPercent(Number(r.qualityRate || 0)), textClass: 'text-emerald-600', cardClass: 'border-emerald-100 bg-emerald-50' },
     { key: 'responsibility', label: t('productionEntry.responsibility'), value: formatPercent(Number(r.responsibility || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
     { key: 'deduction', label: t('productionEntry.deductionPercent'), value: formatPercent(Number(r.deductionPercent || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
-    { key: 'signature', label: t('productionEntry.createdBy'), value: currentUser.value?.fullName || currentUser.value?.name || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
+    { key: 'operator', label: t('productionEntry.table.operatorName'), value: r.operatorName || currentUser.value?.fullName || currentUser.value?.name || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
+    { key: 'leader', label: t('productionEntry.table.responsibleLeader'), value: r.responsibleLeader || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
   ]
 })
 

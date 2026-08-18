@@ -136,4 +136,23 @@ public class MasterDataController {
             return ResponseEntity.status(409).body(ex.getMessage());
         }
     }
+    @DeleteMapping("/processes")
+    public ResponseEntity<?> deleteAllProcesses() {
+        try {
+            masterDataService.deleteAllProcesses();
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
+    }
+
+    @DeleteMapping("/products")
+    public ResponseEntity<?> deleteAllProducts() {
+        try {
+            masterDataService.deleteAllProducts();
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
+    }
 }

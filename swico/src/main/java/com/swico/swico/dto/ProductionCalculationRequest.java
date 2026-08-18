@@ -25,6 +25,7 @@ public record ProductionCalculationRequest(
         @Min(0) Integer internalDefectQuantity,
         @Min(0) Integer externalDefectQuantity,
         String company,
+        String responsibleLeader,
         String downtimeReason,
         String responsibility,
         BigDecimal deductionPercent,

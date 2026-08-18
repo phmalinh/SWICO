@@ -47,7 +47,8 @@ public class ProductionExportService {
             CellStyle dateStyle = createDateStyle(workbook);
 
             String[] headers = {
-                    "\u65e5\u671f\nNgay", "\u7dda\u5225\nChuyen", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMa May", "\u516c\u53f8\nCong Ty", "\u6599\u865f\nMa Hang",
+                    "\u65e5\u671f\nNgay", "\u7dda\u5225\nChuyen", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMa May", "\u516c\u53f8\nCong Ty",
+                    "\u4f5c\u54e1\nNhan Vien Thao Tac", "\u8ca0\u8cac\u5e79\u90e8\nCan Bo Phu Trach", "\u6599\u865f\nMa Hang",
                     "\u54c1\u540d\nTen Hang", "\u5de5\u5e8f\nCong doan", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTong TG", "\u505c\u6a5f(\u5206)\nTG Dung",
                     "\u505c\u6a5f\u539f\u56e0\nLy Do Dung", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMuc Tieu", "\u6295\u5165\u6578\nSL Nhap",
                     "\u826f\u54c1\u6578\nSL Dat", "\u4e0d\u826f\u6578\nSL Loi\n(\u5167\u88fd)", "\u4e0d\u826f\u6578\nSL Loi\n(\u5916\u88fd)",
@@ -72,29 +73,31 @@ public class ProductionExportService {
                 setValue(row.createCell(2), report.shiftName(), textStyle);
                 setValue(row.createCell(3), report.machineCode(), textStyle);
                 setValue(row.createCell(4), report.company(), textStyle);
-                setValue(row.createCell(5), report.partNumber(), textStyle);
-                setValue(row.createCell(6), report.partName(), textStyle);
-                setValue(row.createCell(7), formatProcesses(report.processIds()), wrappedTextStyle);
-                setValue(row.createCell(8), report.cycleTimeSeconds(), decimalStyle);
-                setValue(row.createCell(9), report.totalOperatingMinutes(), intStyle);
-                setValue(row.createCell(10), report.downtimeMinutes(), intStyle);
-                setValue(row.createCell(11), report.downtimeReason(), wrappedTextStyle);
-                setValue(row.createCell(12), report.shiftStandardTimeMinutes(), intStyle);
-                setValue(row.createCell(13), report.dailyTargetQuantity(), decimalStyle);
-                setValue(row.createCell(14), report.inputQuantity(), intStyle);
-                setValue(row.createCell(15), report.goodQuantity(), intStyle);
-                setValue(row.createCell(16), report.internalDefectQuantity(), intStyle);
-                setValue(row.createCell(17), report.externalDefectQuantity(), intStyle);
+                setValue(row.createCell(5), report.operatorName(), textStyle);
+                setValue(row.createCell(6), report.responsibleLeader(), textStyle);
+                setValue(row.createCell(7), report.partNumber(), textStyle);
+                setValue(row.createCell(8), report.partName(), textStyle);
+                setValue(row.createCell(9), formatProcesses(report.processIds()), wrappedTextStyle);
+                setValue(row.createCell(10), report.cycleTimeSeconds(), decimalStyle);
+                setValue(row.createCell(11), report.totalOperatingMinutes(), intStyle);
+                setValue(row.createCell(12), report.downtimeMinutes(), intStyle);
+                setValue(row.createCell(13), report.downtimeReason(), wrappedTextStyle);
+                setValue(row.createCell(14), report.shiftStandardTimeMinutes(), intStyle);
+                setValue(row.createCell(15), report.dailyTargetQuantity(), decimalStyle);
+                setValue(row.createCell(16), report.inputQuantity(), intStyle);
+                setValue(row.createCell(17), report.goodQuantity(), intStyle);
+                setValue(row.createCell(18), report.internalDefectQuantity(), intStyle);
+                setValue(row.createCell(19), report.externalDefectQuantity(), intStyle);
                 int excelRow = row.getRowNum() + 1;
-                setFormula(row.createCell(18), "Q" + excelRow + "/O" + excelRow, percentStyle);
-                setFormula(row.createCell(19), "IF(S" + excelRow + ">0.27%,S" + excelRow + "-0.27%,0)", percentStyle);
-                setValue(row.createCell(20), report.productionEfficiency(), percentStyle);
-                setValue(row.createCell(21), report.availabilityRate(), percentStyle);
-                setValue(row.createCell(22), report.performanceRate(), percentStyle);
-                setValue(row.createCell(23), report.qualityRate(), percentStyle);
-                setValue(row.createCell(24), report.oee(), percentStyle);
-                setValue(row.createCell(25), report.evaluationLabel(), textStyle);
-                row.createCell(26).setCellValue("");
+                setFormula(row.createCell(20), "S" + excelRow + "/Q" + excelRow, percentStyle);
+                setFormula(row.createCell(21), "IF(U" + excelRow + ">0.27%,U" + excelRow + "-0.27%,0)", percentStyle);
+                setFormula(row.createCell(22), "IF(U" + excelRow + ">0.27%,(Q" + excelRow + "*(K" + excelRow + "/60)/L" + excelRow + ")-V" + excelRow + ",(Q" + excelRow + "*(K" + excelRow + "/60)/L" + excelRow + "))", percentStyle);
+                setValue(row.createCell(23), report.availabilityRate(), percentStyle);
+                setValue(row.createCell(24), report.performanceRate(), percentStyle);
+                setValue(row.createCell(25), report.qualityRate(), percentStyle);
+                setValue(row.createCell(26), report.oee(), percentStyle);
+                setValue(row.createCell(27), report.evaluationLabel(), textStyle);
+                row.createCell(28).setCellValue("");
             }
 
             for (int i = 0; i < headers.length; i++) {

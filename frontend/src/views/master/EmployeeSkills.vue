@@ -29,7 +29,7 @@
             <el-table-column prop="employeeCode" :label="l('employeeCode')" min-width="130" show-overflow-tooltip />
             <el-table-column prop="employeeName" :label="l('employeeName')" min-width="150" show-overflow-tooltip />
             <el-table-column prop="jobTitle" :label="l('jobTitle')" min-width="120" show-overflow-tooltip />
-            <el-table-column prop="skill" :label="l('skill')" min-width="130" show-overflow-tooltip />
+            <el-table-column prop="team" :label="l('skill')" min-width="130" show-overflow-tooltip />
             <!-- <el-table-column prop="team" :label="l('team')" min-width="110" show-overflow-tooltip /> -->
             <el-table-column prop="hireDate" :label="l('hireDate')" width="135" align="center" />
             <el-table-column prop="partName" :label="l('partName')" min-width="150" show-overflow-tooltip />
@@ -53,13 +53,16 @@
         </el-tab-pane>
 
         <el-tab-pane :label="l('matrixView')" name="matrix">
-          <el-table :data="matrixRows" stripe border class="management-table" style="width:100%" size="large" v-loading="loading">
+          <el-table :data="matrixRows" stripe border class="management-table matrix-table" style="width:100%" size="large" v-loading="loading" height="calc(100vh - 270px)">
             <el-table-column prop="partName" :label="l('partName')" min-width="180" fixed show-overflow-tooltip />
             <el-table-column prop="partNumber" :label="l('partNumber')" min-width="150" fixed show-overflow-tooltip />
+            <!-- <el-table-column prop="team" :label="l('team')" min-width="140" show-overflow-tooltip /> -->
             <el-table-column
               v-for="employee in matrixEmployees"
               :key="employee.employeeCode"
+              :column-key="employee.employeeCode"
               min-width="140"
+              :class-name="cellClassName"
               show-overflow-tooltip
             >
               <template #header>
@@ -177,8 +180,8 @@ const text = {
     employeeCode: 'Tài khoản',
     employeeName: 'Họ tên',
     jobTitle: 'Chức vụ',
-    team: 'Tổ',
-    skill: 'Năng lực',
+    team: 'Năng lực/Tổ',
+    skill: 'Năng lực - Tổ',
     hireDate: 'Ngày vào làm',
     partName: 'Tên hàng',
     partNumber: 'Mã hàng',
@@ -223,8 +226,8 @@ const text = {
     employeeCode: '工號',
     employeeName: '姓名',
     jobTitle: '職稱',
-    team: '組',
-    skill: '技能',
+    team: '技能 - 組',
+    skill: '技能 - 組',
     hireDate: '入職日期',
     partName: '品名',
     partNumber: '料號',
@@ -282,6 +285,7 @@ const filteredRows = computed(() => {
       row.employeeName,
       row.jobTitle,
       row.team,
+      row.hireDate,
       row.skill,
       row.partName,
       row.partNumber,
@@ -325,7 +329,7 @@ const matrixEmployees = computed(() => {
   const map = new Map()
   filteredRows.value.forEach(row => {
     if (!row.employeeCode || map.has(row.employeeCode)) return
-    map.set(row.employeeCode, { employeeCode: row.employeeCode, employeeName: row.employeeName })
+    map.set(row.employeeCode, { employeeCode: row.employeeCode, employeeName: row.employeeName, hireDate: row.hireDate })
   })
   return [...map.values()]
 })
@@ -334,9 +338,9 @@ const matrixRows = computed(() => {
   const map = new Map()
   filteredRows.value.forEach(row => {
     const process = processCodeOnly(row.process || row.skill || '')
-    const key = `${row.partNumber || ''}::${row.partName || ''}`
+    const key = `${row.partNumber || ''}::${row.partName || ''}::${row.team || ''}`
     if (!map.has(key)) {
-      map.set(key, { partNumber: row.partNumber, partName: row.partName, skills: {} })
+      map.set(key, { partNumber: row.partNumber, partName: row.partName,team: row.team, skills: {} })
     }
     if (row.employeeCode && process) {
       const rowData = map.get(key)
@@ -346,7 +350,13 @@ const matrixRows = computed(() => {
       rowData.skills[row.employeeCode] = values.join(' + ')
     }
   })
-  return [...map.values()]
+  const hireDateRow = {
+    partName: l('hireDate'),
+    partNumber: '',
+    team: '',
+    skills: Object.fromEntries(matrixEmployees.value.map(employee => [employee.employeeCode, employee.hireDate || ''])),
+  }
+  return matrixEmployees.value.length ? [hireDateRow, ...map.values()] : [...map.values()]
 })
 
 function pageIndex(index) {
@@ -357,6 +367,12 @@ function processCodeOnly(value) {
   const text = String(value || '').trim()
   if (!text) return ''
   return text.split(' - ')[0].trim()
+}
+
+function cellClassName({ row, column }) {
+  const employeeCode = column.rawColumnKey || column.property
+  if (!employeeCode || row.partName === l('hireDate')) return ''
+  return row.skills?.[employeeCode] ? 'skill-filled-cell' : ''
 }
 
 function emptyForm() {
@@ -680,6 +696,19 @@ watch([detailRows, pageSize], () => {
   border-color: #d8e3f0;
 }
 
+.matrix-table {
+  min-height: 360px;
+}
+
+.matrix-table :deep(.el-table__header-wrapper),
+.matrix-table :deep(.el-table__fixed-header-wrapper) {
+  z-index: 6;
+}
+
+.matrix-table :deep(.el-table__body-wrapper) {
+  max-height: calc(100vh - 325px);
+}
+
 .header-cell {
   display: flex;
   flex-direction: column;
@@ -697,6 +726,19 @@ watch([detailRows, pageSize], () => {
   font-size: 12px;
   font-weight: 700;
   opacity: 0.9;
+}
+
+.matrix-table :deep(.skill-filled-cell) {
+  background: #dcfce7 !important;
+  color: #166534;
+  font-weight: 800;
+  text-align: center;
+}
+
+.matrix-table :deep(.skill-filled-cell .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .danger-item {

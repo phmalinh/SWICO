@@ -188,6 +188,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8081/api/v1'
 const AUTH_PATH = (import.meta.env.VITE_AUTH_PATH || '/auth').replace(/\/+$/, '')
 const API_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 30000)
+const KEEP_PAGE_ON_ERROR = { handleAuthFailure: false }
 
 function normalizeToken(token) {
   if (!token) return null
@@ -296,9 +297,10 @@ async function request(path, options = {}, config = {}) {
 
 export const masterApi = {
   getProducts: () => request('/master-data/products'),
-  createProduct: payload => request('/master-data/products', { method: 'POST', body: JSON.stringify(payload) }),
-  updateProduct: (id, payload) => request(`/master-data/products/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteProduct: id => request(`/master-data/products/${id}`, { method: 'DELETE' }, { handleAuthFailure: false }),
+  createProduct: payload => request('/master-data/products', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateProduct: (id, payload) => request(`/master-data/products/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteProduct: id => request(`/master-data/products/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  deleteAllProducts: () => request('/master-data/products', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   importProductionInfo: file => {
     const formData = new FormData()
     formData.append('file', file)
@@ -306,38 +308,48 @@ export const masterApi = {
   },
 
   getLines: () => request('/master-data/lines'),
-  createLine: payload => request('/master-data/lines', { method: 'POST', body: JSON.stringify(payload) }),
-  updateLine: (id, payload) => request(`/master-data/lines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteLine: id => request(`/master-data/lines/${id}`, { method: 'DELETE' }),
+  createLine: payload => request('/master-data/lines', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateLine: (id, payload) => request(`/master-data/lines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteLine: id => request(`/master-data/lines/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
 
   getShifts: () => request('/master-data/shifts'),
-  createShift: payload => request('/master-data/shifts', { method: 'POST', body: JSON.stringify(payload) }),
-  updateShift: (id, payload) => request(`/master-data/shifts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteShift: id => request(`/master-data/shifts/${id}`, { method: 'DELETE' }),
+  createShift: payload => request('/master-data/shifts', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateShift: (id, payload) => request(`/master-data/shifts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteShift: id => request(`/master-data/shifts/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
 
   getMachines: () => request('/master-data/machines'),
-  createMachine: payload => request('/master-data/machines', { method: 'POST', body: JSON.stringify(payload) }),
-  updateMachine: (id, payload) => request(`/master-data/machines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteMachine: id => request(`/master-data/machines/${id}`, { method: 'DELETE' }),
+  createMachine: payload => request('/master-data/machines', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateMachine: (id, payload) => request(`/master-data/machines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteMachine: id => request(`/master-data/machines/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   getEmployeeSkills: () => request('/master-data/employee-skills'),
   getEmployeeSkillUsers: () => request('/master-data/employee-skills/users'),
-  createEmployeeSkill: payload => request('/master-data/employee-skills', { method: 'POST', body: JSON.stringify(payload) }),
-  updateEmployeeSkill: (id, payload) => request(`/master-data/employee-skills/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteEmployeeSkill: id => request(`/master-data/employee-skills/${id}`, { method: 'DELETE' }),
-  deleteAllEmployeeSkills: () => request('/master-data/employee-skills', { method: 'DELETE' }),
+  createEmployeeSkill: payload => request('/master-data/employee-skills', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateEmployeeSkill: (id, payload) => request(`/master-data/employee-skills/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteEmployeeSkill: id => request(`/master-data/employee-skills/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  deleteAllEmployeeSkills: () => request('/master-data/employee-skills', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   importEmployeeSkills: file => {
     const formData = new FormData()
     formData.append('file', file)
-    return request('/master-data/employee-skills/import', { method: 'POST', body: formData }, { handleAuthFailure: false })
+    return request('/master-data/employee-skills/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
   },
   getDowntimeReasons: () => request('/master-data/downtime-reasons'),
-  createDowntimeReason: payload => request('/master-data/downtime-reasons', { method: 'POST', body: JSON.stringify(payload) }),
-  updateDowntimeReason: (id, payload) => request(`/master-data/downtime-reasons/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteDowntimeReason: id => request(`/master-data/downtime-reasons/${id}`, { method: 'DELETE' }),
+  getDowntimeReasonCategories: () => request('/master-data/downtime-reasons/categories'),
+  importDowntimeReasons: file => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request('/master-data/downtime-reasons/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
+  },
+  createDowntimeReasonCategory: payload => request('/master-data/downtime-reasons/categories', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateDowntimeReasonCategory: (id, payload) => request(`/master-data/downtime-reasons/categories/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteDowntimeReasonCategory: id => request(`/master-data/downtime-reasons/categories/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  createDowntimeReason: payload => request('/master-data/downtime-reasons', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateDowntimeReason: (id, payload) => request(`/master-data/downtime-reasons/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteDowntimeReason: id => request(`/master-data/downtime-reasons/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   getProductProcesses: productId => request(`/master-data/products/${productId}/processes`),
-  addProductProcess: (productId, payload) => request(`/master-data/products/${productId}/processes`, { method: 'POST', body: JSON.stringify(payload) }),
-  updateProcess: (id, payload) => request(`/master-data/processes/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  deleteProcess: id => request(`/master-data/processes/${id}`, { method: 'DELETE' }),
+  addProductProcess: (productId, payload) => request(`/master-data/products/${productId}/processes`, { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  updateProcess: (id, payload) => request(`/master-data/processes/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  deleteProcess: id => request(`/master-data/processes/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  deleteAllProcesses: () => request('/master-data/processes', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
 }
 
 export const productionApi = {
@@ -345,10 +357,10 @@ export const productionApi = {
   create: payload => request('/production-reports', { method: 'POST', body: JSON.stringify(payload) }, { handleAuthFailure: false }),
   update: (id, payload) => request(`/production-reports/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, { handleAuthFailure: false }),
   deleteReports: ids => request('/production-reports', { method: 'DELETE', body: JSON.stringify(ids) }),
-  today: params => request(`/production-reports/today${buildQuery(params)}`),
-  search: params => request(`/production-reports${buildQuery(params)}`),
-  dashboard: params => request(`/production-reports/dashboard${buildQuery(params)}`),
-  myReports: params => request(`/production-reports/mine${buildQuery(params)}`),
+  today: params => request(`/production-reports/today${buildQuery(params)}`, {}, KEEP_PAGE_ON_ERROR),
+  search: params => request(`/production-reports${buildQuery(params)}`, {}, KEEP_PAGE_ON_ERROR),
+  dashboard: params => request(`/production-reports/dashboard${buildQuery(params)}`, {}, KEEP_PAGE_ON_ERROR),
+  myReports: params => request(`/production-reports/mine${buildQuery(params)}`, {}, KEEP_PAGE_ON_ERROR),
 
   // Đã tối ưu hàm exportV9 dùng chung request()
   exportV9: params => request(`/production-reports/export-v9${buildQuery(params)}`, {}, { responseType: 'blob' }),
@@ -363,9 +375,9 @@ export const productionApi = {
 
 export const userApi = {
   list: () => request('/system/users'),
-  create: payload => request('/system/users', { method: 'POST', body: JSON.stringify(payload) }),
-  update: (id, payload) => request(`/system/users/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  delete: id => request(`/system/users/${id}`, { method: 'DELETE' }),
+  create: payload => request('/system/users', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  update: (id, payload) => request(`/system/users/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
+  delete: id => request(`/system/users/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
 }
 
 export const systemApi = {

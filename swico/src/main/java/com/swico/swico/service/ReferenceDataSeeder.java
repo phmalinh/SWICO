@@ -1,5 +1,6 @@
 package com.swico.swico.service;
 
+import com.swico.swico.config.AppClock;
 import com.swico.swico.dto.ProductionCalculationRequest;
 import com.swico.swico.dto.ProductionCalculationResponse;
 import com.swico.swico.entity.DailyProductionReport;
@@ -81,10 +82,11 @@ public class ReferenceDataSeeder {
         }
 
         if (reportRepository.count() == 0) {
-            seedReport(LocalDate.now(), a1, day, "TC-31", p1, 420, 30, 1800, 1750, 50);
-            seedReport(LocalDate.now(), a2, day, "TC-41", p2, 400, 45, 2500, 2400, 100);
-            seedReport(LocalDate.now(), a4, day, "TC-42", p3, 450, 20, 1600, 1550, 50);
-            seedReport(LocalDate.now(), b1, day, "PK-01", p4, 380, 60, 900, 850, 50);
+            LocalDate today = AppClock.today();
+            seedReport(today, a1, day, "TC-31", p1, 420, 30, 1800, 1750, 50);
+            seedReport(today, a2, day, "TC-41", p2, 400, 45, 2500, 2400, 100);
+            seedReport(today, a4, day, "TC-42", p3, 450, 20, 1600, 1550, 50);
+            seedReport(today, b1, day, "PK-01", p4, 380, 60, 900, 850, 50);
         }
     }
 
@@ -101,14 +103,32 @@ public class ReferenceDataSeeder {
     }
 
     private void seedDowntimeReasons() {
-        downtimeReasonService.ensure("A", "\u63db\u5200\uff08\u7c97\uff0f\u7cbe\u9762\u92d1\u5200\u3001\u5167\u5b54\u93dc\u5200\u3001\u947d\u982d\u7b49\uff09 / Thay dao (dao phay mat tho + tinh, dao moc lo, mui khoan, ...)", 1);
-        downtimeReasonService.ensure("B", "\u7802\u8f2a\u7528\u76e1\u3001\u66f4\u63db\u7802\u8f2a\uff08\u91dd\u5c0d\u78e8\u5e8a\u7d44\uff09 / Het da, thay da (doi voi to Mai)", 2);
-        downtimeReasonService.ensure("C", "\u505c\u6a5f\u7b49\u6599\uff08\u7b49\u5f85\u6bdb\u576f\uff09 / Ngung may cho phoi", 3);
-        downtimeReasonService.ensure("D", "\u7b49\u5f85\u524d\u5de5\u5e8f\u4f86\u6599\uff08\u91dd\u5c0d\u524d\u5de5\u5e8f C/T \u9577\u65bc\u5f8c\u5de5\u5e8f\uff09 / Cho hang cong doan truoc (doi voi cong doan dau C/T lau hon cong doan sau)", 4);
-        downtimeReasonService.ensure("E", "\u7b49\u5f85\u8abf\u6a5f\u4eba\u54e1\uff08\u6280\u8853\u54e1\uff09\u8abf\u6a5f / Cho can bo chinh may", 5);
-        downtimeReasonService.ensure("F", "\u7b49\u5f85\u54c1\u6aa2\uff08QC\uff09\u9996\u4ef6\u78ba\u8a8d\uff0f\u8abf\u6a5f\u54c1\u78ba\u8a8d / Cho QC xac nhan hang chinh may", 6);
-        downtimeReasonService.ensure("G", "\u64cd\u4f5c\u4eba\u54e1\u8acb\u5047\uff08\u7121\u66ff\u4ee3\u4eba\u54e1\u6642\uff09 / Nhan vien thao tac nghi phep (khi khong co nguoi thay the)", 7);
-        downtimeReasonService.ensure("H", "\u5176\u4ed6 / Khac", 8);
+        downtimeReasonService.ensureCategory("1", "Thay dao, thay khuon, chinh may", 1);
+        downtimeReasonService.ensureCategory("2", "Cho dung cu, cho vat lieu, cho cong doan truoc", 2);
+        downtimeReasonService.ensureCategory("3", "Bat thuong thiet bi va nghiep vu", 3);
+        downtimeReasonService.ensureCategory("4", "Bat thuong chat luong", 4);
+        downtimeReasonService.ensureCategory("5", "Yeu to quan ly, nhan su", 5);
+        downtimeReasonService.ensureCategory("6", "Ngung may ke hoach, ve sinh, bao duong", 6);
+
+        downtimeReasonService.ensure("1-1", "Thay dao (dao phay mat tho + tinh, dao moc lo, mui khoan, ...)", "1", 1);
+        downtimeReasonService.ensure("1-2", "Het da, thay da (doi voi to Mai)", "1", 2);
+        downtimeReasonService.ensure("1-3", "Cho can bo chinh may", "1", 3);
+        downtimeReasonService.ensure("1-4", "Don ve sinh", "1", 4);
+        downtimeReasonService.ensure("2-1", "Cho dao/dung cu kiem", "2", 5);
+        downtimeReasonService.ensure("2-2", "Ngung may cho phoi", "2", 6);
+        downtimeReasonService.ensure("2-3", "Cho hang cong doan truoc", "2", 7);
+        downtimeReasonService.ensure("3-1", "May hu", "3", 8);
+        downtimeReasonService.ensure("3-2", "Xon hang di tham nhot", "3", 9);
+        downtimeReasonService.ensure("3-3", "Cup dien/cup nuoc", "3", 10);
+        downtimeReasonService.ensure("4-1", "Cho QC xac nhan hang chinh may", "4", 11);
+        downtimeReasonService.ensure("4-2", "Xu ly hang toan kiem", "4", 12);
+        downtimeReasonService.ensure("5-1", "Nhan vien thao tac nghi phep", "5", 13);
+        downtimeReasonService.ensure("5-2", "Hop", "5", 14);
+        downtimeReasonService.ensure("5-3", "Dao tao nhan vien", "5", 15);
+        downtimeReasonService.ensure("6-1", "Ve sinh may cuoi ca/cuoi tuan", "6", 16);
+        downtimeReasonService.ensure("6-2", "Bao duong may dinh ky", "6", 17);
+        downtimeReasonService.ensure("6-3", "Kiem ke dinh ky", "6", 18);
+        downtimeReasonService.ensure("6-4", "Khong co lenh san xuat", "6", 19);
     }
 
     private Line saveLine(String code, String description) {
@@ -157,6 +177,7 @@ public class ReferenceDataSeeder {
                 inputQuantity,
                 goodQuantity,
                 defectQuantity,
+                null,
                 null,
                 null,
                 null,

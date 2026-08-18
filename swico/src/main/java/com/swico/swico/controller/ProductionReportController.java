@@ -1,5 +1,6 @@
 package com.swico.swico.controller;
 
+import com.swico.swico.config.AppClock;
 import com.swico.swico.dto.DashboardSummaryResponse;
 import com.swico.swico.dto.ProductionCalculationRequest;
 import com.swico.swico.dto.ProductionCalculationResponse;
@@ -93,9 +94,10 @@ public class ProductionReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String lineCode,
             @RequestParam(required = false) String shiftName,
-            @RequestParam(required = false) String partNumber
+            @RequestParam(required = false) String partNumber,
+            @RequestParam(required = false) String operatorName
     ) {
-        return reportService.getReports(from, to, lineCode, shiftName, partNumber);
+        return reportService.getReports(from, to, lineCode, shiftName, partNumber, operatorName);
     }
 
     @GetMapping("/dashboard")
@@ -126,11 +128,12 @@ public class ProductionReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String lineCode,
             @RequestParam(required = false) String shiftName,
-            @RequestParam(required = false) String partNumber
+            @RequestParam(required = false) String partNumber,
+            @RequestParam(required = false) String operatorName
     ) {
-        List<ProductionReportResponse> reports = reportService.getReports(from, to, lineCode, shiftName, partNumber);
+        List<ProductionReportResponse> reports = reportService.getReports(from, to, lineCode, shiftName, partNumber, operatorName);
         byte[] bytes = exportService.exportV9(reports);
-        String filename = "OEE_V9_" + (from != null ? from : LocalDate.now()) + "_" + (to != null ? to : LocalDate.now()) + ".xlsx";
+        String filename = "OEE_V9_" + (from != null ? from : AppClock.today()) + "_" + (to != null ? to : AppClock.today()) + ".xlsx";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))

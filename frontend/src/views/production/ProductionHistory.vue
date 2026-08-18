@@ -21,6 +21,12 @@
         </el-table-column>
         <el-table-column prop="lineCode" :label="t('productionHistory.table.line')" width="86" align="center" />
         <el-table-column prop="machineCode" :label="t('productionHistory.table.machine')" width="96" align="center" />
+        <el-table-column :label="t('productionHistory.table.operatorName')" width="150" align="center" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
+        </el-table-column>
+        <el-table-column :label="t('productionHistory.table.responsibleLeader')" width="160" align="center" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
+        </el-table-column>
         <el-table-column prop="partNumber" :label="t('productionHistory.table.partNumber')" width="120" />
         <el-table-column prop="partName" :label="t('productionHistory.table.partName')" min-width="150" show-overflow-tooltip />
         <el-table-column :label="t('productionHistory.table.processIds')" min-width="130" show-overflow-tooltip>
@@ -190,6 +196,7 @@ function openEdit(row) {
     internalDefectQuantity: row.internalDefectQuantity,
     externalDefectQuantity: row.externalDefectQuantity,
     company: row.company || '',
+    responsibleLeader: row.responsibleLeader || '',
     downtimeReason: row.downtimeReason || '',
   }
   editVisible.value = true
@@ -216,6 +223,7 @@ async function saveEdit() {
       internalDefectQuantity: Number(editForm.value.internalDefectQuantity || 0),
       externalDefectQuantity: Number(editForm.value.externalDefectQuantity || 0),
       company: editForm.value.company,
+      responsibleLeader: editForm.value.responsibleLeader,
       downtimeReason: editForm.value.downtimeReason,
     }
     await productionApi.update(editForm.value.id, payload)

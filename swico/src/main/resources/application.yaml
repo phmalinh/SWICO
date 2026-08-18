@@ -2,6 +2,8 @@ server:
   port: ${PORT:8080}
 
 spring:
+  jackson:
+    time-zone: Asia/Taipei
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/swico_db}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}

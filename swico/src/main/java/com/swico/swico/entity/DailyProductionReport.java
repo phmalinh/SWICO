@@ -1,5 +1,6 @@
 package com.swico.swico.entity;
 
+import com.swico.swico.config.AppClock;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -61,6 +62,9 @@ public class DailyProductionReport {
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
+    @Column(name = "responsible_leader", length = 100)
+    private String responsibleLeader;
+
     @Column(name = "downtime_reason", length = 2000)
     private String downtimeReason;
 
@@ -99,13 +103,13 @@ public class DailyProductionReport {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = AppClock.now();
+        this.updatedAt = AppClock.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = AppClock.now();
     }
 
     public Long getId() {
@@ -290,6 +294,14 @@ public class DailyProductionReport {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public String getResponsibleLeader() {
+        return responsibleLeader;
+    }
+
+    public void setResponsibleLeader(String responsibleLeader) {
+        this.responsibleLeader = responsibleLeader;
     }
 
     public String getDowntimeReason() {

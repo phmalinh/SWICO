@@ -16,7 +16,7 @@
       </div>
 
       <el-form :model="filters" label-position="top">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
           <el-form-item :label="t('reports.search.fields.dateFrom')">
             <el-date-picker v-model="filters.dateFrom" type="date" class="!w-full" value-format="YYYY-MM-DD" />
           </el-form-item>
@@ -36,6 +36,9 @@
           <el-form-item :label="t('reports.search.fields.partNumber')">
             <el-input v-model="filters.partNumber" clearable placeholder="PN-..." />
           </el-form-item>
+          <el-form-item :label="t('reports.search.fields.operatorName')">
+            <el-input v-model="filters.operatorName" clearable :placeholder="t('reports.search.fields.operatorPlaceholder')" />
+          </el-form-item>
         </div>
         <div class="mt-2 flex flex-col gap-2 md:flex-row md:justify-end">
           <el-button type="primary" :loading="loading" @click="search" class="w-full md:w-auto">
@@ -47,13 +50,20 @@
             {{ t('reports.search.buttons.importExcel') }}
           </el-button>
           <el-button type="danger" :disabled="selectedIds.length === 0" @click="deleteSelected" class="w-full md:w-auto">{{ t('reports.search.buttons.deleteSelected') }}</el-button>
-          <el-button type="success" :loading="exporting" @click="exportExcel({ from: filters.dateFrom, to: filters.dateTo, lineCode: filters.lineCode })" class="w-full md:w-auto">
+          <el-button type="success" :loading="exporting" @click="exportExcel({ from: filters.dateFrom, to: filters.dateTo, lineCode: filters.lineCode, shiftName: filters.shiftName, partNumber: filters.partNumber, operatorName: filters.operatorName })" class="w-full md:w-auto">
             <el-icon class="mr-1"><Download /></el-icon>
             {{ t('reports.exportV9.button') }}
           </el-button>
         </div>
         <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
       </el-form>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div v-for="item in summaryItems" :key="item.key" class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <p class="text-xs font-bold uppercase text-slate-500">{{ item.label }}</p>
+        <p class="mt-1 text-2xl font-black text-slate-900">{{ item.format === 'percent' ? formatPercent(item.value) : formatNumber(item.value) }}</p>
+      </div>
     </div>
 
     <div class="page-card overflow-hidden">
@@ -64,6 +74,12 @@
         <el-table-column prop="shiftName" :label="t('reports.search.table.shift')" width="200" />
         <el-table-column prop="machineCode" :label="t('reports.search.table.machine')" width="80" />
         <el-table-column prop="company" :label="t('reports.search.table.company')" min-width="80" show-overflow-tooltip />
+        <el-table-column :label="t('reports.search.table.operatorName')" width="150" align="center" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.responsibleLeader')" width="160" align="center" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
+        </el-table-column>
         <el-table-column prop="partNumber" :label="t('reports.search.table.partNumber')" width="120" />
         <el-table-column prop="partName" :label="t('reports.search.table.partName')" min-width="80" show-overflow-tooltip />
         <el-table-column :label="t('reports.search.table.processIds')" min-width="130" show-overflow-tooltip>
@@ -135,6 +151,7 @@ const filters = ref({
   lineCode: '',
   shiftName: '',
   partNumber: '',
+  operatorName: '',
 })
 
 const exporting = ref(false)
@@ -154,6 +171,87 @@ const paginatedReports = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return reports.value.slice(start, start + pageSize.value)
 })
+
+const reportTotals = computed(() => reports.value.reduce((totals, report) => ({
+  completedQuantity: totals.completedQuantity + Number(report.inputQuantity || 0),
+  goodQuantity: totals.goodQuantity + Number(report.goodQuantity || 0),
+  internalDefectQuantity: totals.internalDefectQuantity + Number(report.internalDefectQuantity || 0),
+  externalDefectQuantity: totals.externalDefectQuantity + Number(report.externalDefectQuantity || 0),
+  productionEfficiency: totals.productionEfficiency + Number(report.productionEfficiency || 0),
+  availabilityRate: totals.availabilityRate + Number(report.availabilityRate || 0),
+  performanceRate: totals.performanceRate + Number(report.performanceRate || 0),
+  qualityRate: totals.qualityRate + Number(report.qualityRate || 0),
+  oee: totals.oee + Number(report.oee || 0),
+}), {
+  completedQuantity: 0,
+  goodQuantity: 0,
+  internalDefectQuantity: 0,
+  externalDefectQuantity: 0,
+  productionEfficiency: 0,
+  availabilityRate: 0,
+  performanceRate: 0,
+  qualityRate: 0,
+  oee: 0,
+}))
+
+const reportCount = computed(() => reports.value.length)
+
+function averageTotal(value) {
+  return reportCount.value ? value / reportCount.value : 0
+}
+
+const summaryItems = computed(() => [
+  {
+    key: 'completedQuantity',
+    label: t('reports.search.summary.completedQuantity'),
+    value: reportTotals.value.completedQuantity,
+  },
+  {
+    key: 'goodQuantity',
+    label: t('reports.search.summary.goodQuantity'),
+    value: reportTotals.value.goodQuantity,
+  },
+  {
+    key: 'internalDefectQuantity',
+    label: t('reports.search.summary.internalDefectQuantity'),
+    value: reportTotals.value.internalDefectQuantity,
+  },
+  {
+    key: 'externalDefectQuantity',
+    label: t('reports.search.summary.externalDefectQuantity'),
+    value: reportTotals.value.externalDefectQuantity,
+  },
+  {
+    key: 'avgProductionEfficiency',
+    label: t('reports.search.summary.avgProductionEfficiency'),
+    value: averageTotal(reportTotals.value.productionEfficiency),
+    format: 'percent',
+  },
+  {
+    key: 'avgAvailabilityRate',
+    label: t('reports.search.summary.avgAvailabilityRate'),
+    value: averageTotal(reportTotals.value.availabilityRate),
+    format: 'percent',
+  },
+  {
+    key: 'avgPerformanceRate',
+    label: t('reports.search.summary.avgPerformanceRate'),
+    value: averageTotal(reportTotals.value.performanceRate),
+    format: 'percent',
+  },
+  {
+    key: 'avgQualityRate',
+    label: t('reports.search.summary.avgQualityRate'),
+    value: averageTotal(reportTotals.value.qualityRate),
+    format: 'percent',
+  },
+  {
+    key: 'avgOee',
+    label: t('reports.search.summary.avgOee'),
+    value: averageTotal(reportTotals.value.oee),
+    format: 'percent',
+  },
+])
 
 async function loadOptions() {
   try {
@@ -249,6 +347,10 @@ function formatPercent(value) {
   return `${(Number(value || 0) * 100).toFixed(1)}%`
 }
 
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString()
+}
+
 function rate(value) {
   return `${(Number(value || 0) * 100).toFixed(0)}`
 }
@@ -272,6 +374,7 @@ async function search() {
       lineCode: filters.value.lineCode,
       shiftName: filters.value.shiftName,
       partNumber: filters.value.partNumber,
+      operatorName: filters.value.operatorName,
     })
     selectedIds.value = []
     currentPage.value = 1
@@ -310,6 +413,7 @@ function resetFilters() {
     lineCode: '',
     shiftName: '',
     partNumber: '',
+    operatorName: '',
   }
   search()
 }

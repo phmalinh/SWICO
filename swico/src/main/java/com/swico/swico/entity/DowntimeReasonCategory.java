@@ -3,21 +3,18 @@ package com.swico.swico.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "downtime_reasons")
-public class DowntimeReason {
+@Table(name = "downtime_reasons_category")
+public class DowntimeReasonCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "reason_code", nullable = false, unique = true, length = 20)
-    private String reasonCode;
-
-    @Column(name = "reason_text", nullable = false, length = 1000)
-    private String reasonText;
-
-    @Column(name = "reason_category_code", length = 20)
+    @Column(name = "reason_category_code", nullable = false, unique = true, length = 20)
     private String reasonCategoryCode;
+
+    @Column(name = "reason_category_text", nullable = false, length = 1000)
+    private String reasonCategoryText;
 
     @Column(name = "sort_order")
     private Integer sortOrder;
@@ -33,28 +30,20 @@ public class DowntimeReason {
         this.id = id;
     }
 
-    public String getReasonCode() {
-        return reasonCode;
-    }
-
-    public void setReasonCode(String reasonCode) {
-        this.reasonCode = reasonCode;
-    }
-
-    public String getReasonText() {
-        return reasonText;
-    }
-
-    public void setReasonText(String reasonText) {
-        this.reasonText = reasonText;
-    }
-
     public String getReasonCategoryCode() {
         return reasonCategoryCode;
     }
 
     public void setReasonCategoryCode(String reasonCategoryCode) {
         this.reasonCategoryCode = reasonCategoryCode;
+    }
+
+    public String getReasonCategoryText() {
+        return reasonCategoryText;
+    }
+
+    public void setReasonCategoryText(String reasonCategoryText) {
+        this.reasonCategoryText = reasonCategoryText;
     }
 
     public Integer getSortOrder() {

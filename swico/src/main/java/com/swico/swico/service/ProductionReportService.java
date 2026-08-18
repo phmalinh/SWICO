@@ -1,5 +1,6 @@
 package com.swico.swico.service;
 
+import com.swico.swico.config.AppClock;
 import com.swico.swico.dto.*;
 import com.swico.swico.entity.DailyProductionReport;
 import com.swico.swico.entity.Line;
@@ -11,6 +12,7 @@ import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.ProductRepository;
 import com.swico.swico.repository.ProductProcessRepository;
 import com.swico.swico.repository.ShiftRepository;
+import com.swico.swico.repository.UserRepository;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -46,6 +48,7 @@ public class ProductionReportService {
     private final ProductRepository productRepository;
     private final ProductProcessRepository productProcessRepository;
     private final ShiftRepository shiftRepository;
+    private final UserRepository userRepository;
     private final MasterDataService masterDataService;
     private final ProductionFormulaService formulaService;
 
@@ -55,6 +58,7 @@ public class ProductionReportService {
             ProductRepository productRepository,
             ProductProcessRepository productProcessRepository,
             ShiftRepository shiftRepository,
+            UserRepository userRepository,
             MasterDataService masterDataService,
             ProductionFormulaService formulaService
     ) {
@@ -63,6 +67,7 @@ public class ProductionReportService {
         this.productRepository = productRepository;
         this.productProcessRepository = productProcessRepository;
         this.shiftRepository = shiftRepository;
+        this.userRepository = userRepository;
         this.masterDataService = masterDataService;
         this.formulaService = formulaService;
     }
@@ -86,7 +91,7 @@ public class ProductionReportService {
             .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
         DailyProductionReport entity = new DailyProductionReport();
-        entity.setReportDate(request.reportDate() != null ? request.reportDate() : LocalDate.now());
+        entity.setReportDate(request.reportDate() != null ? request.reportDate() : AppClock.today());
         entity.setLine(line);
         entity.setShift(shift);
         entity.setMachineCode(request.machineCode());
@@ -100,6 +105,7 @@ public class ProductionReportService {
         entity.setInternalDefectQuantity(request.internalDefectQuantity());
         entity.setExternalDefectQuantity(request.externalDefectQuantity());
         entity.setCompany(request.company());
+        entity.setResponsibleLeader(request.responsibleLeader());
         entity.setCreatedBy(createdBy);
         entity.setDowntimeReason(request.downtimeReason());
 
@@ -190,7 +196,7 @@ public class ProductionReportService {
         Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
             .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
-        entity.setReportDate(request.reportDate() != null ? request.reportDate() : LocalDate.now());
+        entity.setReportDate(request.reportDate() != null ? request.reportDate() : AppClock.today());
         entity.setLine(line);
         entity.setShift(shift);
         entity.setMachineCode(request.machineCode());
@@ -204,6 +210,7 @@ public class ProductionReportService {
         entity.setInternalDefectQuantity(request.internalDefectQuantity());
         entity.setExternalDefectQuantity(request.externalDefectQuantity());
         entity.setCompany(request.company());
+        entity.setResponsibleLeader(request.responsibleLeader());
         entity.setDowntimeReason(request.downtimeReason());
 
         ProductionCalculationResponse calculated = formulaService.calculate(request, effectiveShiftMinutes);
@@ -278,6 +285,7 @@ public class ProductionReportService {
                     parseInteger(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1))),
                     parseInteger(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("company", -1))),
+                    parseString(getCell(row, headerIndex.getOrDefault("responsibleLeader", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("responsibility", -1))),
                     parsePercentPoints(getCell(row, headerIndex.getOrDefault("deductionPercent", -1))),
@@ -337,45 +345,53 @@ public class ProductionReportService {
             return;
         }
         DataFormatter formatter = new DataFormatter();
-        String eighthHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(7)));
-        boolean hasOperationColumn = eighthHeader.equals("op") || eighthHeader.contains("工序");
 
         indexMap.put("reportDate", 0);
         indexMap.put("lineCode", 1);
         indexMap.put("shiftName", 2);
         indexMap.put("machineCode", 3);
         indexMap.put("company", 4);
-        indexMap.put("partNumber", 5);
-        indexMap.put("partName", 6);
-
-        int offset = hasOperationColumn ? 1 : 0;
-        if (hasOperationColumn) {
-            indexMap.put("processIds", 7);
+        String operatorHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(5)));
+        String leaderHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(6)));
+        int peopleOffset = "operatorName".equals(mapHeaderKey(operatorHeader)) || "responsibleLeader".equals(mapHeaderKey(leaderHeader)) ? 2 : 0;
+        if (peopleOffset > 0) {
+            indexMap.put("operatorName", 5);
+            indexMap.put("responsibleLeader", 6);
         }
-        indexMap.put("cycleTimeSeconds", 7 + offset);
-        indexMap.put("totalOperatingMinutes", 8 + offset);
-        indexMap.put("downtimeMinutes", 9 + offset);
-        indexMap.put("downtimeReason", 10 + offset);
-        indexMap.put("shiftStandardTimeMinutes", 11 + offset);
-        indexMap.put("dailyTargetQuantity", 12 + offset);
-        indexMap.put("inputQuantity", 13 + offset);
-        indexMap.put("goodQuantity", 14 + offset);
+        indexMap.put("partNumber", 5 + peopleOffset);
+        indexMap.put("partName", 6 + peopleOffset);
 
-        int metricOffset = offset;
-        String defectOrInternalHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + offset)));
+        String operationHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(7 + peopleOffset)));
+        boolean hasOperationColumn = operationHeader.equals("op") || operationHeader.contains("工序");
+        int offset = hasOperationColumn ? 1 : 0;
+        int baseOffset = peopleOffset + offset;
+        if (hasOperationColumn) {
+            indexMap.put("processIds", 7 + peopleOffset);
+        }
+        indexMap.put("cycleTimeSeconds", 7 + baseOffset);
+        indexMap.put("totalOperatingMinutes", 8 + baseOffset);
+        indexMap.put("downtimeMinutes", 9 + baseOffset);
+        indexMap.put("downtimeReason", 10 + baseOffset);
+        indexMap.put("shiftStandardTimeMinutes", 11 + baseOffset);
+        indexMap.put("dailyTargetQuantity", 12 + baseOffset);
+        indexMap.put("inputQuantity", 13 + baseOffset);
+        indexMap.put("goodQuantity", 14 + baseOffset);
+
+        int metricOffset = baseOffset;
+        String defectOrInternalHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
         boolean firstDefectColumnIsInternal = "internalDefectQuantity".equals(mapHeaderKey(defectOrInternalHeader));
         if (firstDefectColumnIsInternal) {
-            indexMap.put("internalDefectQuantity", 15 + offset);
-            indexMap.put("externalDefectQuantity", 16 + offset);
+            indexMap.put("internalDefectQuantity", 15 + metricOffset);
+            indexMap.put("externalDefectQuantity", 16 + metricOffset);
             metricOffset += 2;
         } else {
-            indexMap.put("defectQuantity", 15 + offset);
-            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + offset)));
+            indexMap.put("defectQuantity", 15 + metricOffset);
+            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + baseOffset)));
             boolean hasDefectSplitColumns = "internalDefectQuantity".equals(mapHeaderKey(internalDefectHeader));
             metricOffset += 1;
             if (hasDefectSplitColumns) {
-                indexMap.put("internalDefectQuantity", 16 + offset);
-                indexMap.put("externalDefectQuantity", 17 + offset);
+                indexMap.put("internalDefectQuantity", 16 + baseOffset);
+                indexMap.put("externalDefectQuantity", 17 + baseOffset);
                 metricOffset += 2;
             }
         }
@@ -449,6 +465,12 @@ public class ProductionReportService {
         }
         if (header.contains("công ty") || header.contains("公司") || header.equals("company")) {
             return "company";
+        }
+        if (header.contains("作員") || header.contains("作業員") || header.contains("nhan vien thao tac") || header.contains("operator")) {
+            return "operatorName";
+        }
+        if (header.contains("負責幹部") || header.contains("負責干部") || header.contains("can bo phu trach") || header.contains("leader") || header.contains("supervisor")) {
+            return "responsibleLeader";
         }
         if (header.contains("mã hàng") || header.contains("料號") || header.contains("part number") || header.contains("partnumber") || header.equals("part") || header.contains("pn")) {
             return "partNumber";
@@ -678,14 +700,16 @@ public class ProductionReportService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductionReportResponse> getReports(LocalDate from, LocalDate to, String lineCode, String shiftName, String partNumber) {
-        LocalDate effectiveFrom = from != null ? from : LocalDate.now();
+    public List<ProductionReportResponse> getReports(LocalDate from, LocalDate to, String lineCode, String shiftName, String partNumber, String operatorName) {
+        LocalDate effectiveFrom = from != null ? from : AppClock.today();
         LocalDate effectiveTo = to != null ? to : effectiveFrom;
         List<DailyProductionReport> reports = reportRepository.findByReportDateBetweenOrderByReportDateDescCreatedAtDesc(effectiveFrom, effectiveTo);
+        String operatorTerm = operatorName != null ? operatorName.trim().toLowerCase(Locale.ROOT) : "";
         return reports.stream()
                 .filter(r -> lineCode == null || lineCode.isBlank() || (r.getLine() != null && lineCode.equals(r.getLine().getLineCode())))
                 .filter(r -> shiftName == null || shiftName.isBlank() || (r.getShift() != null && shiftName.equals(r.getShift().getShiftName())))
                 .filter(r -> partNumber == null || partNumber.isBlank() || (r.getProduct() != null && r.getProduct().getPartNumber().contains(partNumber)))
+                .filter(r -> operatorTerm.isBlank() || operatorMatches(r.getCreatedBy(), operatorTerm))
                 .sorted(Comparator.comparing(DailyProductionReport::getCreatedAt).reversed())
                 .map(r -> toResponse(r, null))
                 .toList();
@@ -719,7 +743,7 @@ public class ProductionReportService {
 
     @Transactional(readOnly = true)
     public List<ProductionReportResponse> getTodayReports(LocalDate reportDate, String lineCode) {
-        LocalDate date = reportDate != null ? reportDate : LocalDate.now();
+        LocalDate date = reportDate != null ? reportDate : AppClock.today();
         List<DailyProductionReport> reports = (lineCode == null || lineCode.isBlank())
                 ? reportRepository.findByReportDateOrderByCreatedAtDesc(date)
                 : reportRepository.findByReportDateAndLine_LineCodeOrderByCreatedAtDesc(date, lineCode);
@@ -728,7 +752,7 @@ public class ProductionReportService {
 
     @Transactional(readOnly = true)
     public DashboardSummaryResponse getDashboard(LocalDate reportDate) {
-        LocalDate date = reportDate != null ? reportDate : LocalDate.now();
+        LocalDate date = reportDate != null ? reportDate : AppClock.today();
         List<DailyProductionReport> reports = reportRepository.findByReportDateOrderByCreatedAtDesc(date);
 
         BigDecimal avgOee = average(reports.stream().map(DailyProductionReport::getOee).toList());
@@ -839,6 +863,8 @@ public class ProductionReportService {
                 report.getInternalDefectQuantity(),
                 report.getExternalDefectQuantity(),
                 calculated != null ? calculated.company() : report.getCompany(),
+                operatorDisplayName(report.getCreatedBy()),
+                report.getResponsibleLeader(),
                 calculated != null ? calculated.downtimeReason() : report.getDowntimeReason(),
                 calculated != null ? calculated.responsibility() : report.getResponsibility(),
                 calculated != null ? calculated.deductionPercent() : report.getDeductionPercent(),
@@ -855,6 +881,27 @@ public class ProductionReportService {
                 report.getUpdatedAt(),
                 report.getCreatedBy()
         );
+    }
+
+    private String operatorDisplayName(String username) {
+        if (username == null || username.isBlank()) {
+            return null;
+        }
+        return userRepository.findByUsername(username)
+                .map(user -> user.getFullName() != null && !user.getFullName().isBlank() ? user.getFullName() : user.getUsername())
+                .orElse(username);
+    }
+
+    private boolean operatorMatches(String username, String operatorTerm) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        String normalizedUsername = username.toLowerCase(Locale.ROOT);
+        if (normalizedUsername.contains(operatorTerm)) {
+            return true;
+        }
+        String displayName = operatorDisplayName(username);
+        return displayName != null && displayName.toLowerCase(Locale.ROOT).contains(operatorTerm);
     }
 
     private BigDecimal average(List<BigDecimal> values) {

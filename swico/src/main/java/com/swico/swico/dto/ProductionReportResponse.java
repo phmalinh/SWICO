@@ -21,6 +21,8 @@ public record ProductionReportResponse(
         Integer internalDefectQuantity,
         Integer externalDefectQuantity,
         String company,
+        String operatorName,
+        String responsibleLeader,
         String downtimeReason,
         BigDecimal responsibility,
         BigDecimal deductionPercent,

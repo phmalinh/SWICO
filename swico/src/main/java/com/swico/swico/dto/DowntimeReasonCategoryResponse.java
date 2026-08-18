@@ -1,10 +1,9 @@
 package com.swico.swico.dto;
 
-public record DowntimeReasonResponse(
+public record DowntimeReasonCategoryResponse(
         Long id,
-        String reasonCode,
-        String reasonText,
         String reasonCategoryCode,
+        String reasonCategoryText,
         Integer sortOrder,
         Boolean active
 ) {}

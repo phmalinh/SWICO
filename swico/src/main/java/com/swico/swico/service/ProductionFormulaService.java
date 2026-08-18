@@ -1,5 +1,6 @@
 package com.swico.swico.service;
 
+import com.swico.swico.config.AppClock;
 import com.swico.swico.dto.ProductionCalculationRequest;
 import com.swico.swico.dto.ProductionCalculationResponse;
 import org.springframework.stereotype.Service;
@@ -41,11 +42,6 @@ public class ProductionFormulaService {
         }
 
         BigDecimal productionEfficiency = null;
-        if (dailyTarget != null && dailyTarget.compareTo(BigDecimal.ZERO) > 0) {
-            productionEfficiency = BigDecimal.valueOf(inputQuantity)
-                    .divide(dailyTarget, 4, RoundingMode.HALF_UP);
-        }
-
         BigDecimal availabilityRate = null;
         BigDecimal performanceRate = null;
         BigDecimal qualityRate = null;
@@ -85,8 +81,17 @@ public class ProductionFormulaService {
         }
         deductionPercent = deductionPercent.setScale(4, RoundingMode.HALF_UP);
 
+        if (operatingMinutes != null && operatingMinutes > 0 && cycleTimeSeconds != null && cycleTimeSeconds.compareTo(BigDecimal.ZERO) > 0 && inputQuantity != null) {
+            BigDecimal baseEfficiency = BigDecimal.valueOf(inputQuantity)
+                    .multiply(cycleTimeSeconds.divide(BigDecimal.valueOf(60), 8, RoundingMode.HALF_UP))
+                    .divide(BigDecimal.valueOf(operatingMinutes), 4, RoundingMode.HALF_UP);
+            productionEfficiency = responsibility.compareTo(new BigDecimal("0.0027")) > 0
+                    ? baseEfficiency.subtract(deductionPercent).setScale(4, RoundingMode.HALF_UP)
+                    : baseEfficiency;
+        }
+
         return new ProductionCalculationResponse(
-                request.reportDate() != null ? request.reportDate() : LocalDate.now(),
+                request.reportDate() != null ? request.reportDate() : AppClock.today(),
                 request.lineCode(),
                 request.shiftName(),
                 request.machineCode(),

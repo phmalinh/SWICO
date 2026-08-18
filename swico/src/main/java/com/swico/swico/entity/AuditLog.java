@@ -1,5 +1,6 @@
 package com.swico.swico.entity;
 
+import com.swico.swico.config.AppClock;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -31,7 +32,7 @@ public class AuditLog {
 
     @PrePersist
     protected void onCreate() {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = AppClock.now();
     }
 
     public Long getId() {
