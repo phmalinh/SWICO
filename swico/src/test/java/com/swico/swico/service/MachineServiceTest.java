@@ -11,6 +11,7 @@ import com.swico.swico.repository.ProductProcessRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,5 +48,26 @@ class MachineServiceTest {
 
         assertEquals("A1", response.lineCode());
         assertEquals("A1", machineCaptor.getValue().getLine().getLineCode());
+    }
+
+    @Test
+    void deleteAllShouldDeleteMachinesAfterValidation() {
+        MachineRepository machineRepository = mock(MachineRepository.class);
+        LineRepository lineRepository = mock(LineRepository.class);
+        DailyProductionReportRepository reportRepository = mock(DailyProductionReportRepository.class);
+        ProductProcessRepository productProcessRepository = mock(ProductProcessRepository.class);
+        MachineService service = new MachineService(machineRepository, lineRepository, reportRepository, productProcessRepository);
+
+        Machine machine = new Machine();
+        machine.setId(3L);
+        machine.setMachineCode("TC-03");
+        when(machineRepository.findAll()).thenReturn(List.of(machine));
+        when(machineRepository.findById(3L)).thenReturn(Optional.of(machine));
+
+        service.deleteAllMachines();
+
+        verify(reportRepository).existsByMachineCode("TC-03");
+        verify(productProcessRepository).existsByMachineCodeToken("TC-03");
+        verify(machineRepository).deleteAll();
     }
 }

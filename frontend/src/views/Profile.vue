@@ -27,6 +27,10 @@
               <el-option v-for="line in lines" :key="line.lineCode" :label="line.lineCode" :value="line.lineCode" />
             </el-select>
           </el-form-item>
+          <el-form-item :label="t('profile.team')">
+            <el-input v-model="profileForm.team" readonly />
+          </el-form-item>
+
           <el-form-item :label="t('profile.role')">
             <el-input v-model="profileForm.role" readonly />
           </el-form-item>
@@ -69,7 +73,7 @@ import { useI18n } from '@/i18n'
 const { t } = useI18n()
 const router = useRouter()
 
-const profileForm = ref({ username: '', fullName: '', role: '', lineCode: '', mustChangePassword: false })
+const profileForm = ref({ username: '', fullName: '', role: '', lineCode: '',team: '', mustChangePassword: false })
 const passwordForm = ref({ currentPassword: '', newPassword: '', confirmPassword: '' })
 const lines = ref([])
 const savingProfile = ref(false)

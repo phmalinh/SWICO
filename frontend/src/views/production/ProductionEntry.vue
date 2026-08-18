@@ -31,11 +31,30 @@
                 <el-option v-for="s in shifts" :key="s.shiftName" :label="s.shiftName" :value="s.shiftName" />
               </el-select>
             </el-form-item>
-            <el-form-item :label="t('productionEntry.company')" class="!mb-0">
+            <!-- <el-form-item :label="t('productionEntry.company')" class="!mb-0">
               <el-input v-model="form.company" size="default" :placeholder="t('productionEntry.enterCompany')" />
+            </el-form-item> -->
+             <el-form-item :label="t('productionEntry.company')" class="!mb-0">
+              <el-select v-model="form.company" size="default" class="w-full" :placeholder="t('productionEntry.enterCompany')" filterable>
+                <el-option v-for="r in company" :key="r" :company="r" :value="r" :label="r" />
+              </el-select>
             </el-form-item>
             <el-form-item :label="t('productionEntry.responsibleLeader')" class="!mb-0">
-              <el-input v-model="form.responsibleLeader" size="default" :placeholder="t('productionEntry.enterResponsibleLeader')" />
+              <el-select
+                v-model="form.responsibleLeader"
+                size="default"
+                class="w-full"
+                :placeholder="t('productionEntry.enterResponsibleLeader')"
+                clearable
+                filterable
+              >
+                <el-option
+                  v-for="leader in leaders"
+                  :key="leader.username"
+                  :label="leader.label"
+                  :value="leader.value"
+                />
+              </el-select>
             </el-form-item>
           </div>
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
@@ -416,6 +435,7 @@ const { t } = useI18n()
 const products = ref([])
 const lines = ref([])
 const machines = ref([])
+const leaders = ref([])
 const processOptions = ref([])
 const processNameById = ref({})
 const shifts = ref([])
@@ -476,8 +496,24 @@ const defaultDowntimeReasons = [
   'G. 操作人員請假（無替代人員時） / Nhân viên thao tác nghỉ phép (khi không có người thay thế)',
   'H. 其他 / Khác',
 ]
+const company = [
+  'STRONG WAY',
+  '客戶',
+  '其他',
+]
 const downtimeCategories = ref([])
 const downtimeReasons = ref(defaultDowntimeReasons.map(value => ({ categoryCode: '', label: value, value })))
+
+function normalizeLeader(user) {
+  const fullName = String(user?.fullName || '').trim()
+  const username = String(user?.username || '').trim()
+  const displayName = fullName || username
+  return {
+    username,
+    value: displayName,
+    label: username && fullName ? `${fullName} (${username})` : displayName,
+  }
+}
 
 function filteredDowntimeReasons(categoryCode) {
   if (!categoryCode) return downtimeReasons.value
@@ -848,11 +884,12 @@ function parseTimeString(value) {
 
 async function loadInitialData() {
   try {
-    const [productsRes, linesRes, machinesRes, shiftsRes, downtimeCategoriesRes, downtimeReasonsRes] = await Promise.all([
+    const [productsRes, linesRes, machinesRes, shiftsRes, leadersRes, downtimeCategoriesRes, downtimeReasonsRes] = await Promise.all([
       masterApi.getProducts(),
       masterApi.getLines(),
       masterApi.getMachines(),
       masterApi.getShifts(),
+      masterApi.getLeaders(),
       masterApi.getDowntimeReasonCategories().catch(() => []),
       masterApi.getDowntimeReasons().catch(() => []),
     ])
@@ -879,6 +916,7 @@ async function loadInitialData() {
       startTime: item.startTime || null,
       endTime: item.endTime || null,
     }))
+    leaders.value = (leadersRes || []).map(normalizeLeader).filter(item => item.value)
     downtimeCategories.value = (downtimeCategoriesRes || [])
       .filter(item => item.active !== false)
       .map(item => ({

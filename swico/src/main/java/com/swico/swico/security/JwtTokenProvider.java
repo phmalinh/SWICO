@@ -100,7 +100,6 @@ public class JwtTokenProvider {
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.expiration-ms}") long expirationMs
     ) {
-        // 🛠️ CHÚ Ý: Bắt buộc chỉ định StandardCharsets.UTF_8 để tránh sai chữ ký giữa các lần khởi động
         this.jwtSecret = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.jwtExpirationMs = expirationMs;
     }
@@ -132,7 +131,7 @@ public class JwtTokenProvider {
             getClaims(authToken);
             return true;
         } catch (Exception ex) {
-            // 🛠️ Đổi sang logger.error để in rõ lý do vì sao Token không hợp lệ ra Console
+            //  Đổi sang logger.error để in rõ lý do vì sao Token không hợp lệ ra Console
             logger.error("JWT Validation Failed: {}", ex.getMessage());
             return false;
         }

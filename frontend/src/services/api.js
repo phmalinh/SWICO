@@ -264,7 +264,7 @@ async function request(path, options = {}, config = {}) {
     if (!response.ok) {
       const text = await response.text()
       if (response.status === 401) {
-        if (config.handleAuthFailure !== false) {
+        if (config.handleAuthFailure === true) {
           handleAuthFailure()
         }
         throw new Error(text || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
@@ -311,16 +311,19 @@ export const masterApi = {
   createLine: payload => request('/master-data/lines', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   updateLine: (id, payload) => request(`/master-data/lines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   deleteLine: id => request(`/master-data/lines/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  deleteAllLines: () => request('/master-data/lines', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
 
   getShifts: () => request('/master-data/shifts'),
   createShift: payload => request('/master-data/shifts', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   updateShift: (id, payload) => request(`/master-data/shifts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   deleteShift: id => request(`/master-data/shifts/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  getLeaders: () => request('/master-data/leaders'),
 
   getMachines: () => request('/master-data/machines'),
   createMachine: payload => request('/master-data/machines', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   updateMachine: (id, payload) => request(`/master-data/machines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   deleteMachine: id => request(`/master-data/machines/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  deleteAllMachines: () => request('/master-data/machines', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   getEmployeeSkills: () => request('/master-data/employee-skills'),
   getEmployeeSkillUsers: () => request('/master-data/employee-skills/users'),
   createEmployeeSkill: payload => request('/master-data/employee-skills', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
@@ -375,6 +378,7 @@ export const productionApi = {
 
 export const userApi = {
   list: () => request('/system/users'),
+  leaders: () => request('/master-data/leaders'),
   create: payload => request('/system/users', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   update: (id, payload) => request(`/system/users/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   delete: id => request(`/system/users/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
@@ -385,8 +389,8 @@ export const systemApi = {
 }
 
 export const authApi = {
-  me: () => request(`${AUTH_PATH}/me`),
-  updateProfile: payload => request(`${AUTH_PATH}/me`, { method: 'PUT', body: JSON.stringify(payload) }),
+  me: () => request(`${AUTH_PATH}/me`, {}, KEEP_PAGE_ON_ERROR),
+  updateProfile: payload => request(`${AUTH_PATH}/me`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   changePassword: payload => request(`${AUTH_PATH}/change-password`, { method: 'POST', body: JSON.stringify(payload) }, { handleAuthFailure: false }),
 }
 

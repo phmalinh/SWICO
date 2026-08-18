@@ -3,7 +3,6 @@
     <PageHeader
       :eyebrow="t('reports.exportV9.eyebrow')"
       :title="t('reports.exportV9.pageTitle')"
-      :subtitle="t('reports.exportV9.pageSubtitle')"
     />
 
 
@@ -59,12 +58,12 @@
       </el-form>
     </div>
 
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <!-- <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
       <div v-for="item in summaryItems" :key="item.key" class="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
         <p class="text-xs font-bold uppercase text-slate-500">{{ item.label }}</p>
         <p class="mt-1 text-2xl font-black text-slate-900">{{ item.format === 'percent' ? formatPercent(item.value) : formatNumber(item.value) }}</p>
       </div>
-    </div>
+    </div> -->
 
     <div class="page-card overflow-hidden">
       <el-table :data="paginatedReports" stripe style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">

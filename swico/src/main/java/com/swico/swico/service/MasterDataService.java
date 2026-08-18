@@ -4,10 +4,12 @@ import com.swico.swico.dto.MasterDataResponse;
 import com.swico.swico.dto.LineUpsertRequest;
 import com.swico.swico.dto.ProductUpsertRequest;
 import com.swico.swico.dto.ShiftUpsertRequest;
+import com.swico.swico.dto.UserResponse;
 import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Product;
 import com.swico.swico.entity.Shift;
 import com.swico.swico.entity.ProductProcess;
+import com.swico.swico.entity.Role;
 import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.MachineRepository;
 import com.swico.swico.repository.ProductRepository;
@@ -67,6 +69,18 @@ public class MasterDataService {
     public List<MasterDataResponse> getShifts() {
         return shiftRepository.findAll().stream()
                 .map(s -> new MasterDataResponse(s.getId(), null, s.getShiftName(), null, null, s.getStandardTimeMinutes()))
+                .toList();
+    }
+
+    public List<UserResponse> getLeaders() {
+        List<com.swico.swico.entity.User> leaders = userRepository.findByRoleAndActiveTrueOrderByFullNameAscUsernameAsc(Role.ROLE_LEADER);
+        if (leaders.isEmpty()) {
+            leaders = userRepository.findByActiveTrueOrderByFullNameAscUsernameAsc().stream()
+                    .filter(user -> user.getRole() == Role.ROLE_MANAGER || user.getRole() == Role.ROLE_ADMIN)
+                    .toList();
+        }
+        return leaders.stream()
+                .map(UserResponse::fromEntity)
                 .toList();
     }
 
@@ -285,6 +299,13 @@ public class MasterDataService {
         deleteAllProcesses();
         productRepository.deleteAll();
     }
+    @Transactional
+    public void deleteAllLines() {
+        for (Line line : lineRepository.findAll()) {
+            assertLineCanBeDeleted(line.getId());
+        }
+        lineRepository.deleteAll();
+    }
 
     private void assertProcessCanBeDeleted(ProductProcess process) {
         java.util.List<String> blockers = new java.util.ArrayList<>();
@@ -299,7 +320,6 @@ public class MasterDataService {
             throw new IllegalStateException("Không thể xóa công đoạn " + process.getProcess() + " vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
         }
     }
-
     private void assertProductCanBeDeleted(Long id) {
         java.util.List<String> blockers = new java.util.ArrayList<>();
         if (reportRepository.existsByProductId(id)) {
@@ -310,6 +330,25 @@ public class MasterDataService {
         }
         if (!blockers.isEmpty()) {
             throw new IllegalStateException("Không thể xóa mã hàng này vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
+        }
+    }
+    private void assertLineCanBeDeleted(Long id) {
+        Line line = lineRepository.findById(id).orElseThrow();
+        java.util.List<String> blockers = new java.util.ArrayList<>();
+        if (machineRepository.existsByLineId(id)) {
+            blockers.add("thiết bị");
+        }
+        if (productProcessRepository.existsByLineCodeToken(line.getLineCode())) {
+            blockers.add("công đoạn");
+        }
+        if (reportRepository.existsByLineId(id)) {
+            blockers.add("báo cáo sản xuất");
+        }
+        if (userRepository.existsByLineCode(line.getLineCode())) {
+            blockers.add("tài khoản người dùng");
+        }
+        if (!blockers.isEmpty()) {
+            throw new IllegalStateException("Không thể xóa chuyền này vì vẫn còn dữ liệu liên quan: " + String.join(", ", blockers) + ". Vui lòng xóa hoặc chuyển dữ liệu liên quan trước.");
         }
     }
 }

@@ -3,7 +3,6 @@
     <PageHeader
       :eyebrow="t('reports.search.eyebrow')"
       :title="t('reports.search.pageTitle')"
-      :subtitle="t('reports.search.pageSubtitle')"
     />
 
     <div class="page-card mb-5 p-5">

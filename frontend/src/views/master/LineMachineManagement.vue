@@ -18,6 +18,8 @@
         <el-button type="info" @click="resetFilters">{{ l('clearFilters') }}</el-button>
         <el-button type="primary" @click="openLineDialog()">{{ l('addLine') }}</el-button>
         <el-button type="success" @click="openMachineDialog()">{{ l('addMachine') }}</el-button>
+        <el-button type="danger"  @click="deleteAllLines">{{ l('deleteAllLines') }}</el-button>
+        <el-button type="danger"  @click="deleteAllMachines">{{ l('deleteAllMachines') }}</el-button>
         <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
       </div>
     </div>
@@ -166,8 +168,14 @@ const text = {
     confirmTitle: 'Xác nhận',
     deleteLineConfirm: 'Xóa chuyền',
     deleteMachineConfirm: 'Xóa thiết bị',
+    deleteAllLines: 'Xóa toàn bộ chuyền',
+    deleteAllMachines: 'Xóa toàn bộ thiết bị',
+    deleteAllLinesConfirm: 'Xóa toàn bộ chuyền?',
+    deleteAllMachinesConfirm: 'Xóa toàn bộ thiết bị?',
     saved: 'Đã lưu',
     deleted: 'Đã xóa',
+    deletedAllLines: 'Đã xóa toàn bộ chuyền',
+    deletedAllMachines: 'Đã xóa toàn bộ thiết bị',
     total: 'Tổng',
     rowsPerPage: 'Dòng/trang',
     lineCount: 'Chuyền',
@@ -206,8 +214,14 @@ const text = {
     confirmTitle: '確認',
     deleteLineConfirm: '刪除產線',
     deleteMachineConfirm: '刪除設備',
+    deleteAllLines: '刪除所有產線',
+    deleteAllMachines: '刪除所有設備',
+    deleteAllLinesConfirm: '刪除所有產線？',
+    deleteAllMachinesConfirm: '刪除所有設備？',
     saved: '已儲存',
     deleted: '已刪除',
+    deletedAllLines: '已刪除所有產線',
+    deletedAllMachines: '已刪除所有設備',
     total: '總筆數',
     rowsPerPage: '每頁筆數',
     lineCount: '產線',
@@ -304,6 +318,7 @@ function resetFilters() {
   currentPage.value = 1
 }
 
+
 async function saveLine() {
   if (!lineForm.value.lineCode) {
     ElMessage.warning(l('missingLine'))
@@ -366,6 +381,26 @@ async function deleteLine(row) {
     ElMessage.error(error.message)
   }
 }
+async function deleteAllLines() {
+  await ElMessageBox.confirm(l('deleteAllLinesConfirm'), l('confirmTitle'), { type: 'warning' })
+  try {
+    await masterApi.deleteAllLines()
+    ElMessage.success(l('deletedAllLines'))
+    await loadData()
+  } catch (error) {
+    ElMessage.error(error.message)
+  }
+}
+async function deleteAllMachines() {
+  await ElMessageBox.confirm(l('deleteAllMachinesConfirm'), l('confirmTitle'), { type: 'warning' })
+  try {
+    await masterApi.deleteAllMachines()
+    ElMessage.success(l('deletedAllMachines'))
+    await loadData()
+  } catch (error) {
+    ElMessage.error(error.message)
+  }
+}
 
 function handleRowCommand(command, row) {
   if (command === 'editLine') {
@@ -394,10 +429,11 @@ watch(() => [filters.value.lineCode, filters.value.machineCode], () => {
 <style scoped>
 .toolbar-row {
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(320px, 1.4fr) repeat(4, max-content) minmax(120px, 0.45fr) minmax(120px, 0.45fr);
+  grid-template-columns: minmax(280px, 1fr) 220px repeat(7, max-content);
   gap: 12px;
-  align-items: stretch;
-  width: 100%;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 :deep(.toolbar-line .el-input__wrapper) {

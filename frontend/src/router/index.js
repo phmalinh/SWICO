@@ -15,10 +15,11 @@ const routes = [
       { path: 'production/history', name: 'ProductionHistory', component: () => import('@/views/production/ProductionHistory.vue'), meta: { title: 'routes.productionHistory', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/oee-dashboard', name: 'OeeDashboard', component: () => import('@/views/reports/OeeDashboard.vue'), meta: { title: 'routes.oeeDashboard', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/search', name: 'ReportSearch', component: ExportV9View, meta: { title: 'routes.reportSearch', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
+      { path: 'reports/pivot-statistics', name: 'PivotStatistics', component: () => import('@/views/reports/PivotStatistics.vue'), meta: { title: 'routes.pivotStatistics', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/export-v9', name: 'ExportV9', component: ExportV9View, meta: { title: 'routes.exportV9', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/product-processes', name: 'ProductProcessManagement', component: () => import('@/views/master/ProductProcessManagement.vue'), meta: { title: 'Quản lý mã hàng & công đoạn / 料號及工序管理', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/line-machines', name: 'LineMachineManagement', component: () => import('@/views/master/LineMachineManagement.vue'), meta: { title: 'Quản lý chuyền & thiết bị / 產線與設備管理', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
-      { path: 'master/employee-skills', name: 'EmployeeSkills', component: () => import('@/views/master/EmployeeSkills.vue'), meta: { title: 'Theo dõi năng lực nhân viên / 人員能力追蹤表', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
+      { path: 'master/employee-skills', name: 'EmployeeSkills', component: () => import('@/views/master/EmployeeSkills.vue'), meta: { title: 'Theo dõi năng lực nhân viên / 人員技能追蹤表', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/products', name: 'Products', component: () => import('@/views/master/Products.vue'), meta: { title: 'routes.products', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/processes', name: 'Processes', component: () => import('@/views/master/Processes.vue'), meta: { title: 'routes.processes', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/lines', name: 'Lines', component: () => import('@/views/master/Lines.vue'), meta: { title: 'routes.lines', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
@@ -63,7 +64,7 @@ router.beforeEach((to, from, next) => {
   }
 
   const allowedRoles = to.meta.roles || []
-  if (isAuthenticated && allowedRoles.length > 0 && !allowedRoles.includes(session.role)) {
+  if (isAuthenticated && allowedRoles.length > 0 && session.role && !allowedRoles.includes(session.role)) {
     next({ path: '/' })
     return
   }

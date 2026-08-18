@@ -65,6 +65,31 @@ function normalizeToken(token) {
   return normalized
 }
 
+function parseJwtPayload(token) {
+  try {
+    const cleanToken = normalizeToken(token)
+    const payload = cleanToken?.split('.')[1]
+    if (!payload) return {}
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(normalized.length + ((4 - normalized.length % 4) % 4), '=')
+    return JSON.parse(window.atob(padded))
+  } catch (error) {
+    return {}
+  }
+}
+
+function normalizeRole(role) {
+  if (Array.isArray(role)) {
+    return normalizeRole(role[0])
+  }
+  if (role && typeof role === 'object') {
+    return normalizeRole(role.role || role.authority || role.name)
+  }
+  const value = String(role || '').trim()
+  if (!value) return ''
+  return value.startsWith('ROLE_') ? value : `ROLE_${value.toUpperCase()}`
+}
+
 export async function login(username, password) {
   const response = await fetch(buildApiUrl(`${AUTH_PATH}/login`), {
     method: 'POST',
@@ -80,21 +105,25 @@ export async function login(username, password) {
   }
 
   const data = await response.json()
+  const payload = data.data || data.user || data
   
   // Hỗ trợ bắt token linh hoạt dù Backend trả về data.token, data.accessToken hay data.jwt
-  const token = data.token || data.accessToken || data.jwt || data.data?.token
-  const userRole = data.role || data.roles?.[0] || data.user?.role
-  const mustChangePassword = Boolean(data.mustChangePassword ?? data.user?.mustChangePassword)
+  const token = data.token || data.accessToken || data.jwt || data.data?.token || data.user?.token
+  const jwtPayload = parseJwtPayload(token)
+  const userRole = normalizeRole(payload.role || payload.roles || data.role || data.roles || jwtPayload.roles || jwtPayload.role)
+  const mustChangePassword = Boolean(payload.mustChangePassword ?? data.mustChangePassword ?? data.user?.mustChangePassword)
   
-  if (token) {
-    setSession({
-      token: token,
-      username: data.username || username,
-      fullName: data.fullName || data.name || username,
-      role: userRole,
-      mustChangePassword,
-    })
+  if (!token) {
+    throw new Error('Đăng nhập thành công nhưng server không trả token.')
   }
+
+  setSession({
+    token: token,
+    username: payload.username || data.username || username,
+    fullName: payload.fullName || payload.name || data.fullName || data.name || username,
+    role: userRole,
+    mustChangePassword,
+  })
 
   return data
 }

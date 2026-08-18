@@ -43,6 +43,13 @@ public class UserController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/leaders")
+    public List<UserResponse> getLeaders() {
+        return userRepository.findByRoleAndActiveTrueOrderByFullNameAscUsernameAsc(Role.ROLE_LEADER).stream()
+                .map(UserResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @PostMapping
     public ResponseEntity<UserResponse> create(@RequestBody UserUpsertRequest request, Authentication authentication) {
         if (request.username() == null || request.username().isBlank() || request.fullName() == null || request.fullName().isBlank()) {

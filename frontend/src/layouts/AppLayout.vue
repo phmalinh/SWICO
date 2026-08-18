@@ -224,6 +224,7 @@ const allMenuItems = computed(() => [
     children: [
       { id: '2.1', title: t('menu.dashboard'), icon: LayoutDashboard, path: '/reports/oee-dashboard' },
       { id: '2.2', title: t('menu.search'), icon: Search, path: '/reports/search' },
+      { id: '2.3', title: t('menu.pivotStatistics'), icon: FileSpreadsheet, path: '/reports/pivot-statistics' },
     ],
   },
   {

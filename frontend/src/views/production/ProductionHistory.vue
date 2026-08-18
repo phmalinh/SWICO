@@ -3,7 +3,7 @@
     <PageHeader
       :eyebrow="t('productionHistory.eyebrow')"
       :title="t('productionHistory.pageTitle')"
-      :subtitle="t('productionHistory.pageSubtitle')"
+    
     >
       <template #actions>
         <div class="flex items-center gap-3">

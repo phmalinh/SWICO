@@ -58,7 +58,6 @@
             <el-table-column prop="partNumber" :label="l('partNumber')" min-width="150" fixed show-overflow-tooltip />
             <!-- <el-table-column prop="team" :label="l('team')" min-width="140" show-overflow-tooltip /> -->
             <el-table-column
-              class="management-table matrix-table"
               v-for="employee in matrixEmployees"
               :key="employee.employeeCode"
               :column-key="employee.employeeCode"

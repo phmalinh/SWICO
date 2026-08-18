@@ -5,6 +5,7 @@ import com.swico.swico.dto.LineUpsertRequest;
 import com.swico.swico.dto.ProductionInfoImportResponse;
 import com.swico.swico.dto.ProductUpsertRequest;
 import com.swico.swico.dto.ShiftUpsertRequest;
+import com.swico.swico.dto.UserResponse;
 import com.swico.swico.service.MasterDataService;
 import com.swico.swico.service.ProductionInfoImportService;
 import jakarta.validation.Valid;
@@ -41,6 +42,11 @@ public class MasterDataController {
     @GetMapping("/shifts")
     public List<MasterDataResponse> shifts() {
         return masterDataService.getShifts();
+    }
+
+    @GetMapping("/leaders")
+    public List<UserResponse> leaders() {
+        return masterDataService.getLeaders();
     }
 
     @PostMapping("/products")
@@ -155,4 +161,23 @@ public class MasterDataController {
             return ResponseEntity.status(409).body(ex.getMessage());
         }
     }
+        @DeleteMapping("/lines")
+    public ResponseEntity<?> deleteAllLines() {
+        try {
+            masterDataService.deleteAllLines();
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).body(ex.getMessage());
+        }
+    }
+
+    // @DeleteMapping("/machines")
+    // public ResponseEntity<?> deleteAllMachines() {
+    //     try {
+    //         masterDataService.deleteAllMachines();
+    //         return ResponseEntity.noContent().build();
+    //     } catch (IllegalStateException ex) {
+    //         return ResponseEntity.status(409).body(ex.getMessage());
+    //     }
+    // }
 }
