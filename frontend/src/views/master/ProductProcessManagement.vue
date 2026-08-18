@@ -3,18 +3,24 @@
     <PageHeader :eyebrow="l('eyebrow')" :title="l('title')" />
     <div class="border-b border-slate-200 pb-4">
       <div class="toolbar-row">
-        <el-input v-model="filters.keyword" clearable :placeholder="l('searchPlaceholder')" class="toolbar-keyword" />
-        <el-select v-model="filters.customer" clearable filterable :placeholder="l('customer')" class="toolbar-customer">
-          <el-option v-for="customer in customerOptions" :key="customer" :label="customer" :value="customer" />
-        </el-select>
-        <el-button type="info" @click="resetFilters">{{ l('clearFilters') }}</el-button>
-        <el-button type="primary" @click="openProductDialog()">{{ l('addProduct') }}</el-button>
-        <el-button type="success" :disabled="!products.length" @click="openProcessDialog()">{{ l('addProcess') }}</el-button>
-        <el-button type="warning" :loading="importing" @click="triggerImport">{{ l('importExcel') }}</el-button>
-        <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
-        <el-button type="danger" :disabled="!products.length === 0" @click="deleteAllProduct">{{ l('deleteAllProducts') }}</el-button>
-        <el-button type="danger" :disabled="!products.length === 0" @click="deleteAllProcess">{{ l('deleteAllProcess') }}</el-button>
-        <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
+        <div class="toolbar-group toolbar-filters">
+          <el-input v-model="filters.keyword" clearable :placeholder="l('searchPlaceholder')" class="toolbar-keyword" />
+          <el-select v-model="filters.customer" clearable filterable :placeholder="l('customer')" class="toolbar-customer">
+            <el-option v-for="customer in customerOptions" :key="customer" :label="customer" :value="customer" />
+          </el-select>
+          <el-button type="info" plain @click="resetFilters">{{ l('clearFilters') }}</el-button>
+        </div>
+        <div class="toolbar-group toolbar-primary-actions">
+          <el-button type="primary" @click="openProductDialog()">{{ l('addProduct') }}</el-button>
+          <el-button type="success" :disabled="!products.length" @click="openProcessDialog()">{{ l('addProcess') }}</el-button>
+          <el-button type="warning" :loading="importing" @click="triggerImport">{{ l('importExcel') }}</el-button>
+          <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
+          <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
+        </div>
+        <div class="toolbar-group toolbar-danger-actions">
+          <el-button type="danger" plain :disabled="!products.length === 0" @click="deleteAllProduct">{{ l('deleteAllProducts') }}</el-button>
+          <el-button type="danger" plain :disabled="!products.length === 0" @click="deleteAllProcess">{{ l('deleteAllProcess') }}</el-button>
+        </div>
       </div>
     </div>
     <div class="page-card space-y-4">
@@ -552,12 +558,42 @@ watch(() => [filters.value.keyword, filters.value.customer], () => {
 
 <style scoped>
 .toolbar-row {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) 220px repeat(7, max-content);
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  align-items: center;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  align-items: stretch;
+}
+
+.toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.toolbar-filters {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.toolbar-primary-actions,
+.toolbar-danger-actions {
+  flex: 0 1 auto;
+}
+
+.toolbar-keyword {
+  flex: 1 1 320px;
+  min-width: 220px;
+}
+
+.toolbar-customer {
+  flex: 0 1 220px;
+  min-width: 180px;
+}
+
+.toolbar-row :deep(.el-button) {
+  min-width: 112px;
+  margin-left: 0;
 }
 
 :deep(.toolbar-keyword .el-input__wrapper) {
@@ -586,9 +622,23 @@ watch(() => [filters.value.keyword, filters.value.customer], () => {
 }
 
 @media (max-width: 1180px) {
-  .toolbar-row {
-    grid-template-columns: minmax(260px, 1fr) 220px repeat(5, max-content);
-    min-width: 980px;
+  .toolbar-group,
+  .toolbar-filters {
+    flex: 1 1 100%;
+  }
+
+  .toolbar-row :deep(.el-button) {
+    flex: 1 1 160px;
+  }
+}
+
+@media (max-width: 640px) {
+  .toolbar-group,
+  .toolbar-keyword,
+  .toolbar-customer,
+  .toolbar-row :deep(.el-button) {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 }
 

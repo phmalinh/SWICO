@@ -360,7 +360,7 @@ const messages = {
         },
       },
       exportV9: {
-        eyebrow: '2.3 Chuẩn Excel V9',
+        eyebrow: '2.2 Chuẩn Excel V9',
         pageTitle: 'Xuất Báo Cáo Excel V9',
         pageSubtitle: 'Kết xuất file Excel V9 từ backend theo đúng công thức và mẫu báo cáo hiện có.',
         title: 'Chuẩn OEE V9',

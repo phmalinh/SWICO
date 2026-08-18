@@ -3,6 +3,7 @@
     <PageHeader :eyebrow="l('eyebrow')" :title="l('title')" />
     <div class="border-b border-slate-200 pb-4">
       <div class="toolbar-row">
+        <div class="toolbar-group toolbar-filters">
           <el-select
             v-model="filters.lineCode"
             clearable
@@ -14,13 +15,18 @@
           >
             <el-option v-for="line in lineOptions" :key="line" :label="line" :value="line" />
           </el-select>
-        <el-input v-model="filters.machineCode" clearable :placeholder="l('searchMachine')" class="toolbar-machine" />
-        <el-button type="info" @click="resetFilters">{{ l('clearFilters') }}</el-button>
-        <el-button type="primary" @click="openLineDialog()">{{ l('addLine') }}</el-button>
-        <el-button type="success" @click="openMachineDialog()">{{ l('addMachine') }}</el-button>
-        <el-button type="danger"  @click="deleteAllLines">{{ l('deleteAllLines') }}</el-button>
-        <el-button type="danger"  @click="deleteAllMachines">{{ l('deleteAllMachines') }}</el-button>
-        <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
+          <el-input v-model="filters.machineCode" clearable :placeholder="l('searchMachine')" class="toolbar-machine" />
+          <el-button type="info" plain @click="resetFilters">{{ l('clearFilters') }}</el-button>
+        </div>
+        <div class="toolbar-group toolbar-primary-actions">
+          <el-button type="primary" @click="openLineDialog()">{{ l('addLine') }}</el-button>
+          <el-button type="success" @click="openMachineDialog()">{{ l('addMachine') }}</el-button>
+          <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
+        </div>
+        <div class="toolbar-group toolbar-danger-actions">
+          <el-button type="danger" plain @click="deleteAllLines">{{ l('deleteAllLines') }}</el-button>
+          <el-button type="danger" plain @click="deleteAllMachines">{{ l('deleteAllMachines') }}</el-button>
+        </div>
       </div>
     </div>
     <div class="page-card space-y-4">
@@ -428,12 +434,42 @@ watch(() => [filters.value.lineCode, filters.value.machineCode], () => {
 
 <style scoped>
 .toolbar-row {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) 220px repeat(7, max-content);
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  align-items: center;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  align-items: stretch;
+}
+
+.toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.toolbar-filters {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.toolbar-primary-actions,
+.toolbar-danger-actions {
+  flex: 0 1 auto;
+}
+
+.toolbar-line {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.toolbar-machine {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.toolbar-row :deep(.el-button) {
+  min-width: 112px;
+  margin-left: 0;
 }
 
 :deep(.toolbar-line .el-input__wrapper) {
@@ -486,14 +522,23 @@ watch(() => [filters.value.lineCode, filters.value.machineCode], () => {
 }
 
 @media (max-width: 1180px) {
-  .toolbar-row {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  .toolbar-group,
+  .toolbar-filters {
+    flex: 1 1 100%;
+  }
+
+  .toolbar-row :deep(.el-button) {
+    flex: 1 1 160px;
   }
 }
 
 @media (max-width: 640px) {
-  .toolbar-row {
-    grid-template-columns: 1fr;
+  .toolbar-group,
+  .toolbar-line,
+  .toolbar-machine,
+  .toolbar-row :deep(.el-button) {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 }
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader :eyebrow="t('master.shifts.eyebrow')" :title="t('master.shifts.pageTitle')" :subtitle="t('master.shifts.pageSubtitle')">
+    <PageHeader :eyebrow="t('master.shifts.eyebrow')" :title="t('master.shifts.pageTitle')">
       <template #actions>
         <el-button type="primary" @click="openDialog()"><el-icon class="mr-1"><Plus /></el-icon> {{ t('master.shifts.add') }}</el-button>
       </template>

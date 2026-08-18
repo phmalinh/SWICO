@@ -3,17 +3,23 @@
     <PageHeader :eyebrow="l('eyebrow')" :title="l('title')" />
     <div class="border-b border-slate-200 pb-4">
       <div class="toolbar-row">
-        <el-input v-model="filters.keyword" clearable class="toolbar-keyword" :placeholder="l('searchPlaceholder')" />
-        <el-select v-model="filters.team" clearable filterable class="toolbar-team" :placeholder="l('team')">
-          <el-option v-for="team in teamOptions" :key="team" :label="team" :value="team" />
-        </el-select>
-        <el-button type="info" @click="resetFilters">{{ l('clearFilters') }}</el-button>
-        <el-button type="primary" @click="openDialog()">{{ l('addSkill') }}</el-button>
-        <el-button type="warning" :disabled="selectedRows.length === 0" @click="deleteSelected">{{ l('deleteSelected') }}</el-button>
-        <el-button type="danger" :disabled="rows.length === 0" @click="deleteAll">{{ l('deleteAll') }}</el-button>
-        <el-button type="success" :loading="importing" @click="triggerImport">{{ l('importExcel') }}</el-button>
-        <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
-        <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
+        <div class="toolbar-group toolbar-filters">
+          <el-input v-model="filters.keyword" clearable class="toolbar-keyword" :placeholder="l('searchPlaceholder')" />
+          <el-select v-model="filters.team" clearable filterable class="toolbar-team" :placeholder="l('team')">
+            <el-option v-for="team in teamOptions" :key="team" :label="team" :value="team" />
+          </el-select>
+          <el-button type="info" plain @click="resetFilters">{{ l('clearFilters') }}</el-button>
+        </div>
+        <div class="toolbar-group toolbar-primary-actions">
+          <el-button type="primary" @click="openDialog()">{{ l('addSkill') }}</el-button>
+          <el-button type="success" :loading="importing" @click="triggerImport">{{ l('importExcel') }}</el-button>
+          <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
+          <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
+        </div>
+        <div class="toolbar-group toolbar-danger-actions">
+          <el-button type="warning" plain :disabled="selectedRows.length === 0" @click="deleteSelected">{{ l('deleteSelected') }}</el-button>
+          <el-button type="danger" plain :disabled="rows.length === 0" @click="deleteAll">{{ l('deleteAll') }}</el-button>
+        </div>
         <!-- <div class="summary-tile">
           <span>{{ l('employees') }}</span>
           <strong>{{ employeeCount }}</strong>
@@ -338,9 +344,9 @@ const matrixRows = computed(() => {
   const map = new Map()
   filteredRows.value.forEach(row => {
     const process = processCodeOnly(row.process || row.skill || '')
-    const key = `${row.partNumber || ''}::${row.partName || ''}::${row.team || ''}`
+    const key = `${row.partNumber || ''}::${row.partName || ''}`
     if (!map.has(key)) {
-      map.set(key, { partNumber: row.partNumber, partName: row.partName,team: row.team, skills: {} })
+      map.set(key, { partNumber: row.partNumber, partName: row.partName, skills: {} })
     }
     if (row.employeeCode && process) {
       const rowData = map.get(key)
@@ -635,19 +641,43 @@ watch([detailRows, pageSize], () => {
 
 <style scoped>
 .toolbar-row {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(180px, 0.65fr) repeat(6, max-content);
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   align-items: stretch;
   width: 100%;
 }
 
-.toolbar-keyword {
+.toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.toolbar-filters {
+  flex: 1 1 100%;
   min-width: 0;
 }
 
+.toolbar-primary-actions,
+.toolbar-danger-actions {
+  flex: 0 1 auto;
+}
+
+.toolbar-keyword {
+  flex: 1 1 320px;
+  min-width: 220px;
+}
+
 .toolbar-team {
-  min-width: 0;
+  flex: 0 1 220px;
+  min-width: 180px;
+}
+
+.toolbar-row :deep(.el-button) {
+  min-width: 112px;
+  margin-left: 0;
 }
 
 :deep(.toolbar-keyword .el-input__wrapper) {
@@ -758,14 +788,23 @@ watch([detailRows, pageSize], () => {
 }
 
 @media (max-width: 1180px) {
-  .toolbar-row {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  .toolbar-group,
+  .toolbar-filters {
+    flex: 1 1 100%;
+  }
+
+  .toolbar-row :deep(.el-button) {
+    flex: 1 1 160px;
   }
 }
 
 @media (max-width: 640px) {
-  .toolbar-row {
-    grid-template-columns: 1fr;
+  .toolbar-group,
+  .toolbar-keyword,
+  .toolbar-team,
+  .toolbar-row :deep(.el-button) {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 }
 </style>
