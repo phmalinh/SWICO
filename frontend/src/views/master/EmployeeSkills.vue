@@ -58,6 +58,7 @@
             <el-table-column prop="partNumber" :label="l('partNumber')" min-width="150" fixed show-overflow-tooltip />
             <!-- <el-table-column prop="team" :label="l('team')" min-width="140" show-overflow-tooltip /> -->
             <el-table-column
+              class="management-table matrix-table"
               v-for="employee in matrixEmployees"
               :key="employee.employeeCode"
               :column-key="employee.employeeCode"
@@ -329,7 +330,7 @@ const matrixEmployees = computed(() => {
   const map = new Map()
   filteredRows.value.forEach(row => {
     if (!row.employeeCode || map.has(row.employeeCode)) return
-    map.set(row.employeeCode, { employeeCode: row.employeeCode, employeeName: row.employeeName, hireDate: row.hireDate })
+    map.set(row.employeeCode, { employeeCode: row.employeeCode, employeeName: row.employeeName, hireDate: row.hireDate, team: row.team , jobTitle: row.jobTitle })
   })
   return [...map.values()]
 })
@@ -356,7 +357,19 @@ const matrixRows = computed(() => {
     team: '',
     skills: Object.fromEntries(matrixEmployees.value.map(employee => [employee.employeeCode, employee.hireDate || ''])),
   }
-  return matrixEmployees.value.length ? [hireDateRow, ...map.values()] : [...map.values()]
+   const teamRow = {
+    partName: l('team'),
+    partNumber: '',
+    team: '',
+    skills: Object.fromEntries(matrixEmployees.value.map(employee => [employee.employeeCode, employee.team || ''])),
+  }
+  const jobTitle = {
+    partName: l('jobTitle'),
+    partNumber: '',
+    team: '',
+    skills: Object.fromEntries(matrixEmployees.value.map(employee => [employee.employeeCode, employee.jobTitle || ''])),
+  }
+  return matrixEmployees.value.length ? [jobTitle,hireDateRow,teamRow, ...map.values()] : [...map.values()]
 })
 
 function pageIndex(index) {
