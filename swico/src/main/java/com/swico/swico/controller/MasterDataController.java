@@ -1,12 +1,14 @@
 package com.swico.swico.controller;
 
 import com.swico.swico.dto.MasterDataResponse;
+import com.swico.swico.dto.LineMachineImportResponse;
 import com.swico.swico.dto.LineUpsertRequest;
 import com.swico.swico.dto.ProductionInfoImportResponse;
 import com.swico.swico.dto.ProductUpsertRequest;
 import com.swico.swico.dto.ShiftUpsertRequest;
 import com.swico.swico.dto.UserResponse;
 import com.swico.swico.service.MasterDataService;
+import com.swico.swico.service.LineMachineImportService;
 import com.swico.swico.service.ProductionInfoImportService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -23,10 +25,12 @@ public class MasterDataController {
 
     private final MasterDataService masterDataService;
     private final ProductionInfoImportService productionInfoImportService;
+    private final LineMachineImportService lineMachineImportService;
 
-    public MasterDataController(MasterDataService masterDataService, ProductionInfoImportService productionInfoImportService) {
+    public MasterDataController(MasterDataService masterDataService, ProductionInfoImportService productionInfoImportService, LineMachineImportService lineMachineImportService) {
         this.masterDataService = masterDataService;
         this.productionInfoImportService = productionInfoImportService;
+        this.lineMachineImportService = lineMachineImportService;
     }
 
     @GetMapping("/products")
@@ -58,6 +62,16 @@ public class MasterDataController {
     public ResponseEntity<?> importProductionInfo(@RequestParam("file") MultipartFile file) {
         try {
             return ResponseEntity.ok(productionInfoImportService.importWorkbook(file));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(ex.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/line-machines/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> importLineMachines(@RequestParam("file") MultipartFile file) {
+        try {
+            LineMachineImportResponse response = lineMachineImportService.importWorkbook(file);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }

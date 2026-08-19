@@ -92,7 +92,7 @@ public class ProductionExportService {
                 setFormula(row.createCell(20), "S" + excelRow + "/Q" + excelRow, percentStyle);
                 setFormula(row.createCell(21), "IF(U" + excelRow + ">0.27%,U" + excelRow + "-0.27%,0)", percentStyle);
                 setFormula(row.createCell(22), "IF(U" + excelRow + ">0.27%,(Q" + excelRow + "*(K" + excelRow + "/60)/L" + excelRow + ")-V" + excelRow + ",(Q" + excelRow + "*(K" + excelRow + "/60)/L" + excelRow + "))", percentStyle);
-                setValue(row.createCell(23), report.availabilityRate(), percentStyle);
+                setFormula(row.createCell(23), "IF(OR(O" + excelRow + "=\"\",O" + excelRow + "=0),\"\",IF(ISNUMBER(SEARCH(\"chuyển mã hàng gia công cùng máy\",N" + excelRow + ")),1,IF(L" + excelRow + "=\"\",\"\",L" + excelRow + "/O" + excelRow + ")))", percentStyle);
                 setValue(row.createCell(24), report.performanceRate(), percentStyle);
                 setValue(row.createCell(25), report.qualityRate(), percentStyle);
                 setValue(row.createCell(26), report.oee(), percentStyle);

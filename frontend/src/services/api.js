@@ -312,6 +312,11 @@ export const masterApi = {
   updateLine: (id, payload) => request(`/master-data/lines/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   deleteLine: id => request(`/master-data/lines/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   deleteAllLines: () => request('/master-data/lines', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
+  importLineMachines: file => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request('/master-data/line-machines/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
+  },
 
   getShifts: () => request('/master-data/shifts'),
   createShift: payload => request('/master-data/shifts', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),

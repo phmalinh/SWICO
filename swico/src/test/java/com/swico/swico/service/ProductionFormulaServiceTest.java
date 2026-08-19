@@ -23,7 +23,32 @@ class ProductionFormulaServiceTest {
         assertEquals(new BigDecimal("0.8542"), withDeduction.productionEfficiency());
     }
 
+    @Test
+    void availabilityShouldUseShiftMinutesMinusDowntimeOverShiftMinutes() {
+        ProductionCalculationResponse response = service.calculate(request(59, 52, 6, new BigDecimal("601"), 620, 40), 660);
+
+        assertEquals(new BigDecimal("0.9394"), response.availabilityRate());
+    }
+
+    @Test
+    void availabilityShouldBeOneForSameMachineChangeover() {
+        ProductionCalculationResponse response = service.calculate(
+                request(59, 52, 6, new BigDecimal("601"), 620, 40, "chuyển mã hàng gia công cùng máy"),
+                660
+        );
+
+        assertEquals(new BigDecimal("1.0000"), response.availabilityRate());
+    }
+
     private ProductionCalculationRequest request(int input, int good, int internalDefect, BigDecimal cycleTime, int operatingMinutes) {
+        return request(input, good, internalDefect, cycleTime, operatingMinutes, 20);
+    }
+
+    private ProductionCalculationRequest request(int input, int good, int internalDefect, BigDecimal cycleTime, int operatingMinutes, int downtimeMinutes) {
+        return request(input, good, internalDefect, cycleTime, operatingMinutes, downtimeMinutes, null);
+    }
+
+    private ProductionCalculationRequest request(int input, int good, int internalDefect, BigDecimal cycleTime, int operatingMinutes, int downtimeMinutes, String downtimeReason) {
         int externalDefect = Math.max(input - good - internalDefect, 0);
         return new ProductionCalculationRequest(
                 LocalDate.of(2026, 8, 18),
@@ -35,7 +60,7 @@ class ProductionFormulaServiceTest {
                 cycleTime,
                 List.of(),
                 operatingMinutes,
-                20,
+                downtimeMinutes,
                 input,
                 good,
                 input - good,
@@ -43,7 +68,7 @@ class ProductionFormulaServiceTest {
                 externalDefect,
                 "SWICO",
                 null,
-                null,
+                downtimeReason,
                 null,
                 null,
                 null,

@@ -1,12 +1,8 @@
 package com.swico.swico.service;
 
 import com.swico.swico.dto.ProductionInfoImportResponse;
-import com.swico.swico.entity.Line;
-import com.swico.swico.entity.Machine;
 import com.swico.swico.entity.Product;
 import com.swico.swico.entity.ProductProcess;
-import com.swico.swico.repository.LineRepository;
-import com.swico.swico.repository.MachineRepository;
 import com.swico.swico.repository.ProductProcessRepository;
 import com.swico.swico.repository.ProductRepository;
 import org.apache.poi.ss.usermodel.*;
@@ -24,19 +20,13 @@ public class ProductionInfoImportService {
 
     private final ProductRepository productRepository;
     private final ProductProcessRepository productProcessRepository;
-    private final LineRepository lineRepository;
-    private final MachineRepository machineRepository;
 
     public ProductionInfoImportService(
             ProductRepository productRepository,
-            ProductProcessRepository productProcessRepository,
-            LineRepository lineRepository,
-            MachineRepository machineRepository
+            ProductProcessRepository productProcessRepository
     ) {
         this.productRepository = productRepository;
         this.productProcessRepository = productProcessRepository;
-        this.lineRepository = lineRepository;
-        this.machineRepository = machineRepository;
     }
 
     @Transactional
@@ -87,8 +77,6 @@ public class ProductionInfoImportService {
                 }
 
                 upsertProcess(product, processCode, process, sequence, lineCode, machineCode, cycleTime);
-                ensureLines(lineCode);
-                ensureMachines(lineCode, machineCode);
                 processesImported++;
             }
         } catch (Exception ex) {
@@ -150,56 +138,6 @@ public class ProductionInfoImportService {
         productProcess.setMachineCode(machineCode);
         productProcess.setCycleTimeSeconds(cycleTime);
         productProcessRepository.save(productProcess);
-    }
-
-    private void ensureLines(String value) {
-        if (isBlank(value)) return;
-        for (String raw : value.split(";")) {
-            String code = raw.trim();
-            if (code.isEmpty()) continue;
-            ensureLine(code);
-        }
-    }
-
-    private Line ensureLine(String code) {
-        return lineRepository.findByLineCode(code).orElseGet(() -> {
-            Line line = new Line();
-            line.setLineCode(code);
-            line.setDescription(code);
-            return lineRepository.save(line);
-        });
-    }
-
-    private void ensureMachines(String lineCodeValue, String machineCodeValue) {
-        if (isBlank(machineCodeValue)) return;
-        Line firstLine = null;
-        if (!isBlank(lineCodeValue)) {
-            String firstLineCode = lineCodeValue.split(";")[0].trim();
-            if (!firstLineCode.isEmpty()) {
-                firstLine = ensureLine(firstLineCode);
-            }
-        }
-
-        for (String raw : machineCodeValue.split(";")) {
-            String code = raw.trim();
-            if (code.isEmpty()) continue;
-            Line line = firstLine;
-            machineRepository.findByMachineCode(code)
-                    .map(existing -> {
-                        if (existing.getLine() == null && line != null) {
-                            existing.setLine(line);
-                            return machineRepository.save(existing);
-                        }
-                        return existing;
-                    })
-                    .orElseGet(() -> {
-                        Machine machine = new Machine();
-                        machine.setMachineCode(code);
-                        machine.setDescription(code);
-                        machine.setLine(line);
-                        return machineRepository.save(machine);
-                    });
-        }
     }
 
     private String text(Row row, int columnIndex, DataFormatter formatter, FormulaEvaluator evaluator) {

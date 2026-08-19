@@ -22,6 +22,8 @@
           <el-button type="primary" @click="openLineDialog()">{{ l('addLine') }}</el-button>
           <el-button type="success" @click="openMachineDialog()">{{ l('addMachine') }}</el-button>
           <el-button class="export-button" @click="exportCsv">{{ l('exportCsv') }}</el-button>
+          <el-button type="warning" :loading="importing" @click="triggerImport">{{ l('importExcel') }}</el-button>
+          <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
         </div>
         <div class="toolbar-group toolbar-danger-actions">
           <el-button type="danger" plain @click="deleteAllLines">{{ l('deleteAllLines') }}</el-button>
@@ -136,9 +138,11 @@ const rows = ref([])
 const filters = ref({ lineCode: '', machineCode: '' })
 const lineDialogVisible = ref(false)
 const machineDialogVisible = ref(false)
+const importing = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 20, 50, 100]
+const fileInput = ref(null)
 const lineForm = ref({ id: null, lineCode: '', description: '' })
 const machineForm = ref({ id: null, lineCode: '', assetCode: '', machineCode: '', description: '', purchaseDate: '', custodyDepartment: '' })
 const text = {
@@ -151,6 +155,9 @@ const text = {
     searchLine: 'Tìm chuyền',
     searchMachine: 'Tìm mã thiết bị',
     clearFilters: 'Xóa lọc',
+    importExcel: 'Nhập Excel',
+    imported: 'Đã import {lines} chuyền và {machines} thiết bị',
+    importFailed: 'Import thất bại',
     lineCode: 'Chuyền',
     assetCode: 'Mã tài sản',
     machineCode: 'Mã thiết bị',
@@ -197,6 +204,9 @@ const text = {
     searchLine: '搜尋產線',
     searchMachine: '搜尋設備編號',
     clearFilters: '清除篩選',
+    importExcel: '匯入 Excel',
+    imported: '已匯入 {lines} 條產線與 {machines} 台設備',
+    importFailed: '匯入失敗',
     lineCode: '產線',
     assetCode: '財產編號',
     machineCode: '設備編號',
@@ -277,6 +287,30 @@ async function loadData() {
     ElMessage.error(error.message)
   } finally {
     loading.value = false
+  }
+}
+
+function triggerImport() {
+  fileInput.value?.click()
+}
+
+async function handleImportFile(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file || importing.value) return
+  importing.value = true
+  try {
+    const result = await masterApi.importLineMachines(file)
+    ElMessage.success(
+      l('imported')
+        .replace('{lines}', result.linesImported ?? 0)
+        .replace('{machines}', result.machinesImported ?? 0)
+    )
+    await loadData()
+  } catch (error) {
+    ElMessage.error(`${l('importFailed')}: ${error.message}`)
+  } finally {
+    importing.value = false
   }
 }
 

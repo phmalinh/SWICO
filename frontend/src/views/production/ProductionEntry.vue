@@ -14,7 +14,10 @@
         </div>
         <el-form :model="form" label-position="top" class="p-3 space-y-2.5">
           <!-- Dòng 1: Cấu hình chung (Chuyền, Máy, Ca, Công ty) -->
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5" >
+            <el-form-item :label="t('productionEntry.reportDate')" class="!mb-0">
+              <el-date-picker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" class="w-full" size="default"/>
+            </el-form-item>
             <el-form-item :label="t('productionEntry.line')" class="!mb-0">
               <el-select v-model="form.lineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectLine')" @change="onLineChange">
                 <el-option v-for="l in lines" :key="l.lineCode" :label="`${l.lineCode} - ${l.description}`" :value="l.lineCode" />
@@ -57,6 +60,7 @@
               </el-select>
             </el-form-item>
           </div>
+  
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
               <el-form-item :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-5">
@@ -813,6 +817,7 @@ function formatProcessIds(processIds) {
 }
 
 function resetForm() {
+  form.value.reportDate = localTodayString()
   form.value.partNumber = ''
   form.value.partName = ''
   form.value.cycleTime = ''
@@ -828,6 +833,8 @@ function resetForm() {
   form.value.internalDefectQuantity = 0
   form.value.externalDefectQuantity = 0
   form.value.responsibleLeader = ''
+  editedReportId.value = null
+  selectedReports.value = []
   showResult.value = false
   result.value = null
 }

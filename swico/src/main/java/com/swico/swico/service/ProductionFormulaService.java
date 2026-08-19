@@ -13,6 +13,8 @@ import java.util.Map;
 @Service
 public class ProductionFormulaService {
 
+    private static final String SAME_MACHINE_CHANGEOVER_REASON = "chuyển mã hàng gia công cùng máy";
+
     private static final Map<String, Integer> SHIFT_MINUTES = Map.of(
             "白班 06:00-14:00 (Ca Ngày)", 440,
             "中班 14:00-22:00 (Ca Chiều)", 440,
@@ -47,7 +49,9 @@ public class ProductionFormulaService {
         BigDecimal qualityRate = null;
         BigDecimal oee = null;
 
-        if (downtimeMinutes != null && shiftMinutes != null && shiftMinutes > 0) {
+        if (isSameMachineChangeover(request.downtimeReason())) {
+            availabilityRate = BigDecimal.ONE.setScale(4, RoundingMode.HALF_UP);
+        } else if (downtimeMinutes != null && shiftMinutes != null && shiftMinutes > 0) {
             availabilityRate = BigDecimal.valueOf(Math.max(shiftMinutes - downtimeMinutes, 0))
                     .divide(BigDecimal.valueOf(shiftMinutes), 4, RoundingMode.HALF_UP);
         } else if (operatingMinutes != null && operatingMinutes > 0 && downtimeMinutes != null) {
@@ -120,6 +124,11 @@ public class ProductionFormulaService {
 
     public Integer resolveShiftMinutes(String shiftName) {
         return SHIFT_MINUTES.get(shiftName);
+    }
+
+    private boolean isSameMachineChangeover(String downtimeReason) {
+        return downtimeReason != null
+                && downtimeReason.toLowerCase().contains(SAME_MACHINE_CHANGEOVER_REASON);
     }
 
     public String evaluationLabel(BigDecimal oee) {

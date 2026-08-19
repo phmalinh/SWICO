@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-5">
-    <PageHeader :eyebrow="l('eyebrow')" :title="l('title')" :subtitle="l('subtitle')" />
+    <PageHeader :eyebrow="l('eyebrow')" :title="l('title')" />
 
     <div class="page-card p-5">
       <el-form :model="filters" label-position="top">
