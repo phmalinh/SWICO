@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-5">
-    <PageHeader :eyebrow="l('eyebrow')" :title="l('title')" :subtitle="l('')" />
+    <PageHeader :eyebrow="l('eyebrow')" :title="l('title')" :subtitle="l('subtitle')" />
 
     <div class="page-card p-5">
       <el-form :model="filters" label-position="top">
@@ -130,7 +130,7 @@ const text = {
   vi: {
     eyebrow: '2.3 Thống kê',
     title: 'Thống kê Pivot báo cáo sản xuất',
-    // subtitle: 'Tổng hợp số lượng theo mã hàng/công đoạn và tỷ lệ OEE theo cán bộ/nhân viên.',
+    subtitle: 'Tổng hợp số lượng theo mã hàng/công đoạn và tỷ lệ OEE theo cán bộ/nhân viên.',
     dateFrom: 'Từ ngày',
     dateTo: 'Đến ngày',
     line: 'Chuyền',
@@ -144,15 +144,15 @@ const text = {
     quantityTab: 'Thống kê số lượng',
     rateTab: 'Thống kê hiệu suất',
     rowLabels: 'Row Labels',
-    completedQuantity: 'Sum of Số lượng hoàn thành (pcs) 完成量',
-    goodQuantity: 'Sum of 良品數SL Đạt',
-    internalDefectQuantity: 'Sum of 不良數SL Lỗi (內製)',
-    externalDefectQuantity: 'Sum of 不良數SL Lỗi (外製)',
-    avgProductionEfficiency: 'Average of 生產效率',
-    avgAvailabilityRate: 'Average of 稼動率 A',
-    avgPerformanceRate: 'Average of 性能率 P',
-    avgQualityRate: 'Average of 良品率 Q',
-    avgOee: 'Average of OEE',
+    completedQuantity: 'Tổng Số lượng hoàn thành (pcs)',
+    goodQuantity: 'Tổng số lượng đạt',
+    internalDefectQuantity: 'Tổng số lượng lỗi(Nội Bộ)',
+    externalDefectQuantity: 'Tổng số lượng lỗi (Bên ngoài)',
+    avgProductionEfficiency: 'Trung bình hiệu xuất sản xuất',
+    avgAvailabilityRate: 'Trung bình tỷ lệ sử dụng A',
+    avgPerformanceRate: 'Trung bình tỷ lệ khả dụng P',
+    avgQualityRate: 'Năng suất trung bình Q',
+    avgOee: 'Trung bình của OEE',
     grandTotal: 'Grand Total',
     reportCount: 'Số báo cáo',
     unknownProcess: 'Chưa có công đoạn',
@@ -177,10 +177,10 @@ const text = {
     quantityTab: '數量統計',
     rateTab: '效率統計',
     rowLabels: 'Row Labels',
-    completedQuantity: 'Sum of Số lượng hoàn thành (pcs) 完成量',
-    goodQuantity: 'Sum of 良品數SL Đạt',
-    internalDefectQuantity: 'Sum of 不良數SL Lỗi (內製)',
-    externalDefectQuantity: 'Sum of 不良數SL Lỗi (外製)',
+    completedQuantity: 'Sum of 完成量',
+    goodQuantity: 'Sum of 良品數',
+    internalDefectQuantity: 'Sum of 不良數',
+    externalDefectQuantity: 'Sum of 不良數',
     avgProductionEfficiency: 'Average of 生產效率',
     avgAvailabilityRate: 'Average of 稼動率 A',
     avgPerformanceRate: 'Average of 性能率 P',
