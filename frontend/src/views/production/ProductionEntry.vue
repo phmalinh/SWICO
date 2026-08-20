@@ -14,9 +14,9 @@
         </div>
         <el-form :model="form" label-position="top" class="p-3 space-y-2.5">
           <!-- Dòng 1: Cấu hình chung (Chuyền, Máy, Ca, Công ty) -->
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5" >
-            <el-form-item :label="t('productionEntry.reportDate')" class="!mb-0">
-              <el-date-picker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" class="w-full" size="default"/>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 " >
+            <el-form-item :label="t('productionEntry.reportDate')" class="!mb-0 ">
+              <el-date-picker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" class="w-full el-form-item__content" size="default"/>
             </el-form-item>
             <el-form-item :label="t('productionEntry.line')" class="!mb-0">
               <el-select v-model="form.lineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectLine')" @change="onLineChange">
@@ -142,7 +142,7 @@
           <!-- Dòng 4: Số lượng nhập & kết quả sản xuất -->
           <div class="mt-2.5 grid grid-cols-2 md:grid-cols-4 gap-2.5">
             <el-form-item :label="t('productionEntry.inputQuantity')" class="!mb-0">
-              <div class="flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                 <el-button
                   size="default"
                   class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
@@ -173,7 +173,7 @@
             </el-form-item>
 
             <el-form-item :label="t('productionEntry.internalDefectQuantity')" class="!mb-0">
-              <div class="flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+              <div class=" el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                 <el-button
                   size="default"
                   class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
@@ -200,7 +200,7 @@
             </el-form-item>
 
             <el-form-item :label="t('productionEntry.externalDefectQuantity')" class="!mb-0">
-              <div class="flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                 <el-button
                   size="default"
                   class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"

@@ -14,7 +14,7 @@
     </div>
 
     <div class="page-card overflow-hidden">
-      <el-table :data="users" stripe>
+      <el-table :data="paginatedUsers" stripe>
         <el-table-column prop="username" :label="t('users.table.account')" width="150">
           <template #default="{ row }"><span class="font-mono font-bold">{{ row.username }}</span></template>
         </el-table-column>
@@ -45,6 +45,13 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="users.length"
+          layout="prev, pager, next"
+          background
+        />
     </div>
 
     <div class="page-card mt-5 p-5">
@@ -109,7 +116,14 @@ const dialogVisible = ref(false)
 const editId = ref(null)
 const defaultForm = () => ({ username: '', fullName: '', password: '', role: 'ROLE_OPERATOR', lineCode: null, jobTitle: '', team: '', hireDate: '', active: true })
 const form = ref(defaultForm())
+const currentPage = ref(1)
+const pageSize = ref(10)
 
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return users.value.slice(start, end)
+})
 const roleSummary = computed(() => [
   { key: 'ROLE_OPERATOR', label: t('users.summary.operator'), count: users.value.filter(u => u.role === 'ROLE_OPERATOR').length, color: 'text-sky-600' },
   { key: 'ROLE_LEADER', label: t('users.summary.leader'), count: users.value.filter(u => u.role === 'ROLE_LEADER').length, color: 'text-emerald-600' },
@@ -123,7 +137,23 @@ const permissionMatrix = computed(() => [
   { role: 'ROLE_MANAGER', menu1: '-', menu2: '2.1 + 2.2 + 2.3', menu3: t('users.permissionMatrix.all'), menu4: '-' },
   { role: 'ROLE_ADMIN', menu1: t('users.permissionMatrix.all'), menu2: t('users.permissionMatrix.all'), menu3: t('users.permissionMatrix.all'), menu4: t('users.permissionMatrix.all') },
 ])
+const filteredRows = computed(() => {
+  const users = filters.value.username.trim().toLowerCase()
+//  const machineTerm = filters.value.machineCode.trim().toLowerCase()
+  return rows.value.filter(row => {
+ //   const users = !username || String(row.username || '').toLowerCase().includes(username)
+    //const matchesMachine = !machineTerm || String(row.machineCode || '').toLowerCase().includes(machineTerm)
+    return matchesUsers 
+  })
+})
+const paginatedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredRows.value.slice(start, start + pageSize.value)
+})
 
+function pageIndex(index) {
+  return (currentPage.value - 1) * pageSize.value + index + 1
+}
 function roleTagType(role) {
   return { ROLE_OPERATOR: '', ROLE_LEADER: 'success', ROLE_MANAGER: 'warning', ROLE_ADMIN: 'danger' }[role] || 'info'
 }
