@@ -27,34 +27,31 @@
       <el-table :data="paginatedRows" stripe border class="product-process-table rounded-md" style="width:100%" size="large" v-loading="loading">
         <el-table-column type="index" label="#" width="60" :index="pageIndex" />
         <el-table-column prop="customer" min-width="150" show-overflow-tooltip>
-          <template #header><HeaderCell zh="客戶" vi="Khách Hàng" /></template>
+          <template #header><HeaderCell :label="l('customer')" /></template>
         </el-table-column>
         <el-table-column prop="partNumber" min-width="150" show-overflow-tooltip>
-          <template #header><HeaderCell zh="料號" vi="Mã Hàng" /></template>
+          <template #header><HeaderCell :label="l('partNumber')" /></template>
         </el-table-column>
         <el-table-column prop="partName" min-width="150" show-overflow-tooltip>
-          <template #header><HeaderCell zh="品名" vi="Tên Sản Phẩm" /></template>
+          <template #header><HeaderCell :label="l('partName')" /></template>
         </el-table-column>
         <el-table-column prop="processCode" min-width="130" show-overflow-tooltip>
-          <template #header><HeaderCell zh="工序" vi="Công Đoạn" /></template>
+          <template #header><HeaderCell :label="l('processCode')" /></template>
         </el-table-column>
-        <!-- <el-table-column prop="process" min-width="180" show-overflow-tooltip>
-          <template #header><HeaderCell zh="製程" vi="Lưu Trình" /></template>
-        </el-table-column> -->
         <el-table-column prop="machineCode" min-width="180" show-overflow-tooltip>
-          <template #header><HeaderCell zh="設備編號" vi="Mã Số Máy" /></template>
+          <template #header><HeaderCell :label="l('machineCode')" /></template>
         </el-table-column>
         <el-table-column prop="lineCode" min-width="170" show-overflow-tooltip>
-          <template #header><HeaderCell zh="產線" vi="Chuyền" /></template>
+          <template #header><HeaderCell :label="l('lineCode')" /></template>
         </el-table-column>
         <el-table-column prop="cycleTimeSeconds" width="140" align="center">
-          <template #header><HeaderCell zh="CT" vi="Thời Gian Thao Tác (giây)" /></template>
+          <template #header><HeaderCell :label="l('cycleTime')" /></template>
         </el-table-column>
         <el-table-column prop="sequence" width="120" align="center">
-          <template #header><HeaderCell zh="順序" vi="Thứ Tự" /></template>
+          <template #header><HeaderCell :label="l('sequence')" /></template>
         </el-table-column>
         <el-table-column :label="l('actions')" width="130" fixed="right" align="center">
-          <template #header><HeaderCell zh="操作" :vi="l('actions')" /></template>
+          <template #header><HeaderCell :label="l('actions')" /></template>
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="command => handleRowCommand(command, row)">
               <el-button size="small">{{ l('moreActions') }}</el-button>
@@ -136,15 +133,14 @@ import PageHeader from '@/components/PageHeader.vue'
 import { masterApi } from '@/services/api'
 import { useI18n } from '@/i18n'
 
-const { locale } = useI18n()
+const { t } = useI18n()
 const HeaderCell = {
   props: {
-    zh: { type: String, required: true },
-    vi: { type: String, required: true },
+    label: { type: String, required: true },
   },
   setup(props) {
     return () => h('div', { class: 'excel-header-cell' }, [
-      h('div', { class: 'excel-header-main' }, locale.value === 'zh-Hant' ? props.zh : props.vi),
+      h('div', { class: 'excel-header-main' }, props.label),
     ])
   },
 }
@@ -164,107 +160,7 @@ const pageSize = ref(10)
 const pageSizeOptions = [10, 20, 50, 100]
 const productForm = ref({ id: null, customer: '', partNumber: '', partName: '', cycleTimeSeconds: null })
 const processForm = ref({ id: null, productId: null, processCode: '', process: '', lineCodes: [], machineCodes: [], cycleTimeSeconds: null, sequence: null })
-const text = {
-  vi: {
-    eyebrow: '3.1 Dữ liệu chính',
-    title: 'Quản lý mã hàng & công đoạn',
-    addProduct: 'Thêm mã hàng',
-    addProcess: 'Thêm công đoạn',
-    importExcel: 'Nhập Excel',
-    exportCsv: 'Xuất CSV',
-    searchPlaceholder: 'Tìm mã hàng, tên hàng, công đoạn',
-    clearFilters: 'Xóa lọc',
-    customer: 'Khách hàng',
-    partNumber: 'Mã hàng',
-    partName: 'Tên hàng',
-    process: 'Công đoạn',
-    processCode: 'Mã công đoạn',
-    machineCode: 'Mã thiết bị',
-    lineCode: 'Chuyền',
-    sequence: 'Thứ tự',
-    actions: 'Thao tác',
-    editProduct: 'Sửa mã hàng',
-    editProcess: 'Sửa công đoạn',
-    deleteProduct: 'Xóa mã hàng',
-    deleteProcess: 'Xóa công đoạn',
-    deleteAllProducts: 'Xóa tất cả mã hàng',
-    deleteAllProcess: 'Xóa tất cả công đoạn',
-    productCreateTitle: 'Thêm mã hàng',
-    productEditTitle: 'Sửa mã hàng',
-    processCreateTitle: 'Thêm công đoạn',
-    processEditTitle: 'Sửa công đoạn',
-    cancel: 'Hủy',
-    save: 'Lưu',
-    importSuccess: 'Nhập thành công',
-    importFailed: 'Nhập thất bại',
-    missingProduct: 'Vui lòng nhập mã hàng và tên hàng',
-    missingProcess: 'Vui lòng chọn mã hàng và nhập công đoạn',
-    confirmTitle: 'Xác nhận',
-    deleteProductConfirm: 'Xóa mã hàng',
-    deleteProcessConfirm: 'Xóa công đoạn',
-    saved: 'Đã lưu',
-    deleted: 'Đã xóa',
-    deletedAllProducts: 'Đã xóa tất cả mã hàng',
-    deletedAllProcess: 'Đã xóa tất cả công đoạn',
-    total: 'Tổng',
-    rowsPerPage: 'Dòng/trang',
-    productsCount: 'Mã hàng',
-    processesCount: 'Công đoạn',
-    filteredCount: 'Kết quả',
-    moreActions: 'Thao tác',
-  },
-  'zh-Hant': {
-    eyebrow: '3.1 主資料',
-    title: '料號及工序管理',
-    addProduct: '新增料號',
-    addProcess: '新增工序',
-    importExcel: '匯入 Excel',
-    exportCsv: '匯出 CSV',
-    searchPlaceholder: '搜尋料號、品名、工序',
-    clearFilters: '清除篩選',
-    customer: '客戶',
-    partNumber: '料號',
-    partName: '品名',
-    process: '工序',
-    processCode: '工序代碼',
-    machineCode: '設備編號',
-    lineCode: '產線',
-    sequence: '順序',
-    actions: '操作',
-    editProduct: '編輯料號',
-    editProcess: '編輯工序',
-    deleteProduct: '刪除料號',
-    deleteProcess: '刪除工序',
-    deleteAllProducts: '刪除所有料號',
-    deleteAllProcess: '刪除所有工序',
-    productCreateTitle: '新增料號',
-    productEditTitle: '編輯料號',
-    processCreateTitle: '新增工序',
-    processEditTitle: '編輯工序',
-    cancel: '取消',
-    save: '儲存',
-    importSuccess: '匯入成功',
-    importFailed: '匯入失敗',
-    missingProduct: '請輸入料號與品名',
-    missingProcess: '請選擇料號並輸入工序',
-    confirmTitle: '確認',
-    deleteProductConfirm: '刪除料號',
-    deleteProcessConfirm: '刪除工序',
-    saved: '已儲存',
-    deleted: '已刪除',
-    deletedAllProducts: '已刪除所有料號',
-    deletedAllProcess: '已刪除所有工序',
-    total: '總筆數',
-    rowsPerPage: '每頁筆數',
-    productsCount: '料號',
-    processesCount: '工序',
-    filteredCount: '結果',
-    moreActions: '操作',
-  },
-}
-
-const currentText = computed(() => text[locale.value] || text.vi)
-const l = key => currentText.value[key] || key
+const l = (key, params) => t(`master.productProcesses.${key}`, params)
 const productDialogTitle = computed(() => productForm.value.id ? l('productEditTitle') : l('productCreateTitle'))
 const processDialogTitle = computed(() => processForm.value.id ? l('processEditTitle') : l('processCreateTitle'))
 

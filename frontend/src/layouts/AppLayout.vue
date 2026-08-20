@@ -14,8 +14,8 @@
           <div class="flex flex-wrap items-center gap-3">
             <div class="py-2">
             <el-select v-model="locale" size="small" style="width: 110px" @change="value => setLocale(value)">
-              <el-option label="Tiếng Việt" value="vi" />
-              <el-option label="繁體中文" value="zh-Hant" />
+              <el-option :label="t('common.languages.vi')" value="vi" />
+              <el-option :label="t('common.languages.zhHant')" value="zh-Hant" />
             </el-select>
             </div>
             <div class="px-4 py-2">
@@ -130,8 +130,8 @@
           </div>
           <div class="flex items-center gap-3">
             <el-select v-model="locale" size="small" style="width: 110px" @change="value => setLocale(value)">
-              <el-option label="Tiếng Việt" value="vi" />
-              <el-option label="繁體中文" value="zh-Hant" />
+              <el-option :label="t('common.languages.vi')" value="vi" />
+              <el-option :label="t('common.languages.zhHant')" value="zh-Hant" />
             </el-select>
             <span class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-500">{{ currentDate }}</span>
             <el-dropdown @command="handleProfileAction" placement="bottom-end" trigger="click">
@@ -230,11 +230,11 @@ const allMenuItems = computed(() => [
   {
     id: '3', title: t('menu.master'), icon: Database,
     children: [
-      { id: '3.1', title: masterTitle('productProcesses'), icon: Package, path: '/master/product-processes' },
-      { id: '3.2', title: masterTitle('lineMachines'), icon: GitFork, path: '/master/line-machines' },
+      { id: '3.1', title: t('menu.productProcesses'), icon: Package, path: '/master/product-processes' },
+      { id: '3.2', title: t('menu.lineMachines'), icon: GitFork, path: '/master/line-machines' },
       { id: '3.3', title: t('menu.shifts'), icon: Clock, path: '/master/shifts' },
       { id: '3.6', title: t('menu.downtimeReasons'), icon: CirclePause, path: '/master/downtime-reasons' },
-      { id: '3.7', title: masterTitle('employeeSkills'), icon: Users, path: '/master/employee-skills' },
+      { id: '3.7', title: t('menu.employeeSkills'), icon: Users, path: '/master/employee-skills' },
     ],
   },
   {
@@ -285,32 +285,10 @@ const roleBadgeClass = computed(() => {
 })
 
 const currentPageTitle = computed(() => {
-  const customTitle = {
-    ProductProcessManagement: masterTitle('productProcesses'),
-    LineMachineManagement: masterTitle('lineMachines'),
-    EmployeeSkills: masterTitle('employeeSkills'),
-  }[route.name]
-  if (customTitle) return customTitle
   const title = route.meta?.title
   if (!title) return 'SWICO MES'
-  return title.startsWith('routes.') ? t(title) : title
+  return title.includes('.') ? t(title) : title
 })
-
-function masterTitle(key) {
-  const labels = {
-    vi: {
-      productProcesses: 'Quản lý mã hàng & công đoạn',
-      lineMachines: 'Quản lý chuyền & thiết bị',
-      employeeSkills: 'Theo dõi năng lực nhân viên',
-    },
-    'zh-Hant': {
-      productProcesses: '料號及工序管理',
-      lineMachines: '產線與設備管理',
-      employeeSkills: '人員技能追蹤表',
-    },
-  }
-  return (labels[locale.value] || labels.vi)[key] || key
-}
 
 function toggleGroup(id) {
   if (isCollapsed.value) isCollapsed.value = false

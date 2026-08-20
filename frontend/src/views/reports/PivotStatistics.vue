@@ -124,78 +124,9 @@ import PageHeader from '@/components/PageHeader.vue'
 import { masterApi, productionApi } from '@/services/api'
 import { useI18n } from '@/i18n'
 
-const { locale } = useI18n()
+const { t } = useI18n()
 
-const text = {
-  vi: {
-    eyebrow: '2.3 Thống kê',
-    title: 'Thống kê Pivot báo cáo sản xuất',
-    subtitle: 'Tổng hợp số lượng theo mã hàng/công đoạn và tỷ lệ OEE theo cán bộ/nhân viên.',
-    dateFrom: 'Từ ngày',
-    dateTo: 'Đến ngày',
-    line: 'Chuyền',
-    shift: 'Ca',
-    partNumber: 'Mã hàng',
-    operatorName: 'Nhân viên thao tác',
-    operatorPlaceholder: 'Nhập họ tên hoặc tài khoản',
-    all: 'Tất cả',
-    reset: 'Xóa lọc',
-    search: 'Tìm kiếm',
-    quantityTab: 'Thống kê số lượng',
-    rateTab: 'Thống kê hiệu suất',
-    rowLabels: 'Row Labels',
-    completedQuantity: 'Tổng Số lượng hoàn thành (pcs)',
-    goodQuantity: 'Tổng số lượng đạt',
-    internalDefectQuantity: 'Tổng số lượng lỗi(Nội Bộ)',
-    externalDefectQuantity: 'Tổng số lượng lỗi (Bên ngoài)',
-    avgProductionEfficiency: 'Trung bình hiệu xuất sản xuất',
-    avgAvailabilityRate: 'Trung bình tỷ lệ sử dụng A',
-    avgPerformanceRate: 'Trung bình tỷ lệ khả dụng P',
-    avgQualityRate: 'Năng suất trung bình Q',
-    avgOee: 'Trung bình của OEE',
-    grandTotal: 'Grand Total',
-    reportCount: 'Số báo cáo',
-    unknownProcess: 'Chưa có công đoạn',
-    unknownOperator: 'Chưa có nhân viên',
-    unknownLeader: 'Chưa có cán bộ phụ trách',
-    loadFailed: 'Không tải được dữ liệu thống kê',
-  },
-  'zh-Hant': {
-    eyebrow: '2.3 統計',
-    title: '生產報表樞紐統計',
-    subtitle: '依料號/工序彙總數量，依幹部/作員彙總 OEE 比率。',
-    dateFrom: '開始日期',
-    dateTo: '結束日期',
-    line: '產線',
-    shift: '班別',
-    partNumber: '料號',
-    operatorName: '作員',
-    operatorPlaceholder: '輸入姓名或帳號',
-    all: '全部',
-    reset: '清除篩選',
-    search: '搜尋',
-    quantityTab: '數量統計',
-    rateTab: '效率統計',
-    rowLabels: 'Row Labels',
-    completedQuantity: 'Sum of 完成量',
-    goodQuantity: 'Sum of 良品數',
-    internalDefectQuantity: 'Sum of 不良數',
-    externalDefectQuantity: 'Sum of 不良數',
-    avgProductionEfficiency: 'Average of 生產效率',
-    avgAvailabilityRate: 'Average of 稼動率 A',
-    avgPerformanceRate: 'Average of 性能率 P',
-    avgQualityRate: 'Average of 良品率 Q',
-    avgOee: 'Average of OEE',
-    grandTotal: 'Grand Total',
-    reportCount: '報表筆數',
-    unknownProcess: '未填工序',
-    unknownOperator: '未填作員',
-    unknownLeader: '未填負責幹部',
-    loadFailed: '無法載入統計資料',
-  },
-}
-
-const l = key => (text[locale.value] || text.vi)[key] || key
+const l = (key, params) => t(`reports.pivotStatistics.${key}`, params)
 const today = new Date().toISOString().slice(0, 10)
 const firstDayOfMonth = today.slice(0, 8) + '01'
 

@@ -48,13 +48,13 @@
     </div>
 
     <div class="page-card mt-5 p-5">
-      <h3 class="section-title mb-3">Ma trận phân quyền / 權限矩陣</h3>
+      <h3 class="section-title mb-3">{{ t('users.permissionMatrix.title') }}</h3>
       <el-table :data="permissionMatrix" size="small" border>
-        <el-table-column prop="role" label="Vai trò" width="120" />
-        <el-table-column prop="menu1" label="Menu 1 - Báo cáo SX" />
-        <el-table-column prop="menu2" label="Menu 2 - Giám sát" />
-        <el-table-column prop="menu3" label="Menu 3 - Danh mục" />
-        <el-table-column prop="menu4" label="Menu 4 - Quản trị" />
+        <el-table-column prop="role" :label="t('users.permissionMatrix.role')" width="120" />
+        <el-table-column prop="menu1" :label="t('users.permissionMatrix.menuProduction')" />
+        <el-table-column prop="menu2" :label="t('users.permissionMatrix.menuMonitoring')" />
+        <el-table-column prop="menu3" :label="t('users.permissionMatrix.menuMaster')" />
+        <el-table-column prop="menu4" :label="t('users.permissionMatrix.menuSystem')" />
       </el-table>
     </div>
 
@@ -64,10 +64,10 @@
         <el-form-item :label="t('users.table.fullName')" required><el-input v-model="form.fullName" /></el-form-item>
         <el-form-item :label="t('users.dialog.role')" required>
           <el-select v-model="form.role" class="w-full">
-            <el-option label="OPERATOR - Công nhân" value="ROLE_OPERATOR" />
-            <el-option label="LEADER - Tổ trưởng" value="ROLE_LEADER" />
-            <el-option label="MANAGER - Quản lý" value="ROLE_MANAGER" />
-            <el-option label="ADMIN - Toàn quyền" value="ROLE_ADMIN" />
+            <el-option :label="t('users.roleOptions.operator')" value="ROLE_OPERATOR" />
+            <el-option :label="t('users.roleOptions.leader')" value="ROLE_LEADER" />
+            <el-option :label="t('users.roleOptions.manager')" value="ROLE_MANAGER" />
+            <el-option :label="t('users.roleOptions.admin')" value="ROLE_ADMIN" />
           </el-select>
         </el-form-item>
         <el-form-item :label="t('users.dialog.line')">
@@ -117,12 +117,12 @@ const roleSummary = computed(() => [
   { key: 'ROLE_ADMIN', label: t('users.summary.admin'), count: users.value.filter(u => u.role === 'ROLE_ADMIN').length, color: 'text-rose-600' },
 ])
 
-const permissionMatrix = [
-  { role: 'ROLE_OPERATOR', menu1: '1.1 Nhập báo cáo', menu2: '-', menu3: '-', menu4: '-' },
-  { role: 'ROLE_LEADER', menu1: '1.1 + 1.2 Lịch sử', menu2: '2.2 Tra cứu', menu3: '-', menu4: '-' },
-  { role: 'ROLE_MANAGER', menu1: '-', menu2: '2.1 + 2.2 + 2.3', menu3: 'Toàn bộ', menu4: '-' },
-  { role: 'ROLE_ADMIN', menu1: 'Toàn bộ', menu2: 'Toàn bộ', menu3: 'Toàn bộ', menu4: 'Toàn bộ' },
-]
+const permissionMatrix = computed(() => [
+  { role: 'ROLE_OPERATOR', menu1: t('users.permissionMatrix.entry'), menu2: '-', menu3: '-', menu4: '-' },
+  { role: 'ROLE_LEADER', menu1: t('users.permissionMatrix.entryHistory'), menu2: t('users.permissionMatrix.search'), menu3: '-', menu4: '-' },
+  { role: 'ROLE_MANAGER', menu1: '-', menu2: '2.1 + 2.2 + 2.3', menu3: t('users.permissionMatrix.all'), menu4: '-' },
+  { role: 'ROLE_ADMIN', menu1: t('users.permissionMatrix.all'), menu2: t('users.permissionMatrix.all'), menu3: t('users.permissionMatrix.all'), menu4: t('users.permissionMatrix.all') },
+])
 
 function roleTagType(role) {
   return { ROLE_OPERATOR: '', ROLE_LEADER: 'success', ROLE_MANAGER: 'warning', ROLE_ADMIN: 'danger' }[role] || 'info'

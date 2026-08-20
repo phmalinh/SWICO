@@ -150,7 +150,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { masterApi } from '@/services/api'
 import { useI18n } from '@/i18n'
 
-const { locale } = useI18n()
+const { t } = useI18n()
 const loading = ref(false)
 const importing = ref(false)
 const rows = ref([])
@@ -167,101 +167,6 @@ const pageSizeOptions = [10, 20, 50, 100]
 const fileInput = ref(null)
 const form = ref(emptyForm())
 
-const text = {
-  vi: {
-    eyebrow: '3.7 Dữ liệu chính',
-    title: 'Theo dõi năng lực nhân viên',
-    addSkill: 'Thêm năng lực',
-    deleteSelected: 'Xóa đã chọn',
-    deleteAll: 'Xóa tất cả',
-    importExcel: 'Nhập Excel',
-    exportCsv: 'Xuất CSV',
-    clearFilters: 'Xóa lọc',
-    detailView: 'Danh sách',
-    matrixView: 'Ma trận',
-    searchPlaceholder: 'Tìm tài khoản, họ tên, mã hàng, công đoạn',
-    selectEmployee: 'Chọn tài khoản',
-    selectProduct: 'Chọn mã hàng',
-    selectProcess: 'Chọn công đoạn',
-    employeeCode: 'Tài khoản',
-    employeeName: 'Họ tên',
-    jobTitle: 'Chức vụ',
-    team: 'Năng lực/Tổ',
-    skill: 'Năng lực - Tổ',
-    hireDate: 'Ngày vào làm',
-    partName: 'Tên hàng',
-    partNumber: 'Mã hàng',
-    process: 'Công đoạn',
-    actions: 'Thao tác',
-    edit: 'Sửa',
-    delete: 'Xóa',
-    createTitle: 'Thêm năng lực',
-    editTitle: 'Sửa năng lực',
-    cancel: 'Hủy',
-    save: 'Lưu',
-    missingEmployeeCode: 'Vui lòng nhập tài khoản',
-    confirmTitle: 'Xác nhận',
-    deleteConfirm: 'Xóa',
-    deleteSelectedConfirm: 'Xóa các dòng năng lực đã chọn?',
-    deleteAllConfirm: 'Xóa toàn bộ bảng theo dõi năng lực nhân viên?',
-    saved: 'Đã lưu',
-    deleted: 'Đã xóa',
-    deletedAll: 'Da xoa tat ca',
-    imported: 'Đã import {skills} dòng năng lực của {employees} nhân viên',
-    importFailed: 'Import không thành công',
-    total: 'Tổng',
-    rowsPerPage: 'Dòng/trang',
-    employees: 'Nhân viên',
-    skills: 'Năng lực',
-  },
-  'zh-Hant': {
-    eyebrow: '3.7 主資料',
-    title: '人員技能追蹤表',
-    addSkill: '新增技能',
-    deleteSelected: '刪除已選',
-    deleteAll: '全部刪除',
-    importExcel: '匯入 Excel',
-    exportCsv: '匯出 CSV',
-    clearFilters: '清除篩選',
-    detailView: '清單',
-    matrixView: '矩陣',
-    searchPlaceholder: '搜尋工號、姓名、料號、工序',
-    selectEmployee: '選擇工號',
-    selectProduct: '選擇料號',
-    selectProcess: '選擇工序',
-    employeeCode: '工號',
-    employeeName: '姓名',
-    jobTitle: '職稱',
-    team: '技能 - 組',
-    skill: '技能 - 組',
-    hireDate: '入職日期',
-    partName: '品名',
-    partNumber: '料號',
-    process: '工序',
-    actions: '操作',
-    edit: '編輯',
-    delete: '刪除',
-    createTitle: '新增技能',
-    editTitle: '編輯技能',
-    cancel: '取消',
-    save: '儲存',
-    missingEmployeeCode: '請輸入工號',
-    confirmTitle: '確認',
-    deleteConfirm: '刪除',
-    deleteSelectedConfirm: '刪除已選擇的人員技能資料？',
-    deleteAllConfirm: '刪除全部人員技能追蹤資料？',
-    saved: '已儲存',
-    deleted: '已刪除',
-    deletedAll: '已全部刪除',
-    imported: '已匯入 {employees} 位人員，共 {skills} 筆技能資料',
-    importFailed: '匯入失敗',
-    total: '總筆數',
-    rowsPerPage: '每頁筆數',
-    employees: '人員',
-    skills: '技能',
-  },
-}
-
 const HeaderCell = {
   props: {
     main: { type: String, required: true },
@@ -275,8 +180,7 @@ const HeaderCell = {
   },
 }
 
-const currentText = computed(() => text[locale.value] || text.vi)
-const l = key => currentText.value[key] || key
+const l = (key, params) => t(`master.employeeSkills.${key}`, params)
 const dialogTitle = computed(() => form.value.id ? l('editTitle') : l('createTitle'))
 
 const teamOptions = computed(() => [...new Set(rows.value.map(row => row.team).filter(Boolean))])

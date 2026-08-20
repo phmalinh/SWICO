@@ -8,8 +8,8 @@
           class="!w-28"
           @change="value => setLocale(value)"
         >
-          <el-option label="Tiếng Việt" value="vi" />
-          <el-option label="繁體中文" value="zh-Hant" />
+          <el-option :label="t('common.languages.vi')" value="vi" />
+          <el-option :label="t('common.languages.zhHant')" value="zh-Hant" />
         </el-select>
       </div>
       <div class="mb-6 text-center">

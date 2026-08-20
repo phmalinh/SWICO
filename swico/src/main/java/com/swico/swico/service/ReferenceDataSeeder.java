@@ -14,6 +14,7 @@ import com.swico.swico.repository.MachineRepository;
 import com.swico.swico.repository.ProductRepository;
 import com.swico.swico.repository.ShiftRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Component
+@ConditionalOnProperty(name = "app.seed.reference-data", havingValue = "true")
 public class ReferenceDataSeeder {
 
     private static final String DAY_SHIFT_NAME = "Ca Ngay 06:00-14:00";

@@ -1,7 +1,7 @@
 # Frontend env files
+frontend/.env
 frontend/.env.local
 frontend/.env.*
-!frontend/.env
 !frontend/.env.example
 
 # Python virtual env

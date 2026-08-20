@@ -35,25 +35,25 @@
       <el-table :data="paginatedRows" stripe border class="line-machine-table rounded-md" style="width:100%" size="large" v-loading="loading">
         <el-table-column type="index" label="#" width="60" :index="pageIndex" />
         <el-table-column prop="lineCode" width="130">
-          <template #header><HeaderCell zh="產線" vi="Chuyền" /></template>
+          <template #header><HeaderCell :label="l('lineCode')" /></template>
         </el-table-column>
         <el-table-column prop="assetCode" min-width="150" show-overflow-tooltip>
-          <template #header><HeaderCell zh="財產編號" vi="Mã Tài Sản" /></template>
+          <template #header><HeaderCell :label="l('assetCode')" /></template>
         </el-table-column>
         <el-table-column prop="machineCode" min-width="150" show-overflow-tooltip>
-          <template #header><HeaderCell zh="設備編號" vi="Mã Thiết Bị" /></template>
+          <template #header><HeaderCell :label="l('machineCode')" /></template>
         </el-table-column>
         <el-table-column prop="description" min-width="200" show-overflow-tooltip>
-          <template #header><HeaderCell zh="設備名稱" vi="Tên Thiết Bị" /></template>
+          <template #header><HeaderCell :label="l('machineName')" /></template>
         </el-table-column>
         <el-table-column prop="purchaseDate" width="150" align="center">
-          <template #header><HeaderCell zh="購入日期" vi="Ngày Nhập" /></template>
+          <template #header><HeaderCell :label="l('purchaseDate')" /></template>
         </el-table-column>
         <el-table-column prop="custodyDepartment" min-width="180" show-overflow-tooltip>
-          <template #header><HeaderCell zh="保管單位" vi="Bộ Phận Bảo Quản" /></template>
+          <template #header><HeaderCell :label="l('custodyDepartment')" /></template>
         </el-table-column>
         <el-table-column :label="l('actions')" width="130" fixed="right" align="center">
-          <template #header><HeaderCell zh="操作" :vi="l('actions')" /></template>
+          <template #header><HeaderCell :label="l('actions')" /></template>
           <template #default="{ row }">
             <el-dropdown trigger="click" @command="command => handleRowCommand(command, row)">
               <el-button size="small">{{ l('moreActions') }}</el-button>
@@ -120,15 +120,14 @@ import PageHeader from '@/components/PageHeader.vue'
 import { masterApi } from '@/services/api'
 import { useI18n } from '@/i18n'
 
-const { locale } = useI18n()
+const { t } = useI18n()
 const HeaderCell = {
   props: {
-    zh: { type: String, required: true },
-    vi: { type: String, required: true },
+    label: { type: String, required: true },
   },
   setup(props) {
     return () => h('div', { class: 'excel-header-cell' }, [
-      h('div', { class: 'excel-header-main' }, locale.value === 'zh-Hant' ? props.zh : props.vi),
+      h('div', { class: 'excel-header-main' }, props.label),
     ])
   },
 }
@@ -145,109 +144,7 @@ const pageSizeOptions = [10, 20, 50, 100]
 const fileInput = ref(null)
 const lineForm = ref({ id: null, lineCode: '', description: '' })
 const machineForm = ref({ id: null, lineCode: '', assetCode: '', machineCode: '', description: '', purchaseDate: '', custodyDepartment: '' })
-const text = {
-  vi: {
-    eyebrow: '3.2 Dữ liệu chính',
-    title: 'Quản lý chuyền & thiết bị',
-    addLine: 'Thêm chuyền',
-    addMachine: 'Thêm thiết bị',
-    exportCsv: 'Xuất CSV',
-    searchLine: 'Tìm chuyền',
-    searchMachine: 'Tìm mã thiết bị',
-    clearFilters: 'Xóa lọc',
-    importExcel: 'Nhập Excel',
-    imported: 'Đã import {lines} chuyền và {machines} thiết bị',
-    importFailed: 'Import thất bại',
-    lineCode: 'Chuyền',
-    assetCode: 'Mã tài sản',
-    machineCode: 'Mã thiết bị',
-    machineName: 'Tên thiết bị',
-    purchaseDate: 'Ngày nhập',
-    custodyDepartment: 'Bộ phận bảo quản',
-    actions: 'Thao tác',
-    editLine: 'Sửa chuyền',
-    deleteLine: 'Xóa chuyền',
-    editMachine: 'Sửa thiết bị',
-    deleteMachine: 'Xóa thiết bị',
-    lineCreateTitle: 'Thêm chuyền',
-    lineEditTitle: 'Sửa chuyền',
-    machineCreateTitle: 'Thêm thiết bị',
-    machineEditTitle: 'Sửa thiết bị',
-    description: 'Mô tả',
-    cancel: 'Hủy',
-    save: 'Lưu',
-    missingLine: 'Vui lòng nhập chuyền',
-    missingMachine: 'Vui lòng nhập mã thiết bị',
-    confirmTitle: 'Xác nhận',
-    deleteLineConfirm: 'Xóa chuyền',
-    deleteMachineConfirm: 'Xóa thiết bị',
-    deleteAllLines: 'Xóa toàn bộ chuyền',
-    deleteAllMachines: 'Xóa toàn bộ thiết bị',
-    deleteAllLinesConfirm: 'Xóa toàn bộ chuyền?',
-    deleteAllMachinesConfirm: 'Xóa toàn bộ thiết bị?',
-    saved: 'Đã lưu',
-    deleted: 'Đã xóa',
-    deletedAllLines: 'Đã xóa toàn bộ chuyền',
-    deletedAllMachines: 'Đã xóa toàn bộ thiết bị',
-    total: 'Tổng',
-    rowsPerPage: 'Dòng/trang',
-    lineCount: 'Chuyền',
-    machineCount: 'Thiết bị',
-    moreActions: 'Thao tác',
-  },
-  'zh-Hant': {
-    eyebrow: '3.2 主資料',
-    title: '產線與設備管理',
-    addLine: '新增產線',
-    addMachine: '新增設備',
-    exportCsv: '匯出 CSV',
-    searchLine: '搜尋產線',
-    searchMachine: '搜尋設備編號',
-    clearFilters: '清除篩選',
-    importExcel: '匯入 Excel',
-    imported: '已匯入 {lines} 條產線與 {machines} 台設備',
-    importFailed: '匯入失敗',
-    lineCode: '產線',
-    assetCode: '財產編號',
-    machineCode: '設備編號',
-    machineName: '設備名稱',
-    purchaseDate: '購入日期',
-    custodyDepartment: '保管單位',
-    actions: '操作',
-    editLine: '編輯產線',
-    deleteLine: '刪除產線',
-    editMachine: '編輯設備',
-    deleteMachine: '刪除設備',
-    lineCreateTitle: '新增產線',
-    lineEditTitle: '編輯產線',
-    machineCreateTitle: '新增設備',
-    machineEditTitle: '編輯設備',
-    description: '說明',
-    cancel: '取消',
-    save: '儲存',
-    missingLine: '請輸入產線',
-    missingMachine: '請輸入設備編號',
-    confirmTitle: '確認',
-    deleteLineConfirm: '刪除產線',
-    deleteMachineConfirm: '刪除設備',
-    deleteAllLines: '刪除所有產線',
-    deleteAllMachines: '刪除所有設備',
-    deleteAllLinesConfirm: '刪除所有產線？',
-    deleteAllMachinesConfirm: '刪除所有設備？',
-    saved: '已儲存',
-    deleted: '已刪除',
-    deletedAllLines: '已刪除所有產線',
-    deletedAllMachines: '已刪除所有設備',
-    total: '總筆數',
-    rowsPerPage: '每頁筆數',
-    lineCount: '產線',
-    machineCount: '設備',
-    moreActions: '操作',
-  },
-}
-
-const currentText = computed(() => text[locale.value] || text.vi)
-const l = key => currentText.value[key] || key
+const l = (key, params) => t(`master.lineMachines.${key}`, params)
 const lineDialogTitle = computed(() => lineForm.value.id ? l('lineEditTitle') : l('lineCreateTitle'))
 const machineDialogTitle = computed(() => machineForm.value.id ? l('machineEditTitle') : l('machineCreateTitle'))
 const machineCount = computed(() => rows.value.filter(row => row.machineId).length)
