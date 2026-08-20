@@ -55,10 +55,10 @@
                     <span v-if="row.level < 2" class="tree-box">−</span>
                     <span>{{ row.label }}</span>
                   </td>
-                  <td>{{ formatNumber(row.inputQuantity) }}</td>
-                  <td>{{ formatNumber(row.goodQuantity) }}</td>
-                  <td>{{ formatNumber(row.internalDefectQuantity) }}</td>
-                  <td>{{ formatNumber(row.externalDefectQuantity) }}</td>
+                  <td>{{ row.showValues ? formatNumber(row.inputQuantity) : '' }}</td>
+                  <td>{{ row.showValues ? formatNumber(row.goodQuantity) : '' }}</td>
+                  <td>{{ row.showValues ? formatNumber(row.internalDefectQuantity) : '' }}</td>
+                  <td>{{ row.showValues ? formatNumber(row.externalDefectQuantity) : '' }}</td>
                 </tr>
                 <tr class="grand-row">
                   <td class="label-col">{{ l('grandTotal') }}</td>
@@ -232,7 +232,7 @@ function buildGroupedRows(items, firstKey, secondKey) {
   })
 
   return [...firstMap.values()].flatMap(first => [
-    toQuantityRow(first, 0, `first-${first.label}`),
+    toQuantityRow(first, 0, `first-${first.label}`, false),
     ...[...first.children.values()].flatMap(second => [
       toQuantityRow(second, 1, `second-${first.label}-${second.label}`),
       ...[...second.children.values()].map(day => toQuantityRow(day, 2, `day-${first.label}-${second.label}-${day.label}`)),
@@ -240,11 +240,12 @@ function buildGroupedRows(items, firstKey, secondKey) {
   ])
 }
 
-function toQuantityRow(node, level, key) {
+function toQuantityRow(node, level, key, showValues = true) {
   return {
     key,
     label: node.label,
     level,
+    showValues,
     inputQuantity: node.totals.inputQuantity,
     goodQuantity: node.totals.goodQuantity,
     internalDefectQuantity: node.totals.internalDefectQuantity,

@@ -37,11 +37,13 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         try {
+            String username = request.username() != null ? request.username().trim() : "";
+            String password = request.password() != null ? request.password().trim() : "";
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.username(), request.password())
+                    new UsernamePasswordAuthenticationToken(username, password)
             );
             String token = tokenProvider.generateToken(authentication);
-            User user = userRepository.findByUsername(request.username()).orElseThrow();
+            User user = userRepository.findByUsername(username).orElseThrow();
             return ResponseEntity.ok(new AuthResponse(token, user.getUsername(), user.getFullName(), user.getRole().name(), user.isMustChangePassword()));
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(401).build();

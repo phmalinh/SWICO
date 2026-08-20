@@ -8,10 +8,12 @@ import com.swico.swico.repository.DailyProductionReportRepository;
 import com.swico.swico.repository.EmployeeSkillRepository;
 import com.swico.swico.repository.UserRepository;
 import com.swico.swico.service.AuditLogService;
+import com.swico.swico.service.UserImportService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Locale;
@@ -27,13 +29,15 @@ public class UserController {
     private final EmployeeSkillRepository employeeSkillRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
+    private final UserImportService userImportService;
 
-    public UserController(UserRepository userRepository, DailyProductionReportRepository reportRepository, EmployeeSkillRepository employeeSkillRepository, PasswordEncoder passwordEncoder, AuditLogService auditLogService) {
+    public UserController(UserRepository userRepository, DailyProductionReportRepository reportRepository, EmployeeSkillRepository employeeSkillRepository, PasswordEncoder passwordEncoder, AuditLogService auditLogService, UserImportService userImportService) {
         this.userRepository = userRepository;
         this.reportRepository = reportRepository;
         this.employeeSkillRepository = employeeSkillRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
+        this.userImportService = userImportService;
     }
 
     @GetMapping
@@ -83,6 +87,19 @@ public class UserController {
                 String.format("Tạo tài khoản %s", saved.getUsername())
         );
         return ResponseEntity.ok(UserResponse.fromEntity(saved));
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<?> importUsers(@RequestParam("file") MultipartFile file, Authentication authentication) {
+        var result = userImportService.importWorkbook(file);
+        auditLogService.record(
+                "IMPORT",
+                "User",
+                null,
+                authentication.getName(),
+                String.format("Import tài khoản: tạo mới %d, cập nhật %d, bỏ qua %d", result.created(), result.updated(), result.skipped())
+        );
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/{id}")

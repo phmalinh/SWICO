@@ -76,7 +76,7 @@ async function doLogin() {
 
   loading.value = true
   try {
-    const auth = await login(form.value.username, form.value.password)
+    const auth = await login(form.value.username.trim(), form.value.password.trim())
     const session = getSession()
     ElMessage.success(t('login.success'))
     router.push(session.mustChangePassword || auth.mustChangePassword ? '/profile' : '/')

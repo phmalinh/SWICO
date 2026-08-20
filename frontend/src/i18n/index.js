@@ -70,6 +70,9 @@ const messages = {
       pageTitle: 'Quản Lý Tài Khoản & Phân Quyền',
       pageSubtitle: 'Tạo tài khoản và gán vai trò OPERATOR, LEADER, MANAGER, ADMIN.',
       createAccount: 'Tạo tài khoản',
+      importExcel: 'Nhập Excel',
+      searchPlaceholder: 'Tìm tài khoản, họ tên, chức vụ, tổ, quyền',
+      deleteSelected: 'Xóa đã chọn',
       summary: {
         operator: 'Công nhân',
         leader: 'Tổ trưởng',
@@ -130,8 +133,11 @@ const messages = {
         locked: 'Đã khóa tài khoản',
         toggleConfirm: 'Bạn có chắc muốn {action} tài khoản {username}?',
         deleteConfirm: 'Bạn có chắc muốn xóa tài khoản {username}?',
+        deleteSelectedConfirm: 'Bạn có chắc muốn xóa {count} tài khoản đã chọn?',
         deleted: 'Đã xóa tài khoản',
         deleteFailed: 'Không thể xóa tài khoản',
+        importSuccess: 'Đã import tài khoản: tạo mới {created}, cập nhật {updated}, bỏ qua {skipped}',
+        importFailed: 'Import tài khoản thất bại',
       },
     },
     productionEntry: {
@@ -989,6 +995,9 @@ const messages = {
       pageTitle: '帳號與權限管理',
       pageSubtitle: '建立帳號並分配 OPERATOR、LEADER、MANAGER、ADMIN 角色。',
       createAccount: '建立帳號',
+      importExcel: '匯入 Excel',
+      searchPlaceholder: '搜尋帳號、姓名、職稱、組、權限',
+      deleteSelected: '刪除已選',
       summary: {
         operator: '作業員',
         leader: '班長',
@@ -1049,8 +1058,11 @@ const messages = {
         locked: '已停用帳號',
         toggleConfirm: '您確定要{action}帳號 {username} 嗎？',
         deleteConfirm: '您確定要刪除帳號 {username} 嗎？',
+        deleteSelectedConfirm: '確定刪除已選的 {count} 個帳號？',
         deleted: '已刪除帳號',
         deleteFailed: '無法刪除帳號',
+        importSuccess: '已匯入帳號：新增 {created}，更新 {updated}，略過 {skipped}',
+        importFailed: '匯入帳號失敗',
       },
     },
     productionEntry: {

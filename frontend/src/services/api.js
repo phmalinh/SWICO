@@ -384,6 +384,11 @@ export const productionApi = {
 export const userApi = {
   list: () => request('/system/users'),
   leaders: () => request('/master-data/leaders'),
+  importUsers: file => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request('/system/users/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
+  },
   create: payload => request('/system/users', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   update: (id, payload) => request(`/system/users/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   delete: id => request(`/system/users/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),

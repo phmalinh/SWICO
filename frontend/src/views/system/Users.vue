@@ -2,7 +2,9 @@
   <div>
     <PageHeader :eyebrow="'4.1 ' + t('layout.system')" :title="t('users.pageTitle')" :subtitle="t('users.pageSubtitle')">
       <template #actions>
+        <el-button type="success" :loading="importing" @click="triggerImport"><el-icon class="mr-1"><Upload /></el-icon> {{ t('users.importExcel') }}</el-button>
         <el-button type="primary" @click="openDialog()"><el-icon class="mr-1"><Plus /></el-icon> {{ t('users.createAccount') }}</el-button>
+        <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
       </template>
     </PageHeader>
 
@@ -14,7 +16,19 @@
     </div>
 
     <div class="page-card overflow-hidden">
-      <el-table :data="paginatedUsers" stripe>
+      <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between">
+        <el-input
+          v-model="keyword"
+          clearable
+          :placeholder="t('users.searchPlaceholder')"
+          class="md:max-w-md"
+        />
+        <el-button type="danger" plain :disabled="selectedUsers.length === 0" @click="deleteSelectedUsers">
+          {{ t('users.deleteSelected') }}
+        </el-button>
+      </div>
+      <el-table :data="paginatedUsers" stripe @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="48" align="center" />
         <el-table-column prop="username" :label="t('users.table.account')" width="150">
           <template #default="{ row }"><span class="font-mono font-bold">{{ row.username }}</span></template>
         </el-table-column>
@@ -48,7 +62,7 @@
       <el-pagination
           v-model:current-page="currentPage"
           :page-size="pageSize"
-          :total="users.length"
+          :total="filteredUsers.length"
           layout="prev, pager, next"
           background
         />
@@ -101,8 +115,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { Plus, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
 import { masterApi, userApi } from '@/services/api'
@@ -112,6 +126,10 @@ const { t } = useI18n()
 
 const users = ref([])
 const lines = ref([])
+const importing = ref(false)
+const fileInput = ref(null)
+const keyword = ref('')
+const selectedUsers = ref([])
 const dialogVisible = ref(false)
 const editId = ref(null)
 const defaultForm = () => ({ username: '', fullName: '', password: '', role: 'ROLE_OPERATOR', lineCode: null, jobTitle: '', team: '', hireDate: '', active: true })
@@ -119,10 +137,27 @@ const form = ref(defaultForm())
 const currentPage = ref(1)
 const pageSize = ref(10)
 
+const filteredUsers = computed(() => {
+  const term = keyword.value.trim().toLowerCase()
+  if (!term) return users.value
+  return users.value.filter(user => [
+    user.username,
+    user.fullName,
+    user.jobTitle,
+    user.team,
+    user.role,
+    user.lineCode,
+  ].some(value => String(value || '').toLowerCase().includes(term)))
+})
+
 const paginatedUsers = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return users.value.slice(start, end)
+  return filteredUsers.value.slice(start, end)
+})
+
+watch(keyword, () => {
+  currentPage.value = 1
 })
 const roleSummary = computed(() => [
   { key: 'ROLE_OPERATOR', label: t('users.summary.operator'), count: users.value.filter(u => u.role === 'ROLE_OPERATOR').length, color: 'text-sky-600' },
@@ -137,25 +172,13 @@ const permissionMatrix = computed(() => [
   { role: 'ROLE_MANAGER', menu1: '-', menu2: '2.1 + 2.2 + 2.3', menu3: t('users.permissionMatrix.all'), menu4: '-' },
   { role: 'ROLE_ADMIN', menu1: t('users.permissionMatrix.all'), menu2: t('users.permissionMatrix.all'), menu3: t('users.permissionMatrix.all'), menu4: t('users.permissionMatrix.all') },
 ])
-const filteredRows = computed(() => {
-  const users = filters.value.username.trim().toLowerCase()
-//  const machineTerm = filters.value.machineCode.trim().toLowerCase()
-  return rows.value.filter(row => {
- //   const users = !username || String(row.username || '').toLowerCase().includes(username)
-    //const matchesMachine = !machineTerm || String(row.machineCode || '').toLowerCase().includes(machineTerm)
-    return matchesUsers 
-  })
-})
-const paginatedRows = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredRows.value.slice(start, start + pageSize.value)
-})
 
-function pageIndex(index) {
-  return (currentPage.value - 1) * pageSize.value + index + 1
-}
 function roleTagType(role) {
   return { ROLE_OPERATOR: '', ROLE_LEADER: 'success', ROLE_MANAGER: 'warning', ROLE_ADMIN: 'danger' }[role] || 'info'
+}
+
+function onSelectionChange(selection) {
+  selectedUsers.value = selection
 }
 
 async function loadUsers() {
@@ -176,6 +199,32 @@ async function loadLines() {
     }))
   } catch (error) {
     lines.value = []
+  }
+}
+
+function triggerImport() {
+  fileInput.value?.click()
+}
+
+async function handleImportFile(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+
+  importing.value = true
+  try {
+    const result = await userApi.importUsers(file)
+    await loadUsers()
+    selectedUsers.value = []
+    ElMessage.success(t('users.messages.importSuccess', {
+      created: result.created ?? 0,
+      updated: result.updated ?? 0,
+      skipped: result.skipped ?? 0,
+    }))
+  } catch (error) {
+    ElMessage.error(`${t('users.messages.importFailed')}: ${error.message}`)
+  } finally {
+    importing.value = false
   }
 }
 
@@ -259,6 +308,32 @@ async function deleteUser(row) {
     })
     await userApi.delete(row.id)
     users.value = users.value.filter(user => user.id !== row.id)
+    ElMessage.success(t('users.messages.deleted'))
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || t('users.messages.deleteFailed'))
+    }
+  }
+}
+
+async function deleteSelectedUsers() {
+  if (!selectedUsers.value.length) return
+  try {
+    await ElMessageBox.confirm(
+      t('users.messages.deleteSelectedConfirm', { count: selectedUsers.value.length }),
+      t('common.confirm'),
+      {
+        type: 'warning',
+        confirmButtonText: t('users.table.delete'),
+        cancelButtonText: t('common.cancel'),
+      }
+    )
+    const selectedIds = selectedUsers.value.map(user => user.id)
+    for (const id of selectedIds) {
+      await userApi.delete(id)
+    }
+    users.value = users.value.filter(user => !selectedIds.includes(user.id))
+    selectedUsers.value = []
     ElMessage.success(t('users.messages.deleted'))
   } catch (error) {
     if (error !== 'cancel') {
