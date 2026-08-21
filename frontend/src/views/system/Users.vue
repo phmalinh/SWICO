@@ -16,13 +16,16 @@
     </div>
 
     <div class="page-card overflow-hidden">
-      <div class="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between">
+      <div class="toolbar-row">
         <el-input
           v-model="keyword"
           clearable
           :placeholder="t('users.searchPlaceholder')"
-          class="md:max-w-md"
+         
         />
+        <el-button type="success" :loading="importing" @click="triggerImport"><el-icon class="mr-1"><Upload /></el-icon> {{ t('users.importExcel') }}</el-button>
+        <el-button type="primary" @click="openDialog()"><el-icon class="mr-1"><Plus /></el-icon> {{ t('users.createAccount') }}</el-button>
+        <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
         <el-button type="danger" plain :disabled="selectedUsers.length === 0" @click="deleteSelectedUsers">
           {{ t('users.deleteSelected') }}
         </el-button>
@@ -347,3 +350,33 @@ onMounted(() => {
   loadLines()
 })
 </script>
+<style scoped>
+:deep(.downtime-tabs .el-tabs__header) {
+  margin: 0;
+  padding: 0 16px;
+  background: #f8fafc;
+}
+
+.toolbar-row {
+  display: grid;
+  /* grid-template-columns: minmax(260px, 1fr) max-content max-content; */
+  grid-template-columns: minmax(350px, 1fr) 120px repeat(5, max-content);
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+:deep(.toolbar-search .el-input__wrapper) {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  box-shadow: 0 0 0 1px #bfdbfe inset;
+}
+
+@media (max-width: 720px) {
+  .toolbar-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
