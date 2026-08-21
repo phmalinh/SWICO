@@ -1,5 +1,7 @@
 package com.swico.swico.service;
 
+import com.swico.swico.dto.ProductionCalculationRequest;
+import com.swico.swico.dto.ProductionCalculationResponse;
 import com.swico.swico.dto.ProductionReportResponse;
 import com.swico.swico.entity.ProductProcess;
 import com.swico.swico.repository.ProductProcessRepository;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -28,9 +32,11 @@ import java.util.Map;
 public class ProductionExportService {
 
     private final ProductProcessRepository productProcessRepository;
+    private final ProductionFormulaService formulaService;
 
-    public ProductionExportService(ProductProcessRepository productProcessRepository) {
+    public ProductionExportService(ProductProcessRepository productProcessRepository, ProductionFormulaService formulaService) {
         this.productProcessRepository = productProcessRepository;
+        this.formulaService = formulaService;
     }
 
     public byte[] exportV9(List<ProductionReportResponse> reports) {
@@ -47,12 +53,12 @@ public class ProductionExportService {
             CellStyle dateStyle = createDateStyle(workbook);
 
             String[] headers = {
-                    "\u65e5\u671f\nNgay", "\u7dda\u5225\nChuyen", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMa May", "\u516c\u53f8\nCong Ty",
-                    "\u4f5c\u54e1\nNhan Vien Thao Tac", "\u8ca0\u8cac\u5e79\u90e8\nCan Bo Phu Trach", "\u6599\u865f\nMa Hang",
-                    "\u54c1\u540d\nTen Hang", "\u5de5\u5e8f\nCong doan", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTong TG", "\u505c\u6a5f(\u5206)\nTG Dung",
-                    "\u505c\u6a5f\u539f\u56e0\nLy Do Dung", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMuc Tieu", "\u6295\u5165\u6578\nSL Nhap",
-                    "\u826f\u54c1\u6578\nSL Dat", "\u4e0d\u826f\u6578\nSL Loi\n(\u5167\u88fd)", "\u4e0d\u826f\u6578\nSL Loi\n(\u5916\u88fd)",
-                    "\u8cac\u4efb\nTrach nhiem", "\u6263\u9ede\u6578\n% tru", "\u751f\u7522\u6548\u7387\nHieu Suat", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nDanh Gia", "\u7c3d\u540d"
+                    "\u65e5\u671f\nNgày", "\u7dda\u5225\nChuyền", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMã Máy", "\u516c\u53f8\nCông Ty",
+                    "\u4f5c\u54e1\nNhân Viên Thao Tác", "\u8ca0\u8cac\u5e79\u90e8\nCán Bộ Phụ Trách", "\u6599\u865f\nMã Hàng",
+                    "\u54c1\u540d\nTên Hàng", "\u5de5\u5e8f\nCông Đoạn", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTổng TG", "\u505c\u6a5f(\u5206)\nTG Dừng",
+                    "\u505c\u6a5f\u539f\u56e0\nLý Do Dừng", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMục Tiêu", "\u6295\u5165\u6578\nSL Nhập",
+                    "\u826f\u54c1\u6578\nSL Đạt", "\u4e0d\u826f\u6578\nSL Lỗi\n(\u5167\u88fd)", "\u4e0d\u826f\u6578\nSL Lỗi\n(\u5916\u88fd)",
+                    "\u8cac\u4efb\nTrách Nhiệm", "\u6263\u9ede\u6578\n% Trừ", "\u751f\u7522\u6548\u7387\nHiệu Suất", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nĐánh Giá", "\u7c3d\u540d"
             };
 
             Row header = sheet.createRow(0);
@@ -88,11 +94,17 @@ public class ProductionExportService {
                 setValue(row.createCell(17), report.goodQuantity(), intStyle);
                 setValue(row.createCell(18), report.internalDefectQuantity(), intStyle);
                 setValue(row.createCell(19), report.externalDefectQuantity(), intStyle);
-                int excelRow = row.getRowNum() + 1;
-                setFormula(row.createCell(20), "S" + excelRow + "/Q" + excelRow, percentStyle);
-                setFormula(row.createCell(21), "IF(U" + excelRow + ">0.27%,U" + excelRow + "-0.27%,0)", percentStyle);
-                setFormula(row.createCell(22), "IF(U" + excelRow + ">0.27%,(Q" + excelRow + "*(K" + excelRow + "/60)/L" + excelRow + ")-V" + excelRow + ",(Q" + excelRow + "*(K" + excelRow + "/60)/L" + excelRow + "))", percentStyle);
-                setFormula(row.createCell(23), "IF(OR(O" + excelRow + "=\"\",O" + excelRow + "=0),\"\",IF(ISNUMBER(SEARCH(\"chuyển mã hàng gia công cùng máy\",N" + excelRow + ")),1,IF(L" + excelRow + "=\"\",\"\",L" + excelRow + "/O" + excelRow + ")))", percentStyle);
+                ProductionCalculationResponse fallback = null;
+                if (report.responsibility() == null
+                        || report.deductionPercent() == null
+                        || report.productionEfficiency() == null
+                        || report.availabilityRate() == null) {
+                    fallback = calculateFallback(report);
+                }
+                setValue(row.createCell(20), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
+                setValue(row.createCell(21), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
+                setValue(row.createCell(22), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
+                setValue(row.createCell(23), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
                 setValue(row.createCell(24), report.performanceRate(), percentStyle);
                 setValue(row.createCell(25), report.qualityRate(), percentStyle);
                 setValue(row.createCell(26), report.oee(), percentStyle);
@@ -124,6 +136,52 @@ public class ProductionExportService {
                 .collect(java.util.stream.Collectors.joining("\uff1b "));
     }
 
+    private ProductionCalculationResponse calculateFallback(ProductionReportResponse report) {
+        return formulaService.calculate(new ProductionCalculationRequest(
+                parseDate(report.reportDate()),
+                report.lineCode(),
+                report.shiftName(),
+                report.machineCode(),
+                report.partNumber(),
+                report.partName(),
+                report.cycleTimeSeconds(),
+                report.processIds(),
+                report.totalOperatingMinutes(),
+                report.downtimeMinutes(),
+                report.inputQuantity(),
+                report.goodQuantity(),
+                report.defectQuantity(),
+                report.internalDefectQuantity(),
+                report.externalDefectQuantity(),
+                report.company(),
+                report.responsibleLeader(),
+                report.downtimeReason(),
+                null,
+                report.deductionPercent(),
+                report.shiftStandardTimeMinutes(),
+                report.dailyTargetQuantity(),
+                report.productionEfficiency(),
+                report.availabilityRate(),
+                report.performanceRate(),
+                report.qualityRate(),
+                report.oee(),
+                report.evaluationLabel()
+        ), report.shiftStandardTimeMinutes());
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException ignored) {
+            return null;
+        }
+    }
+
+    private BigDecimal firstNonNull(BigDecimal value, BigDecimal fallback) {
+        return value != null ? value : fallback;
+    }
+
     private void setValue(Cell cell, String value, CellStyle style) {
         if (value != null) cell.setCellValue(value);
         cell.setCellStyle(style);
@@ -136,11 +194,6 @@ public class ProductionExportService {
 
     private void setValue(Cell cell, BigDecimal value, CellStyle style) {
         if (value != null) cell.setCellValue(value.doubleValue());
-        cell.setCellStyle(style);
-    }
-
-    private void setFormula(Cell cell, String formula, CellStyle style) {
-        cell.setCellFormula(formula);
         cell.setCellStyle(style);
     }
 

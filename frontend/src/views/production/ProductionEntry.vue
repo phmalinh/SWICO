@@ -63,7 +63,7 @@
   
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
-              <el-form-item :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-5">
+              <el-form-item :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-4">
                 <el-select
                   v-model="form.partNumber"
                   size="default"
@@ -83,7 +83,7 @@
                 <el-input v-model="form.partName" size="default" readonly placeholder="-" />
               </el-form-item>
               
-              <el-form-item :label="t('productionEntry.cycleTime')" class="!mb-0 md:col-span-3">
+              <el-form-item :label="t('productionEntry.cycleTime')" class="!mb-0 md:col-span-4">
                 <el-input v-model="form.cycleTime" size="default" readonly placeholder="-" />
               </el-form-item>
 
@@ -501,6 +501,7 @@ const defaultDowntimeReasons = [
   'H. 其他 / Khác',
 ]
 const company = [
+  'SWICO',
   'STRONG WAY',
   '客戶',
   '其他',

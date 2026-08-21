@@ -173,7 +173,7 @@ const roleSummary = computed(() => [
 const permissionMatrix = computed(() => [
   { role: 'ROLE_OPERATOR', menu1: t('users.permissionMatrix.entry'), menu2: '-', menu3: '-', menu4: '-' },
   { role: 'ROLE_LEADER', menu1: t('users.permissionMatrix.entryHistory'), menu2: t('users.permissionMatrix.search'), menu3: '-', menu4: '-' },
-  { role: 'ROLE_MANAGER', menu1: '-', menu2: '2.1 + 2.2 + 2.3', menu3: t('users.permissionMatrix.all'), menu4: '-' },
+  { role: 'ROLE_MANAGER', menu1: t('users.permissionMatrix.entryHistory'), menu2: '2.1 + 2.2 + 2.3', menu3: t('users.permissionMatrix.all'), menu4: '-' },
   { role: 'ROLE_ADMIN', menu1: t('users.permissionMatrix.all'), menu2: t('users.permissionMatrix.all'), menu3: t('users.permissionMatrix.all'), menu4: t('users.permissionMatrix.all') },
 ])
 

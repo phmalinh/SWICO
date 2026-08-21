@@ -21,12 +21,19 @@
             <div class="px-4 py-2">
               <span class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-500">{{ currentDate }}</span>
             </div>
-            <div class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-bold text-slate-200">
-              {{ displayUsername }} • {{ roleLabels[userRole]?.label }}
-            </div>
-            <button @click="doLogout" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-slate-700">
-              {{ t('common.logout') }}
-            </button>
+            <el-dropdown @command="handleProfileAction" placement="bottom-end" trigger="click">
+              <span class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-bold text-slate-200 transition hover:bg-slate-800">
+                <span>{{ displayUsername }} • {{ roleLabels[userRole]?.label }}</span>
+                <ChevronDownIcon class="h-4 w-4 text-slate-400" />
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="production-entry">{{ t('menu.entry') }}</el-dropdown-item>
+                  <el-dropdown-item command="profile">{{ t('layout.profileLabel') }}</el-dropdown-item>
+                  <el-dropdown-item command="logout">{{ t('common.logout') }}</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
       </header>
@@ -203,7 +210,9 @@ const displayUsername = computed(() => session.value?.fullName || session.value?
 
 function handleProfileAction(action) {
   if (!action) return
-  if (action === 'profile') {
+  if (action === 'production-entry') {
+    router.push('/production/entry')
+  } else if (action === 'profile') {
     router.push({ name: 'Profile' })
   } else if (action === 'logout') {
     doLogout()
