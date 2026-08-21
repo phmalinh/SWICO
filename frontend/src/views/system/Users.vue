@@ -1,11 +1,11 @@
 <template>
   <div>
     <PageHeader :eyebrow="'4.1 ' + t('layout.system')" :title="t('users.pageTitle')" :subtitle="t('users.pageSubtitle')">
-      <template #actions>
+      <!-- <template #actions>
         <el-button type="success" :loading="importing" @click="triggerImport"><el-icon class="mr-1"><Upload /></el-icon> {{ t('users.importExcel') }}</el-button>
         <el-button type="primary" @click="openDialog()"><el-icon class="mr-1"><Plus /></el-icon> {{ t('users.createAccount') }}</el-button>
         <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="handleImportFile" />
-      </template>
+      </template> -->
     </PageHeader>
 
     <div class="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -29,6 +29,7 @@
         <el-button type="danger" plain :disabled="selectedUsers.length === 0" @click="deleteSelectedUsers">
           {{ t('users.deleteSelected') }}
         </el-button>
+        
       </div>
       <el-table :data="paginatedUsers" stripe @selection-change="onSelectionChange">
         <el-table-column type="selection" width="48" align="center" />
