@@ -53,7 +53,6 @@
         </div>
       </el-form>
       <div class="mt-6 text-center text-xs text-slate-400">
-        {{ t('login.sample') }}
       </div>
     </div>
   </div>
