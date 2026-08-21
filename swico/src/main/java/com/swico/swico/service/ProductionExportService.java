@@ -129,11 +129,18 @@ public class ProductionExportService {
         }
         List<ProductProcess> processes = productProcessRepository.findAllById(processIds);
         Map<Long, String> processNameById = processes.stream()
-                .collect(java.util.stream.Collectors.toMap(ProductProcess::getId, ProductProcess::getProcess));
+                .collect(java.util.stream.Collectors.toMap(ProductProcess::getId, this::exportProcessCode));
         return processIds.stream()
                 .map(processNameById::get)
                 .filter(value -> value != null && !value.isBlank())
                 .collect(java.util.stream.Collectors.joining("\uff1b "));
+    }
+
+    private String exportProcessCode(ProductProcess process) {
+        if (process.getProcessCode() != null && !process.getProcessCode().isBlank()) {
+            return process.getProcessCode();
+        }
+        return process.getProcess();
     }
 
     private ProductionCalculationResponse calculateFallback(ProductionReportResponse report) {
