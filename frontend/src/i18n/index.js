@@ -38,7 +38,7 @@ const messages = {
       },
       languages: {
         vi: 'Tiếng Việt',
-        zhHant: 'Tiếng Trung',
+        zhHant: '繁體中文',
       },
     },
     login: {
@@ -962,7 +962,7 @@ const messages = {
         rows: '每頁筆數',
       },
       languages: {
-        vi: '越南文',
+        vi: 'Tiếng Việt',
         zhHant: '繁體中文',
       },
     },
