@@ -1,7 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8081/api/v1'
 const AUTH_PATH = (import.meta.env.VITE_AUTH_PATH || '/auth').replace(/\/+$/, '')
 const API_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 30000)
+const IMPORT_TIMEOUT_MS = Number(import.meta.env.VITE_IMPORT_TIMEOUT_MS || 120000)
+const IMPORT_MAX_FILE_SIZE_MB = Number(import.meta.env.VITE_IMPORT_MAX_FILE_SIZE_MB || 10)
+const IMPORT_MAX_FILE_SIZE_BYTES = IMPORT_MAX_FILE_SIZE_MB * 1024 * 1024
 const KEEP_PAGE_ON_ERROR = { handleAuthFailure: false }
+const IMPORT_REQUEST = { handleAuthFailure: false, timeoutMs: IMPORT_TIMEOUT_MS }
 
 function normalizeToken(token) {
   if (!token) return null
@@ -45,6 +49,26 @@ function isPublicRequest(path, method) {
   return false
 }
 
+function validateImportFile(file) {
+  if (!file) {
+    throw new Error('Vui lòng chọn file Excel để import.')
+  }
+  const fileName = String(file.name || '').toLowerCase()
+  if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+    throw new Error('Chỉ hỗ trợ file Excel .xlsx hoặc .xls.')
+  }
+  if (file.size > IMPORT_MAX_FILE_SIZE_BYTES) {
+    throw new Error(`File import không được vượt quá ${IMPORT_MAX_FILE_SIZE_MB}MB.`)
+  }
+}
+
+function buildImportFormData(file) {
+  validateImportFile(file)
+  const formData = new FormData()
+  formData.append('file', file)
+  return formData
+}
+
 async function request(path, options = {}, config = {}) {
   const token = normalizeToken(localStorage.getItem('swico_token'))
   const method = (options.method || 'GET').toUpperCase()
@@ -65,7 +89,8 @@ async function request(path, options = {}, config = {}) {
   }
 
   const controller = new AbortController()
-  const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+  const timeoutMs = Number(config.timeoutMs || API_TIMEOUT_MS)
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetch(buildApiUrl(path), {
@@ -115,9 +140,8 @@ export const masterApi = {
   deleteProduct: id => request(`/master-data/products/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   deleteAllProducts: () => request('/master-data/products', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   importProductionInfo: file => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request('/master-data/products/import-production-info', { method: 'POST', body: formData }, { handleAuthFailure: false, skipAuth: true })
+    const formData = buildImportFormData(file)
+    return request('/master-data/products/import-production-info', { method: 'POST', body: formData }, { ...IMPORT_REQUEST, skipAuth: true })
   },
 
   getLines: () => request('/master-data/lines'),
@@ -126,9 +150,8 @@ export const masterApi = {
   deleteLine: id => request(`/master-data/lines/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   deleteAllLines: () => request('/master-data/lines', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   importLineMachines: file => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request('/master-data/line-machines/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
+    const formData = buildImportFormData(file)
+    return request('/master-data/line-machines/import', { method: 'POST', body: formData }, IMPORT_REQUEST)
   },
 
   getShifts: () => request('/master-data/shifts'),
@@ -149,16 +172,14 @@ export const masterApi = {
   deleteEmployeeSkill: id => request(`/master-data/employee-skills/${id}`, { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   deleteAllEmployeeSkills: () => request('/master-data/employee-skills', { method: 'DELETE' }, KEEP_PAGE_ON_ERROR),
   importEmployeeSkills: file => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request('/master-data/employee-skills/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
+    const formData = buildImportFormData(file)
+    return request('/master-data/employee-skills/import', { method: 'POST', body: formData }, IMPORT_REQUEST)
   },
   getDowntimeReasons: () => request('/master-data/downtime-reasons'),
   getDowntimeReasonCategories: () => request('/master-data/downtime-reasons/categories'),
   importDowntimeReasons: file => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request('/master-data/downtime-reasons/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
+    const formData = buildImportFormData(file)
+    return request('/master-data/downtime-reasons/import', { method: 'POST', body: formData }, IMPORT_REQUEST)
   },
   createDowntimeReasonCategory: payload => request('/master-data/downtime-reasons/categories', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   updateDowntimeReasonCategory: (id, payload) => request(`/master-data/downtime-reasons/categories/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
@@ -188,9 +209,8 @@ export const productionApi = {
 
   // Đã tối ưu hàm importV9 dùng chung request()
   importV9: async file => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request('/production-reports/import', { method: 'POST', body: formData })
+    const formData = buildImportFormData(file)
+    return request('/production-reports/import', { method: 'POST', body: formData }, IMPORT_REQUEST)
   },
 }
 
@@ -198,9 +218,8 @@ export const userApi = {
   list: () => request('/system/users'),
   leaders: () => request('/master-data/leaders'),
   importUsers: file => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return request('/system/users/import', { method: 'POST', body: formData }, KEEP_PAGE_ON_ERROR)
+    const formData = buildImportFormData(file)
+    return request('/system/users/import', { method: 'POST', body: formData }, IMPORT_REQUEST)
   },
   create: payload => request('/system/users', { method: 'POST', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
   update: (id, payload) => request(`/system/users/${id}`, { method: 'PUT', body: JSON.stringify(payload) }, KEEP_PAGE_ON_ERROR),
@@ -217,4 +236,4 @@ export const authApi = {
   changePassword: payload => request(`${AUTH_PATH}/change-password`, { method: 'POST', body: JSON.stringify(payload) }, { handleAuthFailure: false }),
 }
 
-export { API_BASE_URL, AUTH_PATH, API_TIMEOUT_MS, buildApiUrl }
+export { API_BASE_URL, AUTH_PATH, API_TIMEOUT_MS, IMPORT_TIMEOUT_MS, IMPORT_MAX_FILE_SIZE_MB, buildApiUrl }

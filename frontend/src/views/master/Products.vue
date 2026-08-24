@@ -49,9 +49,6 @@
         </el-table-column>
         <el-table-column prop="customer" :label="t('master.products.table.customer')" min-width="180" show-overflow-tooltip />
         <el-table-column prop="partName" :label="t('master.products.table.partName')" min-width="220" />
-        <el-table-column prop="cycleTimeSeconds" :label="t('master.products.table.cycleTime')" width="130" align="center">
-          <template #default="{ row }"><el-tag type="info">{{ row.cycleTimeSeconds }} {{ t('common.units.seconds') }}</el-tag></template>
-        </el-table-column>
         <el-table-column :label="t('master.products.table.actions')" width="150" align="center">
           <template #default="{ row }">
             <el-button type="primary" link @click="openDialog(row)">{{ t('common.edit') }}</el-button>
@@ -69,7 +66,6 @@
         <el-form-item :label="t('master.products.dialog.partNumber')" required><el-input v-model="form.partNumber" placeholder="PN-001" /></el-form-item>
         <el-form-item :label="t('master.products.dialog.customer')"><el-input v-model="form.customer" /></el-form-item>
         <el-form-item :label="t('master.products.dialog.partName')" required><el-input v-model="form.partName" :placeholder="t('master.products.placeholders.partName')" /></el-form-item>
-        <el-form-item :label="t('master.products.dialog.cycleTime')" required><el-input-number v-model="form.cycleTimeSeconds" :min="0.1" :precision="1" :step="0.5" class="!w-full" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
@@ -94,7 +90,7 @@ const editId = ref(null)
 const loading = ref(false)
 const importing = ref(false)
 const fileInput = ref(null)
-const form = ref({ partNumber: '', partName: '', customer: '', cycleTimeSeconds: 10 })
+const form = ref({ partNumber: '', partName: '', customer: '' })
 const filters = ref({ partNumber: '', partName: '', customer: '' })
 const selectedRows = ref([])
 const currentPage = ref(1)
@@ -131,7 +127,6 @@ async function loadProducts() {
       partNumber: item.code ?? item.partNumber,
       partName: item.name ?? item.partName,
       customer: item.customer || '',
-      cycleTimeSeconds: Number(item.cycleTimeSeconds ?? 10),
     }))
   } catch (error) {
     ElMessage.error(`${t('master.products.messages.loadFailed')}: ${error.message}`)
@@ -156,7 +151,7 @@ function handleSelectionChange(selection) {
 
 function openDialog(row) {
   editId.value = row?.id || null
-  form.value = row ? { ...row } : { partNumber: '', partName: '', customer: '', cycleTimeSeconds: 10 }
+  form.value = row ? { partNumber: row.partNumber, partName: row.partName, customer: row.customer || '' } : { partNumber: '', partName: '', customer: '' }
   dialogVisible.value = true
 }
 
@@ -171,7 +166,7 @@ async function save() {
       partNumber: form.value.partNumber.trim(),
       partName: form.value.partName.trim(),
       customer: form.value.customer?.trim() || '',
-      cycleTimeSeconds: Number(form.value.cycleTimeSeconds),
+      cycleTimeSeconds: 1,
     }
     if (editId.value) {
       await masterApi.updateProduct(editId.value, payload)

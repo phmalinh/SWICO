@@ -35,7 +35,6 @@ public class ProductionInfoImportService {
         int processesImported = 0;
         int rowsSkipped = 0;
         Set<String> touchedProducts = new HashSet<>();
-        Set<String> touchedProductCycleTimes = new HashSet<>();
 
         try (InputStream input = file.getInputStream(); Workbook workbook = WorkbookFactory.create(input)) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -65,13 +64,7 @@ public class ProductionInfoImportService {
                     continue;
                 }
 
-                BigDecimal productCycleTime = null;
-                if (cycleTime != null && cycleTime.compareTo(BigDecimal.ZERO) > 0 && !touchedProductCycleTimes.contains(partNumber)) {
-                    productCycleTime = cycleTime;
-                    touchedProductCycleTimes.add(partNumber);
-                }
-
-                Product product = upsertProduct(partNumber, partName, customer, productCycleTime);
+                Product product = upsertProduct(partNumber, partName, customer);
                 if (touchedProducts.add(partNumber)) {
                     productsImported++;
                 }
@@ -102,17 +95,11 @@ public class ProductionInfoImportService {
         return 0;
     }
 
-    private Product upsertProduct(String partNumber, String partName, String customer, BigDecimal cycleTime) {
-        BigDecimal fallbackCycleTime = cycleTime != null && cycleTime.compareTo(BigDecimal.ZERO) > 0
-                ? cycleTime
-                : BigDecimal.ONE;
+    private Product upsertProduct(String partNumber, String partName, String customer) {
         return productRepository.findByPartNumber(partNumber)
                 .map(existing -> {
                     existing.setPartName(partName);
                     existing.setCustomer(customer);
-                    if (cycleTime != null && cycleTime.compareTo(BigDecimal.ZERO) > 0) {
-                        existing.setCycleTimeSeconds(cycleTime);
-                    }
                     return productRepository.save(existing);
                 })
                 .orElseGet(() -> {
@@ -120,7 +107,7 @@ public class ProductionInfoImportService {
                     product.setPartNumber(partNumber);
                     product.setPartName(partName);
                     product.setCustomer(customer);
-                    product.setCycleTimeSeconds(fallbackCycleTime);
+                    product.setCycleTimeSeconds(BigDecimal.ONE);
                     return productRepository.save(product);
                 });
     }

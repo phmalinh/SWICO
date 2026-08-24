@@ -84,7 +84,6 @@
         <el-form-item :label="l('customer')"><el-input v-model="productForm.customer" /></el-form-item>
         <el-form-item :label="l('partNumber')" required><el-input v-model="productForm.partNumber" /></el-form-item>
         <el-form-item :label="l('partName')" required><el-input v-model="productForm.partName" /></el-form-item>
-        <el-form-item label="C/T"><el-input-number v-model="productForm.cycleTimeSeconds" :min="0" :precision="2" class="!w-full" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="productDialogVisible = false">{{ l('cancel') }}</el-button>
@@ -158,7 +157,7 @@ const processDialogVisible = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 20, 50, 100]
-const productForm = ref({ id: null, customer: '', partNumber: '', partName: '', cycleTimeSeconds: null })
+const productForm = ref({ id: null, customer: '', partNumber: '', partName: '' })
 const processForm = ref({ id: null, productId: null, processCode: '', process: '', lineCodes: [], machineCodes: [], cycleTimeSeconds: null, sequence: null })
 const l = (key, params) => t(`master.productProcesses.${key}`, params)
 const productDialogTitle = computed(() => productForm.value.id ? l('productEditTitle') : l('productCreateTitle'))
@@ -226,7 +225,7 @@ async function loadData() {
           customer: product.customer,
           partNumber: product.code,
           partName: product.name,
-          cycleTimeSeconds: product.cycleTimeSeconds,
+          cycleTimeSeconds: null,
           process: '',
           processId: null,
         }]
@@ -241,7 +240,7 @@ async function loadData() {
         process: process.process || process.processCode || '',
         lineCode: process.lineCode || '',
         machineCode: process.machineCode || '',
-        cycleTimeSeconds: process.cycleTimeSeconds ?? product.cycleTimeSeconds,
+        cycleTimeSeconds: process.cycleTimeSeconds ?? null,
         sequence: process.sequence,
       }))
     })
@@ -310,10 +309,9 @@ function exportCsv() {
 }
 
 function openProductDialog(row) {
-  const product = row ? products.value.find(item => item.id === row.productId) : null
   productForm.value = row
-    ? { id: row.productId, customer: row.customer, partNumber: row.partNumber, partName: row.partName, cycleTimeSeconds: product?.cycleTimeSeconds ?? row.cycleTimeSeconds }
-    : { id: null, customer: '', partNumber: '', partName: '', cycleTimeSeconds: null }
+    ? { id: row.productId, customer: row.customer, partNumber: row.partNumber, partName: row.partName }
+    : { id: null, customer: '', partNumber: '', partName: '' }
   productDialogVisible.value = true
 }
 
@@ -342,7 +340,7 @@ async function saveProduct() {
     partNumber: productForm.value.partNumber.trim(),
     partName: productForm.value.partName.trim(),
     customer: productForm.value.customer?.trim() || '',
-    cycleTimeSeconds: productForm.value.cycleTimeSeconds != null ? Number(productForm.value.cycleTimeSeconds) : 0,
+    cycleTimeSeconds: 1,
   }
   try {
     if (productForm.value.id) {

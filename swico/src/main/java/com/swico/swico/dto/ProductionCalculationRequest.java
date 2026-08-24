@@ -15,7 +15,7 @@ public record ProductionCalculationRequest(
         @NotBlank String machineCode,
         @NotBlank String partNumber,
         @NotBlank String partName,
-        @NotNull @Min(1) BigDecimal cycleTimeSeconds,
+        @Min(1) BigDecimal cycleTimeSeconds,
         List<Long> processIds,
         @NotNull @Min(0) Integer totalOperatingMinutes,
         @NotNull @Min(0) Integer downtimeMinutes,

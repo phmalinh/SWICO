@@ -74,43 +74,44 @@ public class ProductionReportService {
 
     @Transactional
     public ProductionReportResponse createReport(ProductionCalculationRequest request, String createdBy) {
+        ProductionCalculationRequest effectiveRequest = withEffectiveCycleTime(request);
         String normalizedShiftName = request.shiftName() != null ? request.shiftName().trim() : null;
         Integer shiftMinutes = formulaService.resolveShiftMinutes(normalizedShiftName);
         if (shiftMinutes == null) {
             Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
-                    .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, request.totalOperatingMinutes()));
+                    .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveRequest.totalOperatingMinutes()));
             shiftMinutes = shift.getStandardTimeMinutes();
         }
         final Integer effectiveShiftMinutes = shiftMinutes;
 
-        Line line = lineRepository.findByLineCode(request.lineCode())
-                .orElseGet(() -> masterDataService.upsertLine(request.lineCode(), request.lineCode()));
-        Product product = productRepository.findByPartNumber(request.partNumber())
-                .orElseGet(() -> masterDataService.upsertProduct(request.partNumber(), request.partName(), null, request.cycleTimeSeconds()));
+        Line line = lineRepository.findByLineCode(effectiveRequest.lineCode())
+                .orElseGet(() -> masterDataService.upsertLine(effectiveRequest.lineCode(), effectiveRequest.lineCode()));
+        Product product = productRepository.findByPartNumber(effectiveRequest.partNumber())
+                .orElseGet(() -> masterDataService.upsertProduct(effectiveRequest.partNumber(), effectiveRequest.partName(), null, effectiveRequest.cycleTimeSeconds()));
         Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
             .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
         DailyProductionReport entity = new DailyProductionReport();
-        entity.setReportDate(request.reportDate() != null ? request.reportDate() : AppClock.today());
+        entity.setReportDate(effectiveRequest.reportDate() != null ? effectiveRequest.reportDate() : AppClock.today());
         entity.setLine(line);
         entity.setShift(shift);
-        entity.setMachineCode(request.machineCode());
+        entity.setMachineCode(effectiveRequest.machineCode());
         entity.setProduct(product);
-        entity.setProcessIds(joinProcessIds(request.processIds()));
-        entity.setTotalOperatingMinutes(request.totalOperatingMinutes());
-        entity.setDowntimeMinutes(request.downtimeMinutes());
-        entity.setInputQuantity(request.inputQuantity());
-        entity.setGoodQuantity(request.goodQuantity());
-        entity.setDefectQuantity(request.defectQuantity());
-        entity.setInternalDefectQuantity(request.internalDefectQuantity());
-        entity.setExternalDefectQuantity(request.externalDefectQuantity());
-        entity.setCompany(request.company());
-        entity.setResponsibleLeader(request.responsibleLeader());
+        entity.setProcessIds(joinProcessIds(effectiveRequest.processIds()));
+        entity.setTotalOperatingMinutes(effectiveRequest.totalOperatingMinutes());
+        entity.setDowntimeMinutes(effectiveRequest.downtimeMinutes());
+        entity.setInputQuantity(effectiveRequest.inputQuantity());
+        entity.setGoodQuantity(effectiveRequest.goodQuantity());
+        entity.setDefectQuantity(effectiveRequest.defectQuantity());
+        entity.setInternalDefectQuantity(effectiveRequest.internalDefectQuantity());
+        entity.setExternalDefectQuantity(effectiveRequest.externalDefectQuantity());
+        entity.setCompany(effectiveRequest.company());
+        entity.setResponsibleLeader(effectiveRequest.responsibleLeader());
         entity.setCreatedBy(createdBy);
-        entity.setDowntimeReason(request.downtimeReason());
+        entity.setDowntimeReason(effectiveRequest.downtimeReason());
 
-        ProductionCalculationResponse calculated = formulaService.calculate(request, effectiveShiftMinutes);
-        ProductionCalculationResponse effective = mergeCalculated(calculated, request);
+        ProductionCalculationResponse calculated = formulaService.calculate(effectiveRequest, effectiveShiftMinutes);
+        ProductionCalculationResponse effective = mergeCalculated(calculated, effectiveRequest);
         applyCalculatedFields(entity, effective);
 
         DailyProductionReport saved = reportRepository.save(entity);
@@ -135,6 +136,68 @@ public class ProductionReportService {
                 .toList();
     }
 
+    private ProductionCalculationRequest withEffectiveCycleTime(ProductionCalculationRequest request) {
+        BigDecimal cycleTimeSeconds = resolveProcessCycleTime(request.processIds());
+        if (cycleTimeSeconds == null || cycleTimeSeconds.compareTo(BigDecimal.ZERO) <= 0) {
+            cycleTimeSeconds = request.cycleTimeSeconds();
+        }
+        if (cycleTimeSeconds == null || cycleTimeSeconds.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Vui lòng chọn công đoạn có C/T hợp lệ.");
+        }
+        return new ProductionCalculationRequest(
+                request.reportDate(),
+                request.lineCode(),
+                request.shiftName(),
+                request.machineCode(),
+                request.partNumber(),
+                request.partName(),
+                cycleTimeSeconds,
+                request.processIds(),
+                request.totalOperatingMinutes(),
+                request.downtimeMinutes(),
+                request.inputQuantity(),
+                request.goodQuantity(),
+                request.defectQuantity(),
+                request.internalDefectQuantity(),
+                request.externalDefectQuantity(),
+                request.company(),
+                request.responsibleLeader(),
+                request.downtimeReason(),
+                request.responsibility(),
+                request.deductionPercent(),
+                request.shiftStandardTimeMinutes(),
+                request.dailyTargetQuantity(),
+                request.productionEfficiency(),
+                request.availabilityRate(),
+                request.performanceRate(),
+                request.qualityRate(),
+                request.oee(),
+                request.evaluationLabel()
+        );
+    }
+
+    private BigDecimal resolveProcessCycleTime(java.util.List<Long> processIds) {
+        if (processIds == null || processIds.isEmpty()) {
+            return null;
+        }
+        List<ProductProcess> processes = productProcessRepository.findAllById(processIds);
+        if (processes.isEmpty()) {
+            return null;
+        }
+        Map<Long, BigDecimal> cycleTimeById = processes.stream()
+                .filter(process -> process.getCycleTimeSeconds() != null && process.getCycleTimeSeconds().compareTo(BigDecimal.ZERO) > 0)
+                .collect(java.util.stream.Collectors.toMap(
+                        ProductProcess::getId,
+                        ProductProcess::getCycleTimeSeconds,
+                        (first, second) -> first
+                ));
+        BigDecimal total = processIds.stream()
+                .map(cycleTimeById::get)
+                .filter(value -> value != null && value.compareTo(BigDecimal.ZERO) > 0)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return total.compareTo(BigDecimal.ZERO) > 0 ? total : null;
+    }
+
     private java.util.List<Long> resolveImportedProcessIds(String partNumber, String processText) {
         if (partNumber == null || partNumber.isBlank() || processText == null || processText.isBlank()) {
             return java.util.Collections.emptyList();
@@ -150,12 +213,11 @@ public class ProductionReportService {
             return java.util.Collections.emptyList();
         }
 
-        Map<String, Long> processIdByName = productProcesses.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        process -> normalizeProcessName(process.getProcess()),
-                        ProductProcess::getId,
-                        (first, second) -> first
-                ));
+        Map<String, Long> processIdByName = new HashMap<>();
+        for (ProductProcess process : productProcesses) {
+            processIdByName.putIfAbsent(normalizeProcessName(process.getProcess()), process.getId());
+            processIdByName.putIfAbsent(normalizeProcessName(process.getProcessCode()), process.getId());
+        }
 
         return java.util.Arrays.stream(processText.split("[,;；\\n]+"))
                 .map(String::trim)
@@ -177,44 +239,45 @@ public class ProductionReportService {
 
     @Transactional
     public ProductionReportResponse updateReport(Long id, ProductionCalculationRequest request) {
+        ProductionCalculationRequest effectiveRequest = withEffectiveCycleTime(request);
         DailyProductionReport entity = reportRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Report not found: " + id));
 
-        String normalizedShiftName = request.shiftName() != null ? request.shiftName().trim() : null;
+        String normalizedShiftName = effectiveRequest.shiftName() != null ? effectiveRequest.shiftName().trim() : null;
         Integer shiftMinutes = formulaService.resolveShiftMinutes(normalizedShiftName);
         if (shiftMinutes == null) {
             Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
-                .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, request.totalOperatingMinutes()));
+                .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveRequest.totalOperatingMinutes()));
             shiftMinutes = shift.getStandardTimeMinutes();
         }
         final Integer effectiveShiftMinutes = shiftMinutes;
 
-        Line line = lineRepository.findByLineCode(request.lineCode())
-                .orElseGet(() -> masterDataService.upsertLine(request.lineCode(), request.lineCode()));
-        Product product = productRepository.findByPartNumber(request.partNumber())
-                .orElseGet(() -> masterDataService.upsertProduct(request.partNumber(), request.partName(), null, request.cycleTimeSeconds()));
+        Line line = lineRepository.findByLineCode(effectiveRequest.lineCode())
+                .orElseGet(() -> masterDataService.upsertLine(effectiveRequest.lineCode(), effectiveRequest.lineCode()));
+        Product product = productRepository.findByPartNumber(effectiveRequest.partNumber())
+                .orElseGet(() -> masterDataService.upsertProduct(effectiveRequest.partNumber(), effectiveRequest.partName(), null, effectiveRequest.cycleTimeSeconds()));
         Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
             .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
-        entity.setReportDate(request.reportDate() != null ? request.reportDate() : AppClock.today());
+        entity.setReportDate(effectiveRequest.reportDate() != null ? effectiveRequest.reportDate() : AppClock.today());
         entity.setLine(line);
         entity.setShift(shift);
-        entity.setMachineCode(request.machineCode());
+        entity.setMachineCode(effectiveRequest.machineCode());
         entity.setProduct(product);
-        entity.setProcessIds(joinProcessIds(request.processIds()));
-        entity.setTotalOperatingMinutes(request.totalOperatingMinutes());
-        entity.setDowntimeMinutes(request.downtimeMinutes());
-        entity.setInputQuantity(request.inputQuantity());
-        entity.setGoodQuantity(request.goodQuantity());
-        entity.setDefectQuantity(request.defectQuantity());
-        entity.setInternalDefectQuantity(request.internalDefectQuantity());
-        entity.setExternalDefectQuantity(request.externalDefectQuantity());
-        entity.setCompany(request.company());
-        entity.setResponsibleLeader(request.responsibleLeader());
-        entity.setDowntimeReason(request.downtimeReason());
+        entity.setProcessIds(joinProcessIds(effectiveRequest.processIds()));
+        entity.setTotalOperatingMinutes(effectiveRequest.totalOperatingMinutes());
+        entity.setDowntimeMinutes(effectiveRequest.downtimeMinutes());
+        entity.setInputQuantity(effectiveRequest.inputQuantity());
+        entity.setGoodQuantity(effectiveRequest.goodQuantity());
+        entity.setDefectQuantity(effectiveRequest.defectQuantity());
+        entity.setInternalDefectQuantity(effectiveRequest.internalDefectQuantity());
+        entity.setExternalDefectQuantity(effectiveRequest.externalDefectQuantity());
+        entity.setCompany(effectiveRequest.company());
+        entity.setResponsibleLeader(effectiveRequest.responsibleLeader());
+        entity.setDowntimeReason(effectiveRequest.downtimeReason());
 
-        ProductionCalculationResponse calculated = formulaService.calculate(request, effectiveShiftMinutes);
-        ProductionCalculationResponse effective = mergeCalculated(calculated, request);
+        ProductionCalculationResponse calculated = formulaService.calculate(effectiveRequest, effectiveShiftMinutes);
+        ProductionCalculationResponse effective = mergeCalculated(calculated, effectiveRequest);
         applyCalculatedFields(entity, effective);
 
         DailyProductionReport saved = reportRepository.save(entity);
@@ -844,7 +907,10 @@ public class ProductionReportService {
     }
 
     private ProductionReportResponse toResponse(DailyProductionReport report, ProductionCalculationResponse calculated) {
-        BigDecimal cycleTime = report.getProduct() != null ? report.getProduct().getCycleTimeSeconds() : null;
+        BigDecimal cycleTime = resolveProcessCycleTime(parseProcessIds(report.getProcessIds()));
+        if (cycleTime == null) {
+            cycleTime = report.getProduct() != null ? report.getProduct().getCycleTimeSeconds() : null;
+        }
         Integer shiftMinutes = report.getShift() != null ? report.getShift().getStandardTimeMinutes() : null;
         return new ProductionReportResponse(
                 report.getId(),

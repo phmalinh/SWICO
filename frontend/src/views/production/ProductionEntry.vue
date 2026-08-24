@@ -2,7 +2,7 @@
   <div class="mx-auto w-full px-3 py-2">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
       <section class="lg:col-span-9 rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <!-- Header rút gọn -->
+
         <div class="border-b border-slate-200 bg-slate-50 px-4 py-2.5 flex items-center justify-between">
           <div>
             <span class="text-[10px] font-black uppercase tracking-wider text-sky-600 block leading-tight">{{ t('productionEntry.eyebrow') }}</span>
@@ -13,7 +13,7 @@
           </div>
         </div>
         <el-form :model="form" label-position="top" class="p-3 space-y-2.5">
-          <!-- Dòng 1: Cấu hình chung (Chuyền, Máy, Ca, Công ty) -->
+
           <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 " >
             <el-form-item :label="t('productionEntry.reportDate')" class="!mb-0 ">
               <el-date-picker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" class="w-full el-form-item__content" size="default"/>
@@ -34,13 +34,8 @@
                 <el-option v-for="s in shifts" :key="s.shiftName" :label="s.shiftName" :value="s.shiftName" />
               </el-select>
             </el-form-item>
-            <!-- <el-form-item :label="t('productionEntry.company')" class="!mb-0">
-              <el-input v-model="form.company" size="default" :placeholder="t('productionEntry.enterCompany')" />
-            </el-form-item> -->
              <el-form-item :label="t('productionEntry.company')" class="!mb-0">
-              <el-select v-model="form.company" size="default" class="w-full" :placeholder="t('productionEntry.enterCompany')" filterable>
-                <el-option v-for="r in company" :key="r" :company="r" :value="r" :label="r" />
-              </el-select>
+              <el-input v-model="form.company" size="default" readonly :placeholder="t('productionEntry.enterCompany')" />
             </el-form-item>
             <el-form-item :label="t('productionEntry.responsibleLeader')" class="!mb-0">
               <el-select
@@ -60,56 +55,6 @@
               </el-select>
             </el-form-item>
           </div>
-  
-          <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
-              <el-form-item :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-4">
-                <el-select
-                  v-model="form.partNumber"
-                  size="default"
-                  class="w-full"
-                  filterable
-                  :placeholder="t('productionEntry.scanBarcode')"
-                  @change="onProductChange"
-                >
-                  <el-option v-for="p in products" :key="p.partNumber" :label="p.partNumber" :value="p.partNumber">
-                    <span class="font-bold">{{ p.partNumber }}</span>
-                    <span class="ml-2 text-xs text-slate-400">{{ p.partName }} ({{ p.cycleTimeSeconds }}s)</span>
-                  </el-option>
-                </el-select>
-              </el-form-item>
-
-              <el-form-item :label="t('productionEntry.partName')" class="!mb-0 md:col-span-4">
-                <el-input v-model="form.partName" size="default" readonly placeholder="-" />
-              </el-form-item>
-              
-              <el-form-item :label="t('productionEntry.cycleTime')" class="!mb-0 md:col-span-4">
-                <el-input v-model="form.cycleTime" size="default" readonly placeholder="-" />
-              </el-form-item>
-
-              <el-form-item :label="t('productionEntry.processes')" class="!mb-0 md:col-span-12">
-                <el-select
-                  v-model="form.processes"
-                  multiple
-                  filterable
-                  size="default"
-                  class="w-full"
-                  :placeholder="t('productionEntry.selectProcesses')"
-                  @change="onProcessSelectionChange"
-                >
-                  <el-option
-                    v-for="process in processOptions"
-                    :key="process.id"
-                    :label="formatProcessOption(process)"
-                    :value="process.id"
-                  />
-                </el-select>
-              </el-form-item>
-            </div>
-          </div>
-
-          <!-- Dòng 3: Số liệu sản xuất thực tế -->
-          <!-- Dòng 3: Thông số thời gian & Mục tiêu ca -->
           <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5">
             <el-form-item :label="t('productionEntry.shiftTime')" class="!mb-0">
               <el-input 
@@ -138,8 +83,55 @@
               />
             </el-form-item>
           </div>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
+              <el-form-item :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-6">
+                <el-select
+                  v-model="form.partNumber"
+                  size="default"
+                  class="w-full"
+                  filterable
+                  :placeholder="t('productionEntry.scanBarcode')"
+                  @change="onProductChange"
+                >
+                  <el-option v-for="p in products" :key="p.partNumber" :label="p.partNumber" :value="p.partNumber">
+                    <span class="font-bold">{{ p.partNumber }}</span>
+                    <span class="ml-2 text-xs text-slate-400">{{ p.partName }}</span>
+                  </el-option>
+                </el-select>
+              </el-form-item>
 
-          <!-- Dòng 4: Số lượng nhập & kết quả sản xuất -->
+              <el-form-item :label="t('productionEntry.partName')" class="!mb-0 md:col-span-6">
+                <el-input v-model="form.partName" size="default" readonly placeholder="-" />
+              </el-form-item>
+              <el-form-item :label="t('productionEntry.processes')" class="!mb-0 md:col-span-6">
+                <el-select
+                  v-model="form.processId"
+                  filterable
+                  clearable
+                  size="default"
+                  class="w-full"
+                  :placeholder="t('productionEntry.selectProcesses')"
+                  @change="onProcessSelectionChange"
+                >
+                  <el-option
+                    v-for="process in processOptions"
+                    :key="process.id"
+                    :label="formatProcessOption(process)"
+                    :value="process.id"
+                  />
+                </el-select>
+              </el-form-item>
+              <el-form-item :label="t('productionEntry.cycleTime')" class="!mb-0 md:col-span-6">
+                <el-input v-model="form.cycleTime" size="default" readonly placeholder="-" />
+              </el-form-item>
+
+              
+            </div>
+          </div>
+
+
+          
           <div class="mt-2.5 grid grid-cols-2 md:grid-cols-4 gap-2.5">
             <el-form-item :label="t('productionEntry.inputQuantity')" class="!mb-0">
               <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
@@ -157,6 +149,8 @@
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
                   :controls="false"
+                  @focus="openQuantityKeypad('inputQuantity')"
+                  @click="openQuantityKeypad('inputQuantity')"
                 />
                 <el-button
                   size="default"
@@ -188,6 +182,8 @@
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
                   :controls="false"
+                  @focus="openQuantityKeypad('internalDefectQuantity')"
+                  @click="openQuantityKeypad('internalDefectQuantity')"
                 />
                 <el-button
                   size="default"
@@ -215,6 +211,8 @@
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
                   :controls="false"
+                  @focus="openQuantityKeypad('externalDefectQuantity')"
+                  @click="openQuantityKeypad('externalDefectQuantity')"
                 />
                 <el-button
                   size="default"
@@ -270,6 +268,8 @@
                       size="default"
                       class="min-w-0 flex-1 downtime-minutes-input"
                       :controls="false"
+                      @focus="openDowntimeKeypad(index)"
+                      @click="openDowntimeKeypad(index)"
                     />
                     <el-button
                       size="default"
@@ -301,7 +301,6 @@
               </el-form-item>
             </template>
           </div>
-          <!-- Nút bấm Action -->
             <div class="pt-2 flex flex-wrap items-center gap-3">
               <el-button type="primary" size="large" class="flex-1 !h-10 text-base font-bold" :loading="saving" @click="saveReport">
                 <Save class="mr-2 h-4 w-4" />
@@ -390,7 +389,6 @@
         </el-form>
       </section>
 
-      <!-- KHỐI KẾT QUẢ/OEE (RIGHT COLUMN - 3 Cols) -->
       <aside class="lg:col-span-3">
         <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
           <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 border-b pb-1.5 mb-2">{{ t('productionEntry.results') }}</h3>
@@ -421,6 +419,32 @@
         </div>
       </aside>
 
+    </div>
+
+    <div
+      v-if="numberKeypad.visible"
+      class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-300 bg-white p-3 shadow-2xl md:left-auto md:right-6 md:bottom-6 md:w-80 md:rounded-lg md:border"
+    >
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="truncate text-xs font-black uppercase text-slate-500">{{ t(numberKeypad.labelKey) }}</p>
+          <p class="text-2xl font-black text-slate-900">{{ numberKeypad.buffer || '0' }}</p>
+        </div>
+        <button class="rounded-md border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600" @click="closeNumberKeypad">{{ t('productionEntry.keypad.ok') }}</button>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          v-for="key in numberKeys"
+          :key="key"
+          class="h-14 rounded-md border border-slate-300 bg-slate-50 text-xl font-black text-slate-900 active:bg-sky-100"
+          @click="pressNumberKey(key)"
+        >
+          {{ key }}
+        </button>
+        <button class="h-14 rounded-md border border-rose-200 bg-rose-50 text-base font-black text-rose-700 active:bg-rose-100" @click="clearNumberKeypad">{{ t('productionEntry.keypad.clear') }}</button>
+        <button class="h-14 rounded-md border border-slate-300 bg-slate-50 text-xl font-black text-slate-900 active:bg-sky-100" @click="pressNumberKey('0')">0</button>
+        <button class="h-14 rounded-md border border-slate-300 bg-slate-50 text-base font-black text-slate-700 active:bg-slate-100" @click="backspaceNumberKeypad">{{ t('productionEntry.keypad.backspace') }}</button>
+      </div>
     </div>
   </div>
 </template>
@@ -453,6 +477,16 @@ const selectedReports = ref([])
 const editedReportId = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
+const numberKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+const numberKeypad = ref({
+  visible: false,
+  type: '',
+  field: '',
+  index: null,
+  labelKey: 'productionEntry.inputQuantity',
+  buffer: '',
+  max: 999999,
+})
 
 const paginatedReports = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -476,18 +510,18 @@ const form = ref({
   partNumber: '',
   partName: '',
   cycleTime: '',
-  processes: [],
-  downtimeMinutes: 30,
+  processId: null,
+  downtimeMinutes: null,
   inputQuantity: 0,
   goodQuantity: 0,
   defectQuantity: 0,
   internalDefectQuantity: 0,
   externalDefectQuantity: 0,
-  company: 'SWICO',
+  company: '',
   responsibleLeader: '',
   downtimeReason: '',
   downtimeReasons: [''],
-  downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: 30 }],
+  downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: null }],
 })
 
 const defaultDowntimeReasons = [
@@ -499,12 +533,6 @@ const defaultDowntimeReasons = [
   'F. 等待品檢（QC）首件確認／調機品確認 / Chờ QC xác nhận hàng chỉnh máy',
   'G. 操作人員請假（無替代人員時） / Nhân viên thao tác nghỉ phép (khi không có người thay thế)',
   'H. 其他 / Khác',
-]
-const company = [
-  'SWICO',
-  'STRONG WAY',
-  '客戶',
-  '其他',
 ]
 const downtimeCategories = ref([])
 const downtimeReasons = ref(defaultDowntimeReasons.map(value => ({ categoryCode: '', label: value, value })))
@@ -537,9 +565,9 @@ function normalizeDowntimeReasons(value) {
   return reasons.length ? reasons : ['']
 }
 
-function normalizeDowntimeItems(reasonValue, minutesValue = 0) {
+function normalizeDowntimeItems(reasonValue, minutesValue = null) {
   const reasons = normalizeDowntimeReasons(reasonValue)
-  const minutes = Number(minutesValue || 0)
+  const minutes = minutesValue === null || minutesValue === undefined || minutesValue === '' ? null : Number(minutesValue || 0)
   return reasons.map((value, index) => {
     const match = String(value).match(/^(.*?)(?:\s+-\s+(\d+))$/)
     if (match) {
@@ -558,7 +586,7 @@ function normalizeDowntimeItems(reasonValue, minutesValue = 0) {
 }
 
 function addDowntimeItem(index = form.value.downtimeItems.length - 1) {
-  form.value.downtimeItems.splice(index + 1, 0, { reasonCategoryCode: '', reason: '', minutes: 0 })
+  form.value.downtimeItems.splice(index + 1, 0, { reasonCategoryCode: '', reason: '', minutes: null })
 }
 
 function decrementDowntimeMinutes(index) {
@@ -586,9 +614,79 @@ function incrementQuantity(field) {
   form.value[field] = Math.min(Number(form.value[field] || 0) + 1, maxQuantityForField(field))
 }
 
+function openQuantityKeypad(field) {
+  numberKeypad.value = {
+    visible: true,
+    type: 'quantity',
+    field,
+    index: null,
+    labelKey: quantityKeypadLabelKey(field),
+    buffer: valueToKeypadBuffer(form.value[field]),
+    max: maxQuantityForField(field),
+  }
+}
+
+function openDowntimeKeypad(index) {
+  const item = form.value.downtimeItems[index]
+  numberKeypad.value = {
+    visible: true,
+    type: 'downtime',
+    field: 'minutes',
+    index,
+    labelKey: 'productionEntry.downtimeMinutes',
+    buffer: valueToKeypadBuffer(item?.minutes),
+    max: 1440,
+  }
+}
+
+function quantityKeypadLabelKey(field) {
+  const labels = {
+    inputQuantity: 'productionEntry.inputQuantity',
+    internalDefectQuantity: 'productionEntry.internalDefectQuantity',
+    externalDefectQuantity: 'productionEntry.externalDefectQuantity',
+  }
+  return labels[field] || 'productionEntry.inputQuantity'
+}
+
+function valueToKeypadBuffer(value) {
+  if (value === null || value === undefined || value === '') return ''
+  return String(Math.max(Number(value || 0), 0))
+}
+
+function applyNumberKeypadValue(buffer) {
+  const text = String(buffer || '').replace(/\D/g, '')
+  const normalized = text.replace(/^0+(?=\d)/, '')
+  const value = normalized ? Math.min(Number(normalized), Number(numberKeypad.value.max || 999999)) : null
+  numberKeypad.value.buffer = value === null ? '' : String(value)
+  if (numberKeypad.value.type === 'quantity') {
+    form.value[numberKeypad.value.field] = value ?? 0
+    return
+  }
+  if (numberKeypad.value.type === 'downtime') {
+    const item = form.value.downtimeItems[numberKeypad.value.index]
+    if (item) item.minutes = value
+  }
+}
+
+function pressNumberKey(key) {
+  applyNumberKeypadValue(`${numberKeypad.value.buffer}${key}`)
+}
+
+function backspaceNumberKeypad() {
+  applyNumberKeypadValue(numberKeypad.value.buffer.slice(0, -1))
+}
+
+function clearNumberKeypad() {
+  applyNumberKeypadValue('')
+}
+
+function closeNumberKeypad() {
+  numberKeypad.value.visible = false
+}
+
 function removeDowntimeItem(index) {
   if (form.value.downtimeItems.length === 1) {
-    form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 0 }]
+    form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: null }]
     return
   }
   form.value.downtimeItems.splice(index, 1)
@@ -692,17 +790,23 @@ function populateFormForEdit(report) {
   form.value.partNumber = report.partNumber || ''
   form.value.partName = report.partName || ''
   form.value.cycleTime = report.cycleTimeSeconds || ''
-  form.value.downtimeMinutes = report.downtimeMinutes ?? 30
+  form.value.processId = Array.isArray(report.processIds) ? (report.processIds[0] || null) : null
+  form.value.downtimeMinutes = report.downtimeMinutes ?? null
   form.value.inputQuantity = report.inputQuantity ?? 0
   form.value.goodQuantity = report.goodQuantity ?? 0
   form.value.defectQuantity = report.defectQuantity ?? Math.max(Number(report.inputQuantity || 0) - Number(report.goodQuantity || 0), 0)
   form.value.internalDefectQuantity = report.internalDefectQuantity ?? form.value.defectQuantity
   form.value.externalDefectQuantity = report.externalDefectQuantity ?? 0
-  form.value.company = report.company || 'SWICO'
+  form.value.company = report.company || ''
   form.value.responsibleLeader = report.responsibleLeader || ''
   form.value.downtimeReason = report.downtimeReason || ''
   form.value.downtimeReasons = normalizeDowntimeReasons(report.downtimeReason)
   form.value.downtimeItems = normalizeDowntimeItems(report.downtimeReason, report.downtimeMinutes)
+
+  const product = products.value.find(p => p.partNumber === form.value.partNumber)
+  if (product) {
+    loadProductProcesses(product.id).then(updateCycleTimeFromSelectedProcess)
+  }
 }
 
 async function editSelectedReport() {
@@ -748,13 +852,14 @@ function onProductChange(partNumber) {
   const product = products.value.find(p => p.partNumber === partNumber)
   if (product) {
     form.value.partName = product.partName
-    form.value.cycleTime = product.cycleTimeSeconds
-    form.value.processes = []
+    form.value.company = product.customer || ''
+    form.value.cycleTime = ''
+    form.value.processId = null
     loadProductProcesses(product.id)
   } else {
     form.value.partName = ''
     form.value.cycleTime = ''
-    form.value.processes = []
+    form.value.processId = null
     processOptions.value = []
   }
 }
@@ -763,12 +868,14 @@ function formatProcessOption(process) {
   return process?.processCode || ''
 }
 
-function onProcessSelectionChange(selectedIds = []) {
-  if (!selectedIds.length) return
-  const selectedProcess = processOptions.value.find(process => process.id === selectedIds[selectedIds.length - 1])
-  if (selectedProcess?.cycleTimeSeconds != null) {
-    form.value.cycleTime = selectedProcess.cycleTimeSeconds
-  }
+function onProcessSelectionChange(processId = null) {
+  updateCycleTimeFromSelectedProcess(processId)
+}
+
+function updateCycleTimeFromSelectedProcess(processId = form.value.processId) {
+  const selected = processOptions.value.find(process => process.id === processId)
+  const cycleTime = Number(selected?.cycleTimeSeconds || 0)
+  form.value.cycleTime = cycleTime > 0 ? Number(cycleTime.toFixed(2)) : ''
 }
 
 function onLineChange() {
@@ -822,12 +929,12 @@ function resetForm() {
   form.value.partNumber = ''
   form.value.partName = ''
   form.value.cycleTime = ''
-  form.value.processes = []
+  form.value.processId = null
   processOptions.value = []
-  form.value.downtimeMinutes = 30
+  form.value.downtimeMinutes = null
   form.value.downtimeReason = ''
   form.value.downtimeReasons = ['']
-  form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 30 }]
+  form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: null }]
   form.value.inputQuantity = 0
   form.value.goodQuantity = 0
   form.value.defectQuantity = 0
@@ -907,7 +1014,6 @@ async function loadInitialData() {
       partNumber: item.code,
       partName: item.name,
       customer: item.customer || '',
-      cycleTimeSeconds: item.cycleTimeSeconds,
     }))
     await loadProcessNamesForProducts(products.value)
     lines.value = linesRes.map(item => ({ id: item.id, lineCode: item.code, description: item.name }))
@@ -975,6 +1081,11 @@ async function saveReport() {
   }
   saving.value = true
   try {
+    const cycleTimeSeconds = Number(form.value.cycleTime || 0)
+    if (!form.value.processId || cycleTimeSeconds <= 0) {
+      ElMessage.warning(t('productionEntry.selectProcesses'))
+      return
+    }
     const payload = {
       reportDate: form.value.reportDate,
       lineCode: form.value.lineCode,
@@ -982,8 +1093,8 @@ async function saveReport() {
       machineCode: form.value.machineCode,
       partNumber: form.value.partNumber,
       partName: form.value.partName,
-      cycleTimeSeconds: Number(form.value.cycleTime),
-      processIds: form.value.processes,
+      cycleTimeSeconds,
+      processIds: [form.value.processId],
       totalOperatingMinutes: Number(actualOperatingMinutes.value),
       downtimeMinutes: Number(totalDowntimeMinutes.value),
       inputQuantity: Number(form.value.inputQuantity),
@@ -1055,7 +1166,7 @@ watch([() => form.value.partNumber, products], ([partNumber]) => {
   const product = products.value.find(p => p.partNumber === partNumber)
   if (!product) return
   form.value.partName = product.partName
-  form.value.cycleTime = product.cycleTimeSeconds
+  if (!form.value.company) form.value.company = product.customer || ''
 }, { immediate: true })
 
 onMounted(loadInitialData)
