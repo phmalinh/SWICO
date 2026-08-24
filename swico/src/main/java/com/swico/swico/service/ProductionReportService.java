@@ -330,6 +330,7 @@ public class ProductionReportService {
 
                 String importedPartNumber = parseString(getCell(row, headerIndex.getOrDefault("partNumber", -1)));
                 String importedProcessText = parseString(getCell(row, headerIndex.getOrDefault("processIds", -1)));
+                String importedOperatorName = parseString(getCell(row, headerIndex.getOrDefault("operatorName", -1)));
 
                 ProductionCalculationRequest request = new ProductionCalculationRequest(
                     parseLocalDate(getCell(row, headerIndex.getOrDefault("reportDate", -1))),
@@ -363,7 +364,7 @@ public class ProductionReportService {
                     parseString(getCell(row, headerIndex.getOrDefault("evaluationLabel", -1)))
                 );
 
-                ProductionReportResponse imported = createReport(request, createdBy);
+                ProductionReportResponse imported = createReport(request, resolveImportedCreatedBy(importedOperatorName, createdBy));
                 importedReports.add(imported);
             }
 
@@ -469,12 +470,12 @@ public class ProductionReportService {
             indexMap.put("deductionPercent", 15 + metricOffset);
             metricOffset++;
         }
-        indexMap.put("productionEfficiency", 16 + metricOffset);
-        indexMap.put("availabilityRate", 17 + metricOffset);
-        indexMap.put("performanceRate", 18 + metricOffset);
-        indexMap.put("qualityRate", 19 + metricOffset);
-        indexMap.put("oee", 20 + metricOffset);
-        indexMap.put("evaluationLabel", 21 + metricOffset);
+        indexMap.put("productionEfficiency", 15 + metricOffset);
+        indexMap.put("availabilityRate", 16 + metricOffset);
+        indexMap.put("performanceRate", 17 + metricOffset);
+        indexMap.put("qualityRate", 18 + metricOffset);
+        indexMap.put("oee", 19 + metricOffset);
+        indexMap.put("evaluationLabel", 20 + metricOffset);
     }
 
     private Row findHeaderRow(Sheet sheet, int maxHeaderScanRows) {
@@ -526,7 +527,7 @@ public class ProductionReportService {
         if (header.contains("mã máy") || header.contains("機台") || header.contains("máy") || header.contains("machine code") || header.equals("machine") || header.contains("machine no") || header.contains("machine id")) {
             return "machineCode";
         }
-        if (header.contains("công ty") || header.contains("公司") || header.equals("company")) {
+        if (header.contains("công ty") || header.contains("khach hang") || header.contains("客戶") || header.contains("客户") || header.contains("公司") || header.equals("company") || header.equals("customer")) {
             return "company";
         }
         if (header.contains("作員") || header.contains("作業員") || header.contains("nhan vien thao tac") || header.contains("operator")) {
@@ -626,6 +627,43 @@ public class ProductionReportService {
         if (cell == null) return null;
         String value = new DataFormatter().formatCellValue(cell).trim();
         return value.isEmpty() ? null : value;
+    }
+
+    private String resolveImportedCreatedBy(String importedOperatorName, String fallbackCreatedBy) {
+        if (importedOperatorName == null || importedOperatorName.isBlank()) {
+            return fallbackCreatedBy;
+        }
+
+        String operatorText = importedOperatorName.trim();
+        return userRepository.findByUsername(operatorText)
+                .map(com.swico.swico.entity.User::getUsername)
+                .orElseGet(() -> userRepository.findByActiveTrueOrderByFullNameAscUsernameAsc().stream()
+                        .filter(user -> userTextMatches(operatorText, user.getUsername()) || userTextMatches(operatorText, user.getFullName()))
+                        .findFirst()
+                        .map(com.swico.swico.entity.User::getUsername)
+                        .orElse(operatorText));
+    }
+
+    private boolean userTextMatches(String importedOperatorName, String accountText) {
+        if (accountText == null || accountText.isBlank()) {
+            return false;
+        }
+
+        String imported = normalizeComparableText(importedOperatorName);
+        String account = normalizeComparableText(accountText);
+        return imported.equals(account) || imported.contains(account) || account.contains(imported);
+    }
+
+    private String normalizeComparableText(String text) {
+        if (text == null) {
+            return "";
+        }
+        return Normalizer.normalize(text.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[\u3000\uFEFF]", " ")
+                .replaceAll("[\\p{Punct}]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private LocalDate parseLocalDate(Cell cell) {

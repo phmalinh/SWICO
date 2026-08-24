@@ -511,7 +511,7 @@ const form = ref({
   partName: '',
   cycleTime: '',
   processId: null,
-  downtimeMinutes: null,
+  downtimeMinutes: 0,
   inputQuantity: 0,
   goodQuantity: 0,
   defectQuantity: 0,
@@ -521,7 +521,7 @@ const form = ref({
   responsibleLeader: '',
   downtimeReason: '',
   downtimeReasons: [''],
-  downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: null }],
+  downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: 0 }],
 })
 
 const defaultDowntimeReasons = [
@@ -567,7 +567,7 @@ function normalizeDowntimeReasons(value) {
 
 function normalizeDowntimeItems(reasonValue, minutesValue = null) {
   const reasons = normalizeDowntimeReasons(reasonValue)
-  const minutes = minutesValue === null || minutesValue === undefined || minutesValue === '' ? null : Number(minutesValue || 0)
+  const minutes = minutesValue === null || minutesValue === undefined || minutesValue === '' ? 0 : Number(minutesValue || 0)
   return reasons.map((value, index) => {
     const match = String(value).match(/^(.*?)(?:\s+-\s+(\d+))$/)
     if (match) {
@@ -586,7 +586,7 @@ function normalizeDowntimeItems(reasonValue, minutesValue = null) {
 }
 
 function addDowntimeItem(index = form.value.downtimeItems.length - 1) {
-  form.value.downtimeItems.splice(index + 1, 0, { reasonCategoryCode: '', reason: '', minutes: null })
+  form.value.downtimeItems.splice(index + 1, 0, { reasonCategoryCode: '', reason: '', minutes: 0 })
 }
 
 function decrementDowntimeMinutes(index) {
@@ -664,7 +664,7 @@ function applyNumberKeypadValue(buffer) {
   }
   if (numberKeypad.value.type === 'downtime') {
     const item = form.value.downtimeItems[numberKeypad.value.index]
-    if (item) item.minutes = value
+    if (item) item.minutes = value ?? 0
   }
 }
 
@@ -686,7 +686,7 @@ function closeNumberKeypad() {
 
 function removeDowntimeItem(index) {
   if (form.value.downtimeItems.length === 1) {
-    form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: null }]
+    form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 0 }]
     return
   }
   form.value.downtimeItems.splice(index, 1)
@@ -791,7 +791,7 @@ function populateFormForEdit(report) {
   form.value.partName = report.partName || ''
   form.value.cycleTime = report.cycleTimeSeconds || ''
   form.value.processId = Array.isArray(report.processIds) ? (report.processIds[0] || null) : null
-  form.value.downtimeMinutes = report.downtimeMinutes ?? null
+  form.value.downtimeMinutes = report.downtimeMinutes ?? 0
   form.value.inputQuantity = report.inputQuantity ?? 0
   form.value.goodQuantity = report.goodQuantity ?? 0
   form.value.defectQuantity = report.defectQuantity ?? Math.max(Number(report.inputQuantity || 0) - Number(report.goodQuantity || 0), 0)
@@ -931,10 +931,10 @@ function resetForm() {
   form.value.cycleTime = ''
   form.value.processId = null
   processOptions.value = []
-  form.value.downtimeMinutes = null
+  form.value.downtimeMinutes = 0
   form.value.downtimeReason = ''
   form.value.downtimeReasons = ['']
-  form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: null }]
+  form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 0 }]
   form.value.inputQuantity = 0
   form.value.goodQuantity = 0
   form.value.defectQuantity = 0
