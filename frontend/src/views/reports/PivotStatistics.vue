@@ -388,6 +388,8 @@ onMounted(async () => {
 
 .table-scroll {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 330px);
   border: 1px solid #9fb5cf;
 }
 
@@ -443,6 +445,14 @@ onMounted(async () => {
   border-top: 1px solid #9fb5cf;
   background: #dbe8f4;
   font-weight: 900;
+}
+
+.grand-row td {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  border-top: 1px solid #9fb5cf;
+  background: #dbe8f4;
 }
 
 .tree-box {

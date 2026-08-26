@@ -44,7 +44,7 @@
     <el-dialog v-model="dialogVisible" :title="editId ? t('master.shifts.dialog.titleEdit') : t('master.shifts.dialog.titleCreate')" width="480px" destroy-on-close>
       <el-form :model="form" label-position="top">
         <el-form-item :label="t('master.shifts.dialog.shiftName')" required><el-input v-model="form.shiftName" :placeholder="t('master.shifts.placeholders.shiftName')" /></el-form-item>
-        <el-form-item :label="t('master.shifts.dialog.standardTime')" required><el-input-number v-model="form.standardTimeMinutes" :min="60" :max="720" :step="60" class="!w-full" /></el-form-item>
+        <el-form-item :label="t('master.shifts.dialog.standardTime')" required><el-input-number v-model="form.standardTimeMinutes" :min="60" :max="1440" :step="60" class="!w-full" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>

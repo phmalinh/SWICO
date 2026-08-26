@@ -100,7 +100,6 @@
                   </el-option>
                 </el-select>
               </el-form-item>
-
               <el-form-item :label="t('productionEntry.partName')" class="!mb-0 md:col-span-6">
                 <el-input v-model="form.partName" size="default" readonly placeholder="-" />
               </el-form-item>
@@ -126,12 +125,9 @@
                 <el-input v-model="form.cycleTime" size="default" readonly placeholder="-" />
               </el-form-item>
 
-              
+
             </div>
-          </div>
-
-
-          
+          </div>    
           <div class="mt-2.5 grid grid-cols-2 md:grid-cols-4 gap-2.5">
             <el-form-item :label="t('productionEntry.inputQuantity')" class="!mb-0">
               <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
@@ -149,8 +145,9 @@
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
                   :controls="false"
-                  @focus="openQuantityKeypad('inputQuantity')"
-                  @click="openQuantityKeypad('inputQuantity')"
+                  @focus="clearZeroQuantity('inputQuantity')"
+                  @click="clearZeroQuantity('inputQuantity')"
+                  @blur="restoreEmptyQuantity('inputQuantity')"
                 />
                 <el-button
                   size="default"
@@ -182,8 +179,9 @@
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
                   :controls="false"
-                  @focus="openQuantityKeypad('internalDefectQuantity')"
-                  @click="openQuantityKeypad('internalDefectQuantity')"
+                  @focus="clearZeroQuantity('internalDefectQuantity')"
+                  @click="clearZeroQuantity('internalDefectQuantity')"
+                  @blur="restoreEmptyQuantity('internalDefectQuantity')"
                 />
                 <el-button
                   size="default"
@@ -211,8 +209,9 @@
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
                   :controls="false"
-                  @focus="openQuantityKeypad('externalDefectQuantity')"
-                  @click="openQuantityKeypad('externalDefectQuantity')"
+                  @focus="clearZeroQuantity('externalDefectQuantity')"
+                  @click="clearZeroQuantity('externalDefectQuantity')"
+                  @blur="restoreEmptyQuantity('externalDefectQuantity')"
                 />
                 <el-button
                   size="default"
@@ -268,8 +267,9 @@
                       size="default"
                       class="min-w-0 flex-1 downtime-minutes-input"
                       :controls="false"
-                      @focus="openDowntimeKeypad(index)"
-                      @click="openDowntimeKeypad(index)"
+                      @focus="clearZeroDowntimeMinutes(index)"
+                      @click="clearZeroDowntimeMinutes(index)"
+                      @blur="restoreEmptyDowntimeMinutes(index)"
                     />
                     <el-button
                       size="default"
@@ -420,32 +420,6 @@
       </aside>
 
     </div>
-
-    <div
-      v-if="numberKeypad.visible"
-      class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-300 bg-white p-3 shadow-2xl md:left-auto md:right-6 md:bottom-6 md:w-80 md:rounded-lg md:border"
-    >
-      <div class="mb-2 flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <p class="truncate text-xs font-black uppercase text-slate-500">{{ t(numberKeypad.labelKey) }}</p>
-          <p class="text-2xl font-black text-slate-900">{{ numberKeypad.buffer || '0' }}</p>
-        </div>
-        <button class="rounded-md border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600" @click="closeNumberKeypad">{{ t('productionEntry.keypad.ok') }}</button>
-      </div>
-      <div class="grid grid-cols-3 gap-2">
-        <button
-          v-for="key in numberKeys"
-          :key="key"
-          class="h-14 rounded-md border border-slate-300 bg-slate-50 text-xl font-black text-slate-900 active:bg-sky-100"
-          @click="pressNumberKey(key)"
-        >
-          {{ key }}
-        </button>
-        <button class="h-14 rounded-md border border-rose-200 bg-rose-50 text-base font-black text-rose-700 active:bg-rose-100" @click="clearNumberKeypad">{{ t('productionEntry.keypad.clear') }}</button>
-        <button class="h-14 rounded-md border border-slate-300 bg-slate-50 text-xl font-black text-slate-900 active:bg-sky-100" @click="pressNumberKey('0')">0</button>
-        <button class="h-14 rounded-md border border-slate-300 bg-slate-50 text-base font-black text-slate-700 active:bg-slate-100" @click="backspaceNumberKeypad">{{ t('productionEntry.keypad.backspace') }}</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -477,16 +451,6 @@ const selectedReports = ref([])
 const editedReportId = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
-const numberKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-const numberKeypad = ref({
-  visible: false,
-  type: '',
-  field: '',
-  index: null,
-  labelKey: 'productionEntry.inputQuantity',
-  buffer: '',
-  max: 999999,
-})
 
 const paginatedReports = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -614,74 +578,30 @@ function incrementQuantity(field) {
   form.value[field] = Math.min(Number(form.value[field] || 0) + 1, maxQuantityForField(field))
 }
 
-function openQuantityKeypad(field) {
-  numberKeypad.value = {
-    visible: true,
-    type: 'quantity',
-    field,
-    index: null,
-    labelKey: quantityKeypadLabelKey(field),
-    buffer: valueToKeypadBuffer(form.value[field]),
-    max: maxQuantityForField(field),
+function clearZeroQuantity(field) {
+  if (Number(form.value[field] || 0) === 0) {
+    form.value[field] = null
   }
 }
 
-function openDowntimeKeypad(index) {
+function restoreEmptyQuantity(field) {
+  if (form.value[field] === null || form.value[field] === undefined || form.value[field] === '') {
+    form.value[field] = 0
+  }
+}
+
+function clearZeroDowntimeMinutes(index) {
   const item = form.value.downtimeItems[index]
-  numberKeypad.value = {
-    visible: true,
-    type: 'downtime',
-    field: 'minutes',
-    index,
-    labelKey: 'productionEntry.downtimeMinutes',
-    buffer: valueToKeypadBuffer(item?.minutes),
-    max: 1440,
+  if (item && Number(item.minutes || 0) === 0) {
+    item.minutes = null
   }
 }
 
-function quantityKeypadLabelKey(field) {
-  const labels = {
-    inputQuantity: 'productionEntry.inputQuantity',
-    internalDefectQuantity: 'productionEntry.internalDefectQuantity',
-    externalDefectQuantity: 'productionEntry.externalDefectQuantity',
+function restoreEmptyDowntimeMinutes(index) {
+  const item = form.value.downtimeItems[index]
+  if (item && (item.minutes === null || item.minutes === undefined || item.minutes === '')) {
+    item.minutes = 0
   }
-  return labels[field] || 'productionEntry.inputQuantity'
-}
-
-function valueToKeypadBuffer(value) {
-  if (value === null || value === undefined || value === '') return ''
-  return String(Math.max(Number(value || 0), 0))
-}
-
-function applyNumberKeypadValue(buffer) {
-  const text = String(buffer || '').replace(/\D/g, '')
-  const normalized = text.replace(/^0+(?=\d)/, '')
-  const value = normalized ? Math.min(Number(normalized), Number(numberKeypad.value.max || 999999)) : null
-  numberKeypad.value.buffer = value === null ? '' : String(value)
-  if (numberKeypad.value.type === 'quantity') {
-    form.value[numberKeypad.value.field] = value ?? 0
-    return
-  }
-  if (numberKeypad.value.type === 'downtime') {
-    const item = form.value.downtimeItems[numberKeypad.value.index]
-    if (item) item.minutes = value ?? 0
-  }
-}
-
-function pressNumberKey(key) {
-  applyNumberKeypadValue(`${numberKeypad.value.buffer}${key}`)
-}
-
-function backspaceNumberKeypad() {
-  applyNumberKeypadValue(numberKeypad.value.buffer.slice(0, -1))
-}
-
-function clearNumberKeypad() {
-  applyNumberKeypadValue('')
-}
-
-function closeNumberKeypad() {
-  numberKeypad.value.visible = false
 }
 
 function removeDowntimeItem(index) {

@@ -6,7 +6,7 @@ import java.time.ZoneId;
 
 public final class AppClock {
 
-    public static final ZoneId ZONE = ZoneId.of("Asia/Taipei");
+    public static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private AppClock() {
     }
