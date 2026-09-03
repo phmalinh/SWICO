@@ -257,7 +257,7 @@ const messages = {
       reportCount: '{count} báo cáo',
       table: {
         time: 'Giờ nhập',
-        line: 'Chuyến',
+        line: 'Chuyền',
         machine: 'Máy',
         operatorName: 'Nhân Viên Thao Tác',
         responsibleLeader: 'Cán Bộ Phụ Trách',
@@ -332,7 +332,7 @@ const messages = {
         fields: {
           dateFrom: 'Từ ngày',
           dateTo: 'Đến ngày',
-          line: 'Chuyến',
+          line: 'Chuyền',
           shift: 'Ca',
           partNumber: 'Mã hàng',
           operatorName: 'Nhân viên thao tác',
@@ -348,7 +348,7 @@ const messages = {
         },
         table: {
           date: 'Ngày',
-          line: 'Chuyến',
+          line: 'Chuyền',
           shift: 'Ca',
           machine: 'Máy',
           partNumber: 'Mã hàng',
@@ -436,7 +436,7 @@ const messages = {
         fields: {
           dateFrom: 'Từ ngày',
           dateTo: 'Đến ngày',
-          line: 'Chuyến (tùy chọn)',
+          line: 'Chuyền (tùy chọn)',
           allLines: 'Tất cả chuyền',
         },
         button: 'Xuất tệp Excel V9',

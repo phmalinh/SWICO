@@ -19,7 +19,7 @@
         <el-table-column prop="createdAt" :label="t('productionHistory.table.time')" width="105">
           <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column prop="lineCode" :label="t('productionHistory.table.line')" width="86" align="center" />
+        <el-table-column prop="lineCode" :label="t('productionHistory.table.line')" width="90" align="center" />
         <el-table-column prop="machineCode" :label="t('productionHistory.table.machine')" width="96" align="center" />
         <el-table-column :label="t('productionHistory.table.operatorName')" width="150" align="center" show-overflow-tooltip>
           <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>

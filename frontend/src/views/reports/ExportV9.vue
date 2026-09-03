@@ -69,8 +69,8 @@
       <el-table :data="paginatedReports" stripe style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="56" />
         <el-table-column prop="reportDate" :label="t('reports.search.table.date')" width="100" />
-        <el-table-column prop="lineCode" :label="t('reports.search.table.line')" width="60" align="center" />
-        <el-table-column prop="shiftName" :label="t('reports.search.table.shift')" width="200" />
+        <el-table-column prop="lineCode" :label="t('reports.search.table.line')" width="80" align="center" />
+        <el-table-column prop="shiftName" :label="t('reports.search.table.shift')" width="150" />
         <el-table-column prop="machineCode" :label="t('reports.search.table.machine')" width="80" />
         <el-table-column prop="company" :label="t('reports.search.table.company')" min-width="80" show-overflow-tooltip />
         <el-table-column :label="t('reports.search.table.operatorName')" width="150" align="center" show-overflow-tooltip>
