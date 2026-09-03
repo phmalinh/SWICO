@@ -28,6 +28,7 @@ const messages = {
       search: 'Tìm',
       reset: 'Xóa',
       loading: 'Đang tải',
+      noData: 'Không có dữ liệu',
       yes: 'Có',
       no: 'Không',
       units: {
@@ -173,7 +174,7 @@ const messages = {
       selectMachine: 'Chọn máy',
       selectShift: 'Chọn ca',
       enterCompany: '-',
-      enterResponsibleLeader: '',
+      enterResponsibleLeader: 'Chọn cán bộ phụ trách',
       scanBarcode: 'Chọn mã hàng',
       processes: 'Công đoạn',
       selectProcesses: 'Chọn công đoạn',
@@ -221,6 +222,12 @@ const messages = {
         oee: 'OEE',
         evaluationLabel: 'Đánh giá',
         createdBy: 'Người nhập',
+      },
+      keypad: {
+        clear: 'Xóa',
+        backspace: 'Lùi',
+        ok: 'OK',
+        space: 'Khoảng trắng',
       },
       messages: {
         selectProduct: 'Vui lòng chọn mã hàng',
@@ -953,6 +960,7 @@ const messages = {
       search: '搜尋',
       reset: '清除',
       loading: '載入中',
+      noData: '無資料',
       yes: '是',
       no: '否',
       units: {
@@ -1146,6 +1154,12 @@ const messages = {
         oee: 'OEE',
         evaluationLabel: '評價',
         createdBy: '輸入者',
+      },
+      keypad: {
+        clear: '清除',
+        backspace: '退格',
+        ok: '確定',
+        space: '空白',
       },
       messages: {
         selectProduct: '請選擇料號',
