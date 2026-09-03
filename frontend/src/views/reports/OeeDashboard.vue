@@ -13,6 +13,42 @@
       </template>
     </PageHeader>
 
+    <section class="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <el-form-item :label="t('reports.dashboard.filters.dateFrom')" class="!mb-0">
+          <el-date-picker
+            v-model="filters.dateFrom"
+            type="date"
+            value-format="YYYY-MM-DD"
+            class="!w-full"
+            @change="loadDashboard"
+          />
+        </el-form-item>
+        <el-form-item :label="t('reports.dashboard.filters.dateTo')" class="!mb-0">
+          <el-date-picker
+            v-model="filters.dateTo"
+            type="date"
+            value-format="YYYY-MM-DD"
+            class="!w-full"
+            @change="loadDashboard"
+          />
+        </el-form-item>
+        <el-form-item :label="t('reports.dashboard.filters.line')" class="!mb-0">
+          <el-select
+            v-model="filters.lineCode"
+            clearable
+            filterable
+            class="w-full"
+            :placeholder="t('reports.dashboard.filters.all')"
+            @change="loadDashboard"
+          >
+            <el-option :label="t('reports.dashboard.filters.all')" value="" />
+            <el-option v-for="line in lines" :key="line.lineCode" :label="line.lineCode" :value="line.lineCode" />
+          </el-select>
+        </el-form-item>
+      </div>
+    </section>
+
     <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div v-for="stat in summaryStats" :key="stat.label" class="stat-card">
         <div class="flex items-center justify-between">
@@ -64,7 +100,7 @@ import { GridComponent, TooltipComponent, LegendComponent, MarkLineComponent } f
 import VChart from 'vue-echarts'
 import { Activity, Gauge, TrendingUp, AlertTriangle } from 'lucide-vue-next'
 import PageHeader from '@/components/PageHeader.vue'
-import { productionApi } from '@/services/api'
+import { masterApi, productionApi } from '@/services/api'
 import { useI18n } from '@/i18n'
 
 use([CanvasRenderer, BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, MarkLineComponent])
@@ -73,7 +109,22 @@ const { t } = useI18n()
 
 const dashboard = ref(null)
 const loading = ref(false)
+const lines = ref([])
 let refreshTimer = null
+
+function localTodayString() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const filters = ref({
+  dateFrom: localTodayString(),
+  dateTo: localTodayString(),
+  lineCode: '',
+})
 
 const summaryStats = computed(() => {
   const avgOee = dashboard.value?.averageOee ?? 0
@@ -121,11 +172,27 @@ const trendChartOption = computed(() => ({
 const loadDashboard = async () => {
   loading.value = true
   try {
-    dashboard.value = await productionApi.dashboard()
+    dashboard.value = await productionApi.dashboard({
+      from: filters.value.dateFrom,
+      to: filters.value.dateTo,
+      lineCode: filters.value.lineCode,
+    })
   } catch (error) {
     console.error(error)
   } finally {
     loading.value = false
+  }
+}
+
+const loadLines = async () => {
+  try {
+    const data = await masterApi.getLines()
+    lines.value = (data || []).map(item => ({
+      lineCode: item.code ?? item.lineCode ?? item.name,
+    })).filter(item => item.lineCode)
+  } catch (error) {
+    console.error(error)
+    lines.value = []
   }
 }
 
@@ -151,6 +218,11 @@ const lineDetails = computed(() =>
 )
 
 onMounted(() => {
+  loadLines()
   loadDashboard()
+})
+
+onBeforeUnmount(() => {
+  if (refreshTimer) window.clearInterval(refreshTimer)
 })
 </script>

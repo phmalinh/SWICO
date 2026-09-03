@@ -304,6 +304,12 @@ const messages = {
           activeLines: 'Chuyền hoạt động',
           warnings: 'Cảnh báo',
         },
+        filters: {
+          dateFrom: 'Từ ngày',
+          dateTo: 'Đến ngày',
+          line: 'Chuyền',
+          all: 'Tất cả',
+        },
         sections: {
           lineOee: 'OEE theo chuyền / OEE',
           lineHint: 'Mục tiêu chuẩn: 85%',
@@ -1235,6 +1241,12 @@ const messages = {
           avgQuality: '品質 Q',
           activeLines: '運作產線',
           warnings: '警示',
+        },
+        filters: {
+          dateFrom: '起始日期',
+          dateTo: '結束日期',
+          line: '產線',
+          all: '全部',
         },
         sections: {
           lineOee: '各線 OEE',

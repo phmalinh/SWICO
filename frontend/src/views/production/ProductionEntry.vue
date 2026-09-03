@@ -43,6 +43,7 @@
                 v-model="form.responsibleLeader"
                 size="default"
                 class="w-full"
+                data-no-global-keyboard="true"
                 :placeholder="selectKeypadPlaceholder('leader', null, t('productionEntry.enterResponsibleLeader'))"
                 clearable
                 filterable
@@ -95,6 +96,7 @@
                   v-model="form.partNumber"
                   size="default"
                   class="w-full"
+                  data-no-global-keyboard="true"
                   filterable
                   :filter-method="noopSelectFilter"
                   :placeholder="selectKeypadPlaceholder('product', null, t('productionEntry.scanBarcode'))"
@@ -119,6 +121,7 @@
                   clearable
                   size="default"
                   class="w-full"
+                  data-no-global-keyboard="true"
                   :placeholder="selectKeypadPlaceholder('process', null, t('productionEntry.selectProcesses'))"
                   :filter-method="noopSelectFilter"
                   @change="onProcessSelectionChange"
@@ -156,6 +159,7 @@
                   :max="999999"
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
+                  data-no-global-keyboard="true"
                   :controls="false"
                   @focus="handleQuantityFocus('inputQuantity', $event)"
                   @click="openQuantityKeypad('inputQuantity')"
@@ -190,6 +194,7 @@
                   :max="form.inputQuantity || 999999"
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
+                  data-no-global-keyboard="true"
                   :controls="false"
                   @focus="handleQuantityFocus('internalDefectQuantity', $event)"
                   @click="openQuantityKeypad('internalDefectQuantity')"
@@ -220,6 +225,7 @@
                   :max="form.inputQuantity || 999999"
                   size="default"
                   class="min-w-0 flex-1 quantity-stepper-input"
+                  data-no-global-keyboard="true"
                   :controls="false"
                   @focus="handleQuantityFocus('externalDefectQuantity', $event)"
                   @click="openQuantityKeypad('externalDefectQuantity')"
@@ -244,6 +250,7 @@
                   v-model="item.reasonCategoryCode"
                   size="default"
                   class="w-full"
+                  data-no-global-keyboard="true"
                   :placeholder="selectKeypadPlaceholder('downtimeCategory', index, t('productionEntry.downtimeCategory'))"
                   clearable
                   filterable
@@ -261,6 +268,7 @@
                   v-model="item.reason"
                   size="default"
                   class="w-full"
+                  data-no-global-keyboard="true"
                   :placeholder="selectKeypadPlaceholder('downtimeReason', index, t('productionEntry.downtimeReason'))"
                   filterable
                   :filter-method="noopSelectFilter"
@@ -286,6 +294,7 @@
                       :max="1440"
                       size="default"
                       class="min-w-0 flex-1 downtime-minutes-input"
+                      data-no-global-keyboard="true"
                       :controls="false"
                       @focus="handleDowntimeFocus(index, $event)"
                       @click="openDowntimeKeypad(index)"
@@ -440,110 +449,11 @@
       </aside>
 
     </div>
-
-    <div
-      v-if="numberKeypad.visible"
-      data-keypad-panel
-      class="fixed inset-x-0 bottom-0 z-[2100] border-t border-slate-300 bg-white p-2.5 shadow-2xl md:left-auto md:right-3 md:bottom-3 md:w-72 md:max-w-[calc(100vw-1rem)] md:rounded-lg md:border"
-      :style="keypadPositionStyle('number')"
-      @mousedown.prevent
-    >
-      <div class="mb-2 flex items-center justify-between gap-2">
-        <div class="min-w-0 cursor-move select-none" @pointerdown.stop.prevent="startKeypadDrag('number', $event)">
-          <p class="truncate text-xs font-black uppercase text-slate-500">{{ t(numberKeypad.labelKey) }}</p>
-          <p class="text-xl font-black text-slate-900">{{ numberKeypad.buffer || '0' }}</p>
-        </div>
-        <button type="button" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600" @click="closeNumberKeypad">
-          {{ t('productionEntry.keypad.ok') }}
-        </button>
-      </div>
-      <div class="grid grid-cols-3 gap-2">
-        <button
-          v-for="key in numberKeys"
-          :key="key"
-          type="button"
-          class="h-12 rounded-md border border-slate-300 bg-slate-50 text-xl font-black text-slate-900 active:bg-sky-100"
-          @click="pressNumberKey(key)"
-        >
-          {{ key }}
-        </button>
-        <button type="button" class="h-12 rounded-md border border-rose-200 bg-rose-50 text-sm font-black text-rose-700 active:bg-rose-100" @click="clearNumberKeypad">
-          {{ t('productionEntry.keypad.clear') }}
-        </button>
-        <button type="button" class="h-12 rounded-md border border-slate-300 bg-slate-50 text-xl font-black text-slate-900 active:bg-sky-100" @click="pressNumberKey('0')">
-          0
-        </button>
-        <button type="button" class="h-12 rounded-md border border-slate-300 bg-slate-50 text-sm font-black text-slate-700 active:bg-slate-100" @click="backspaceNumberKeypad">
-          {{ t('productionEntry.keypad.backspace') }}
-        </button>
-      </div>
-    </div>
-
-    <div
-      v-if="textKeypad.visible"
-      data-keypad-panel
-      class="fixed inset-x-0 bottom-0 z-[2100] max-h-[46vh] overflow-y-auto border-t border-slate-300 bg-white p-2.5 shadow-2xl md:left-auto md:right-3 md:bottom-3 md:w-[24rem] md:max-w-[calc(100vw-1rem)] md:rounded-lg md:border"
-      :style="keypadPositionStyle('text')"
-      @mousedown.prevent
-    >
-      <div class="mb-2 flex flex-wrap items-center gap-1.5">
-        <div
-          class="min-w-0 flex-1 cursor-move select-none rounded border border-slate-300 bg-slate-50 px-2.5 py-2 text-sm font-black text-slate-900"
-          @pointerdown.stop.prevent="startKeypadDrag('text', $event)"
-        >
-          {{ textKeypadDisplayValue }}
-        </div>
-        <button
-          type="button"
-          class="rounded border px-3 py-2 text-sm font-black"
-          :class="textKeypad.mode === 'text' ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-300 text-slate-600'"
-          @click="textKeypad.mode = 'text'"
-        >
-          ABC
-        </button>
-        <button
-          type="button"
-          class="rounded border px-3 py-2 text-sm font-black"
-          :class="textKeypad.mode === 'number' ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-300 text-slate-600'"
-          @click="textKeypad.mode = 'number'"
-        >
-          123
-        </button>
-        <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600" @click="closeTextKeypad">
-          {{ t('productionEntry.keypad.ok') }}
-        </button>
-      </div>
-
-      <div class="space-y-2">
-        <div v-for="(row, rowIndex) in currentTextKeypadRows" :key="rowIndex" class="flex justify-center gap-1">
-          <button
-            v-for="key in row"
-            :key="key"
-            type="button"
-            class="h-9 min-w-7 rounded border border-slate-300 bg-slate-50 px-1.5 text-sm font-black text-slate-900 active:bg-sky-100 sm:h-9 sm:min-w-8 sm:px-2 sm:text-sm"
-            @click="pressTextKey(key)"
-          >
-            {{ key }}
-          </button>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <button type="button" class="h-10 rounded border border-rose-200 bg-rose-50 text-sm font-black text-rose-700 active:bg-rose-100" @click="clearTextKeypad">
-            {{ t('productionEntry.keypad.clear') }}
-          </button>
-          <button type="button" class="h-10 rounded border border-slate-300 bg-slate-50 text-sm font-black text-slate-700 active:bg-slate-100" @click="pressTextKey(' ')">
-            {{ t('productionEntry.keypad.space') }}
-          </button>
-          <button type="button" class="h-10 rounded border border-slate-300 bg-slate-50 text-sm font-black text-slate-700 active:bg-slate-100" @click="backspaceTextKeypad">
-            {{ t('productionEntry.keypad.backspace') }}
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Minus, Plus, RotateCcw, Save, Trash2 } from 'lucide-vue-next'
 import { masterApi, productionApi } from '@/services/api'
@@ -575,18 +485,6 @@ const productSelectRef = ref(null)
 const processSelectRef = ref(null)
 const downtimeCategorySelectRefs = ref({})
 const downtimeReasonSelectRefs = ref({})
-const numberKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-const textKeypadTextRows = [
-  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-  ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '-', '/', '.'],
-]
-const textKeypadNumberRows = [
-  ['1', '2', '3'],
-  ['4', '5', '6'],
-  ['7', '8', '9'],
-  ['-', '0', '/'],
-]
 const numberKeypad = ref({
   visible: false,
   type: '',
@@ -603,21 +501,12 @@ const textKeypad = ref({
   mode: 'text',
   buffer: '',
 })
-const keypadPositions = ref({
-  number: null,
-  text: null,
-})
-const activeKeypadDrag = ref(null)
 
 const paginatedReports = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return myReports.value.slice(start, end)
 })
-
-const currentTextKeypadRows = computed(() => (
-  textKeypad.value.mode === 'number' ? textKeypadNumberRows : textKeypadTextRows
-))
 
 const textKeypadPlaceholder = computed(() => {
   const labels = {
@@ -634,66 +523,12 @@ const textKeypadDisplayValue = computed(() => (
   textKeypad.value.buffer || textKeypadPlaceholder.value || t('common.search')
 ))
 
-function keypadPositionStyle(type) {
-  const position = keypadPositions.value[type]
-  if (!position) return {}
-  return {
-    left: `${position.x}px`,
-    top: `${position.y}px`,
-    right: 'auto',
-    bottom: 'auto',
-    width: `${position.width}px`,
-  }
+function openGlobalVirtualKeyboard(detail) {
+  window.dispatchEvent(new CustomEvent('global-virtual-keyboard:open', { detail }))
 }
 
-function startKeypadDrag(type, event) {
-  if (event.pointerType === 'mouse' && event.button !== 0) return
-  const panel = event.currentTarget?.closest?.('[data-keypad-panel]')
-  if (!panel) return
-  const rect = panel.getBoundingClientRect()
-  activeKeypadDrag.value = {
-    type,
-    offsetX: event.clientX - rect.left,
-    offsetY: event.clientY - rect.top,
-    width: rect.width,
-    height: rect.height,
-  }
-  keypadPositions.value = {
-    ...keypadPositions.value,
-    [type]: {
-      x: rect.left,
-      y: rect.top,
-      width: rect.width,
-    },
-  }
-  window.addEventListener('pointermove', handleKeypadDrag)
-  window.addEventListener('pointerup', stopKeypadDrag, { once: true })
-  window.addEventListener('pointercancel', stopKeypadDrag, { once: true })
-}
-
-function handleKeypadDrag(event) {
-  const drag = activeKeypadDrag.value
-  if (!drag) return
-  const margin = 8
-  const maxX = Math.max(window.innerWidth - drag.width - margin, margin)
-  const maxY = Math.max(window.innerHeight - drag.height - margin, margin)
-  const x = Math.min(Math.max(event.clientX - drag.offsetX, margin), maxX)
-  const y = Math.min(Math.max(event.clientY - drag.offsetY, margin), maxY)
-  keypadPositions.value = {
-    ...keypadPositions.value,
-    [drag.type]: {
-      x,
-      y,
-      width: drag.width,
-    },
-  }
-}
-
-function stopKeypadDrag() {
-  activeKeypadDrag.value = null
-  window.removeEventListener('pointermove', handleKeypadDrag)
-  window.removeEventListener('pointerup', stopKeypadDrag)
-  window.removeEventListener('pointercancel', stopKeypadDrag)
+function updateGlobalVirtualKeyboard(detail) {
+  window.dispatchEvent(new CustomEvent('global-virtual-keyboard:update', { detail }))
 }
 
 const filteredLeaderOptions = computed(() => filterTextKeypadOptions('leader', leaders.value, leader => `${leader.label} ${leader.value} ${leader.username}`))
@@ -831,6 +666,16 @@ function openQuantityKeypad(field) {
     buffer: valueToKeypadBuffer(form.value[field]),
     max: maxQuantityForField(field),
   }
+  openGlobalVirtualKeyboard({
+    id: `production-number-${field}`,
+    numeric: true,
+    mode: 'number',
+    value: numberKeypad.value.buffer,
+    placeholder: t(numberKeypad.value.labelKey),
+    max: numberKeypad.value.max,
+    onInput: value => applyNumberKeypadValue(value),
+    onClose: closeNumberKeypad,
+  })
 }
 
 function openDowntimeKeypad(index) {
@@ -845,6 +690,16 @@ function openDowntimeKeypad(index) {
     buffer: valueToKeypadBuffer(item?.minutes),
     max: 1440,
   }
+  openGlobalVirtualKeyboard({
+    id: `production-downtime-${index}`,
+    numeric: true,
+    mode: 'number',
+    value: numberKeypad.value.buffer,
+    placeholder: t(numberKeypad.value.labelKey),
+    max: numberKeypad.value.max,
+    onInput: value => applyNumberKeypadValue(value),
+    onClose: closeNumberKeypad,
+  })
 }
 
 function selectFocusedInput(event) {
@@ -883,12 +738,14 @@ function valueToKeypadBuffer(value) {
 function syncQuantityKeypad(field, value) {
   if (numberKeypad.value.visible && numberKeypad.value.type === 'quantity' && numberKeypad.value.field === field) {
     numberKeypad.value.buffer = valueToKeypadBuffer(value)
+    updateGlobalVirtualKeyboard({ id: `production-number-${field}`, value: numberKeypad.value.buffer })
   }
 }
 
 function syncDowntimeKeypad(index, value) {
   if (numberKeypad.value.visible && numberKeypad.value.type === 'downtime' && numberKeypad.value.index === index) {
     numberKeypad.value.buffer = valueToKeypadBuffer(value)
+    updateGlobalVirtualKeyboard({ id: `production-downtime-${index}`, value: numberKeypad.value.buffer })
   }
 }
 
@@ -1132,6 +989,15 @@ function openTextKeypad(target, index = null) {
     mode: initialTextKeypadMode(target, index),
     buffer: currentTextKeypadValue(target, index),
   }
+  openGlobalVirtualKeyboard({
+    id: `production-text-${target}-${index ?? 'main'}`,
+    value: textKeypad.value.buffer,
+    placeholder: textKeypadDisplayValue.value,
+    mode: textKeypad.value.mode,
+    onInput: value => setTextKeypadValue(value),
+    onCommit: commitTextKeypadSelection,
+    onClose: closeTextKeypad,
+  })
   reopenActiveTextSelect()
 }
 
@@ -1160,19 +1026,53 @@ function closeTextKeypad() {
   textKeypad.value.visible = false
 }
 
-function pressTextKey(key) {
-  textKeypad.value.buffer = `${textKeypad.value.buffer || ''}${key}`
+function commitTextKeypadSelection() {
+  const target = textKeypad.value.target
+  const index = textKeypad.value.index
+  if (target === 'leader') {
+    const option = filteredLeaderOptions.value[0]
+    if (option) form.value.responsibleLeader = option.value
+  } else if (target === 'product') {
+    const option = filteredProductOptions.value[0]
+    if (option) {
+      form.value.partNumber = option.partNumber
+      onProductChange(option.partNumber)
+    }
+  } else if (target === 'process') {
+    const option = filteredProcessOptions.value[0]
+    if (option) {
+      form.value.processId = option.id
+      onProcessSelectionChange(option.id)
+    }
+  } else if (target === 'downtimeCategory') {
+    const option = filteredDowntimeCategoryOptions(index)[0]
+    const item = form.value.downtimeItems[index]
+    if (option && item) {
+      item.reasonCategoryCode = option.reasonCategoryCode
+      item.reason = ''
+    }
+  } else if (target === 'downtimeReason') {
+    const option = filteredDowntimeReasonOptions(index)[0]
+    const item = form.value.downtimeItems[index]
+    if (option && item) item.reason = option.value
+  }
+}
+
+function setTextKeypadValue(value) {
+  textKeypad.value.buffer = String(value || '')
   reopenActiveTextSelect()
+}
+
+function pressTextKey(key) {
+  setTextKeypadValue(`${textKeypad.value.buffer || ''}${key}`)
 }
 
 function backspaceTextKeypad() {
-  textKeypad.value.buffer = String(textKeypad.value.buffer || '').slice(0, -1)
-  reopenActiveTextSelect()
+  setTextKeypadValue(String(textKeypad.value.buffer || '').slice(0, -1))
 }
 
 function clearTextKeypad() {
-  textKeypad.value.buffer = ''
-  reopenActiveTextSelect()
+  setTextKeypadValue('')
 }
 
 function filterTextKeypadOptions(target, options, getSearchText, index = null) {
@@ -1533,7 +1433,6 @@ watch([() => form.value.partNumber, products], ([partNumber]) => {
 }, { immediate: true })
 
 onMounted(loadInitialData)
-onUnmounted(stopKeypadDrag)
 </script>
 
 <style scoped>

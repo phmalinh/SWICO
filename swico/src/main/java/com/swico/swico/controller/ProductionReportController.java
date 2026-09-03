@@ -102,9 +102,12 @@ public class ProductionReportController {
 
     @GetMapping("/dashboard")
     public DashboardSummaryResponse dashboard(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String lineCode
     ) {
-        return reportService.getDashboard(reportDate);
+        return reportService.getDashboard(reportDate, from, to, lineCode);
     }
 
     @GetMapping("/mine")

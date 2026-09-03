@@ -852,9 +852,15 @@ public class ProductionReportService {
     }
 
     @Transactional(readOnly = true)
-    public DashboardSummaryResponse getDashboard(LocalDate reportDate) {
-        LocalDate date = reportDate != null ? reportDate : AppClock.today();
-        List<DailyProductionReport> reports = reportRepository.findByReportDateOrderByCreatedAtDesc(date);
+    public DashboardSummaryResponse getDashboard(LocalDate reportDate, LocalDate from, LocalDate to, String lineCode) {
+        LocalDate effectiveFrom = from != null ? from : (reportDate != null ? reportDate : AppClock.today());
+        LocalDate effectiveTo = to != null ? to : effectiveFrom;
+        List<DailyProductionReport> reports = reportRepository.findByReportDateBetweenOrderByReportDateDescCreatedAtDesc(effectiveFrom, effectiveTo);
+        if (lineCode != null && !lineCode.isBlank()) {
+            reports = reports.stream()
+                    .filter(r -> r.getLine() != null && lineCode.equals(r.getLine().getLineCode()))
+                    .toList();
+        }
 
         BigDecimal avgOee = average(reports.stream().map(DailyProductionReport::getOee).toList());
         BigDecimal avgA = average(reports.stream().map(DailyProductionReport::getAvailabilityRate).toList());
@@ -881,7 +887,7 @@ public class ProductionReportService {
                 .count();
 
         return new DashboardSummaryResponse(
-                date.toString(),
+                effectiveFrom.equals(effectiveTo) ? effectiveFrom.toString() : effectiveFrom + " - " + effectiveTo,
                 avgOee,
                 avgA,
                 avgP,
