@@ -48,6 +48,7 @@
                 clearable
                 filterable
                 :filter-method="noopSelectFilter"
+                @change="onLeaderSelectChange"
                 @focus="openTextKeypad('leader')"
                 @click="openTextKeypad('leader')"
               >
@@ -100,7 +101,7 @@
                   filterable
                   :filter-method="noopSelectFilter"
                   :placeholder="selectKeypadPlaceholder('product', null, t('productionEntry.scanBarcode'))"
-                  @change="onProductChange"
+                  @change="onProductSelectChange"
                   @focus="openTextKeypad('product')"
                   @click="openTextKeypad('product')"
                 >
@@ -124,7 +125,7 @@
                   data-no-global-keyboard="true"
                   :placeholder="selectKeypadPlaceholder('process', null, t('productionEntry.selectProcesses'))"
                   :filter-method="noopSelectFilter"
-                  @change="onProcessSelectionChange"
+                  @change="onProcessSelectChange"
                   @focus="openTextKeypad('process')"
                   @click="openTextKeypad('process')"
                 >
@@ -255,7 +256,7 @@
                   clearable
                   filterable
                   :filter-method="noopSelectFilter"
-                  @change="item.reason = ''"
+                  @change="onDowntimeCategorySelectChange(index)"
                   @focus="openTextKeypad('downtimeCategory', index)"
                   @click="openTextKeypad('downtimeCategory', index)"
                 >
@@ -272,6 +273,7 @@
                   :placeholder="selectKeypadPlaceholder('downtimeReason', index, t('productionEntry.downtimeReason'))"
                   filterable
                   :filter-method="noopSelectFilter"
+                  @change="onDowntimeReasonSelectChange(index)"
                   @focus="openTextKeypad('downtimeReason', index)"
                   @click="openTextKeypad('downtimeReason', index)"
                 >
@@ -500,6 +502,7 @@ const textKeypad = ref({
   index: null,
   mode: 'text',
   buffer: '',
+  queryActive: false,
 })
 
 const paginatedReports = computed(() => {
@@ -529,6 +532,10 @@ function openGlobalVirtualKeyboard(detail) {
 
 function updateGlobalVirtualKeyboard(detail) {
   window.dispatchEvent(new CustomEvent('global-virtual-keyboard:update', { detail }))
+}
+
+function closeGlobalVirtualKeyboard() {
+  window.dispatchEvent(new CustomEvent('global-virtual-keyboard:close'))
 }
 
 const filteredLeaderOptions = computed(() => filterTextKeypadOptions('leader', leaders.value, leader => `${leader.label} ${leader.value} ${leader.username}`))
@@ -953,11 +960,15 @@ function setDowntimeReasonSelectRef(el, index) {
 }
 
 function activeTextSelectRef() {
-  if (textKeypad.value.target === 'leader') return leaderSelectRef.value
-  if (textKeypad.value.target === 'product') return productSelectRef.value
-  if (textKeypad.value.target === 'process') return processSelectRef.value
-  if (textKeypad.value.target === 'downtimeCategory') return downtimeCategorySelectRefs.value[textKeypad.value.index]
-  if (textKeypad.value.target === 'downtimeReason') return downtimeReasonSelectRefs.value[textKeypad.value.index]
+  return selectRefForTextTarget(textKeypad.value.target, textKeypad.value.index)
+}
+
+function selectRefForTextTarget(target, index = null) {
+  if (target === 'leader') return leaderSelectRef.value
+  if (target === 'product') return productSelectRef.value
+  if (target === 'process') return processSelectRef.value
+  if (target === 'downtimeCategory') return downtimeCategorySelectRefs.value[index]
+  if (target === 'downtimeReason') return downtimeReasonSelectRefs.value[index]
   return null
 }
 
@@ -965,16 +976,23 @@ async function reopenActiveTextSelect() {
   await nextTick()
   const select = activeTextSelectRef()
   if (!select) return
-  syncActiveTextSelectQuery(select)
+  syncActiveTextSelectQuery(select, textKeypad.value.buffer || '')
   select.focus?.()
+  select.toggleMenu?.()
   select.expanded = true
+  select.$el?.querySelector?.('input')?.focus?.()
 }
 
-function syncActiveTextSelectQuery(select = activeTextSelectRef()) {
+function syncActiveTextSelectQuery(select = activeTextSelectRef(), query = textKeypad.value.buffer || '') {
   if (!select?.states) return
-  const query = textKeypad.value.buffer || ''
   select.states.inputValue = query
   select.handleQueryChange?.(query)
+}
+
+function resetTextSelectQuery(select = activeTextSelectRef()) {
+  if (!select?.states) return
+  select.states.inputValue = ''
+  select.handleQueryChange?.('')
 }
 
 function noopSelectFilter() {
@@ -982,12 +1000,17 @@ function noopSelectFilter() {
 
 function openTextKeypad(target, index = null) {
   numberKeypad.value.visible = false
+  const currentValue = currentTextKeypadValue(target, index)
+  const isSameTarget = textKeypad.value.visible
+    && textKeypad.value.target === target
+    && textKeypad.value.index === index
   textKeypad.value = {
     visible: true,
     target,
     index,
     mode: initialTextKeypadMode(target, index),
-    buffer: currentTextKeypadValue(target, index),
+    buffer: currentValue,
+    queryActive: isSameTarget ? textKeypad.value.queryActive : false,
   }
   openGlobalVirtualKeyboard({
     id: `production-text-${target}-${index ?? 'main'}`,
@@ -1026,40 +1049,49 @@ function closeTextKeypad() {
   textKeypad.value.visible = false
 }
 
-function commitTextKeypadSelection() {
+function commitTextKeypadSelection(value = textKeypad.value.buffer) {
+  textKeypad.value.buffer = String(value || '')
+  if (!normalizeTextKeypadSearch(textKeypad.value.buffer)) {
+    resetTextSelectQuery()
+    return
+  }
+  textKeypad.value.queryActive = true
+  syncActiveTextSelectQuery()
   const target = textKeypad.value.target
   const index = textKeypad.value.index
   if (target === 'leader') {
-    const option = filteredLeaderOptions.value[0]
+    const option = firstMatchingTextKeypadOption(filteredLeaderOptions.value, leader => `${leader.label} ${leader.value} ${leader.username}`)
     if (option) form.value.responsibleLeader = option.value
   } else if (target === 'product') {
-    const option = filteredProductOptions.value[0]
+    const option = firstMatchingTextKeypadOption(filteredProductOptions.value, product => product.partNumber)
     if (option) {
       form.value.partNumber = option.partNumber
       onProductChange(option.partNumber)
     }
   } else if (target === 'process') {
-    const option = filteredProcessOptions.value[0]
+    const option = firstMatchingTextKeypadOption(filteredProcessOptions.value, process => `${formatProcessOption(process)} ${process.process || ''} ${process.processName || ''}`)
     if (option) {
       form.value.processId = option.id
       onProcessSelectionChange(option.id)
     }
   } else if (target === 'downtimeCategory') {
-    const option = filteredDowntimeCategoryOptions(index)[0]
+    const option = firstMatchingTextKeypadOption(filteredDowntimeCategoryOptions(index), category => `${category.reasonCategoryCode} ${category.label}`)
     const item = form.value.downtimeItems[index]
     if (option && item) {
       item.reasonCategoryCode = option.reasonCategoryCode
       item.reason = ''
     }
   } else if (target === 'downtimeReason') {
-    const option = filteredDowntimeReasonOptions(index)[0]
+    const option = firstMatchingTextKeypadOption(filteredDowntimeReasonOptions(index), reason => `${reason.label} ${reason.value}`)
     const item = form.value.downtimeItems[index]
     if (option && item) item.reason = option.value
   }
+  activeTextSelectRef()?.blur?.()
 }
 
 function setTextKeypadValue(value) {
   textKeypad.value.buffer = String(value || '')
+  textKeypad.value.queryActive = true
   reopenActiveTextSelect()
 }
 
@@ -1077,7 +1109,7 @@ function clearTextKeypad() {
 
 function filterTextKeypadOptions(target, options, getSearchText, index = null) {
   const active = textKeypad.value.visible && textKeypad.value.target === target && (index === null || textKeypad.value.index === index)
-  const term = active ? normalizeTextKeypadSearch(textKeypad.value.buffer) : ''
+  const term = active && textKeypad.value.queryActive ? normalizeTextKeypadSearch(textKeypad.value.buffer) : ''
   if (!term) return options
   return options.filter(option => normalizeTextKeypadSearch(getSearchText(option)).includes(term))
 }
@@ -1089,6 +1121,12 @@ function filteredDowntimeCategoryOptions(index) {
 function filteredDowntimeReasonOptions(index) {
   const categoryCode = form.value.downtimeItems[index]?.reasonCategoryCode || ''
   return filterTextKeypadOptions('downtimeReason', filteredDowntimeReasons(categoryCode), reason => `${reason.label} ${reason.value}`, index)
+}
+
+function firstMatchingTextKeypadOption(options, getSearchText) {
+  const term = normalizeTextKeypadSearch(textKeypad.value.buffer)
+  if (!term) return options[0]
+  return options.find(option => normalizeTextKeypadSearch(getSearchText(option)) === term) || options[0]
 }
 
 function selectedProcessText() {
@@ -1125,6 +1163,44 @@ function onProductChange(partNumber) {
     form.value.processId = null
     processOptions.value = []
   }
+}
+
+function onLeaderSelectChange() {
+  closeTextKeypadAfterSelect('leader')
+}
+
+function onProductSelectChange(partNumber) {
+  onProductChange(partNumber)
+  closeTextKeypadAfterSelect('product')
+}
+
+function onProcessSelectChange(processId = null) {
+  onProcessSelectionChange(processId)
+  closeTextKeypadAfterSelect('process')
+}
+
+function onDowntimeCategorySelectChange(index) {
+  const item = form.value.downtimeItems[index]
+  if (item) item.reason = ''
+  closeTextKeypadAfterSelect('downtimeCategory', index)
+}
+
+function onDowntimeReasonSelectChange(index) {
+  closeTextKeypadAfterSelect('downtimeReason', index)
+}
+
+function closeTextKeypadAfterSelect(target, index = null) {
+  const select = selectRefForTextTarget(target, index)
+  const isActiveTarget = textKeypad.value.visible
+    && textKeypad.value.target === target
+    && (index === null || textKeypad.value.index === index)
+  if (!isActiveTarget) return
+  resetTextSelectQuery(select)
+  textKeypad.value.buffer = currentTextKeypadValue(target, index)
+  textKeypad.value.queryActive = false
+  closeTextKeypad()
+  closeGlobalVirtualKeyboard()
+  nextTick(() => select?.blur?.())
 }
 
 function formatProcessOption(process) {

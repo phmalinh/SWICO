@@ -37,7 +37,7 @@
       >
         123
       </button>
-      <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600" @click="close">
+      <button type="button" class="rounded border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600" @click="confirm">
         {{ t('productionEntry.keypad.ok') }}
       </button>
     </div>
@@ -159,11 +159,19 @@ function shouldStartNumberMode(input) {
     || input.closest('.el-input-number')
 }
 
-function close() {
+function confirm() {
   commitActiveSelectValue()
   customTarget.value?.onCommit?.(currentValue.value)
+  close()
+}
+
+function close() {
+  const input = activeInput.value
   visible.value = false
   customTarget.value?.onClose?.()
+  if (input && document.activeElement === input) {
+    nextTick(() => input.blur())
+  }
 }
 
 function commitActiveSelectValue() {
@@ -284,12 +292,18 @@ function handleCustomUpdate(event) {
   if (detail.mode) mode.value = detail.mode
 }
 
+function handleCustomClose() {
+  close()
+}
+
 function handleFocusIn(event) {
   openForInput(event.target)
 }
 
 function handlePointerDown(event) {
   if (event.target.closest('[data-global-keyboard]')) return
+  if (event.target.closest('[data-no-global-keyboard="true"]')) return
+  if (event.target.closest('.el-select-dropdown, .el-popper')) return
   if (shouldUseKeyboard(event.target)) return
   close()
 }
@@ -341,6 +355,7 @@ onMounted(() => {
   document.addEventListener('pointerdown', handlePointerDown)
   window.addEventListener('global-virtual-keyboard:open', handleCustomOpen)
   window.addEventListener('global-virtual-keyboard:update', handleCustomUpdate)
+  window.addEventListener('global-virtual-keyboard:close', handleCustomClose)
 })
 
 onUnmounted(() => {
@@ -349,6 +364,7 @@ onUnmounted(() => {
   document.removeEventListener('pointerdown', handlePointerDown)
   window.removeEventListener('global-virtual-keyboard:open', handleCustomOpen)
   window.removeEventListener('global-virtual-keyboard:update', handleCustomUpdate)
+  window.removeEventListener('global-virtual-keyboard:close', handleCustomClose)
   stopDrag()
 })
 </script>
