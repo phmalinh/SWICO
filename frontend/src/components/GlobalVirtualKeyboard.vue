@@ -24,6 +24,14 @@
       <button
         type="button"
         class="rounded border px-3 py-2 text-sm font-black"
+        :class="mode === 'lower' ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-300 text-slate-600'"
+        @click="switchMode('lower')"
+      >
+        abc
+      </button>
+      <button
+        type="button"
+        class="rounded border px-3 py-2 text-sm font-black"
         :class="mode === 'number' ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-300 text-slate-600'"
         @click="switchMode('number')"
       >
@@ -72,6 +80,7 @@ const textRows = [
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
   ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '-', '/', '.'],
 ]
+const lowerRows = textRows.map(row => row.map(key => key.length === 1 ? key.toLowerCase() : key))
 const numberRows = [
   ['1', '2', '3'],
   ['4', '5', '6'],
@@ -87,7 +96,11 @@ const position = ref(null)
 const activeDrag = ref(null)
 const currentValue = ref('')
 
-const currentRows = computed(() => (mode.value === 'number' ? numberRows : textRows))
+const currentRows = computed(() => {
+  if (mode.value === 'number') return numberRows
+  if (mode.value === 'lower') return lowerRows
+  return textRows
+})
 
 const displayValue = computed(() => {
   if (customTarget.value) {
