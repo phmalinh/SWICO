@@ -406,6 +406,13 @@ public class ProductionReportService {
                 String importedPartNumber = parseString(getCell(row, headerIndex.getOrDefault("partNumber", -1)));
                 String importedProcessText = parseString(getCell(row, headerIndex.getOrDefault("processIds", -1)));
                 String importedOperatorName = parseString(getCell(row, headerIndex.getOrDefault("operatorName", -1)));
+                List<ProductionReportLotDto> importedLotRows = resolveImportedLotRows(row, headerIndex);
+                Integer importedInputQuantity = firstNonNull(sumLotInputQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("inputQuantity", -1))));
+                Integer importedGoodQuantity = firstNonNull(sumLotGoodQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("goodQuantity", -1))));
+                Integer importedDefectQuantity = firstNonNull(sumLotDefectQuantity(importedLotRows), resolveImportedDefectQuantity(row, headerIndex));
+                Integer importedInternalDefectQuantity = firstNonNull(sumLotInternalDefectQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1))));
+                Integer importedExternalDefectQuantity = firstNonNull(sumLotExternalDefectQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1))));
+                String importedLotNo = joinImportedLotNos(importedLotRows, parseString(getCell(row, headerIndex.getOrDefault("lotNo", -1))));
 
                 ProductionCalculationRequest request = new ProductionCalculationRequest(
                     parseLocalDate(getCell(row, headerIndex.getOrDefault("reportDate", -1))),
@@ -418,13 +425,13 @@ public class ProductionReportService {
                     resolveImportedProcessIds(importedPartNumber, importedProcessText),
                     parseInteger(getCell(row, headerIndex.getOrDefault("totalOperatingMinutes", -1))),
                     resolveImportedDowntimeMinutes(row, headerIndex),
-                    parseInteger(getCell(row, headerIndex.getOrDefault("inputQuantity", -1))),
-                    parseInteger(getCell(row, headerIndex.getOrDefault("goodQuantity", -1))),
-                    resolveImportedDefectQuantity(row, headerIndex),
-                    parseInteger(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1))),
-                    parseInteger(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1))),
+                    importedInputQuantity,
+                    importedGoodQuantity,
+                    importedDefectQuantity,
+                    importedInternalDefectQuantity,
+                    importedExternalDefectQuantity,
                     parseString(getCell(row, headerIndex.getOrDefault("company", -1))),
-                    parseString(getCell(row, headerIndex.getOrDefault("lotNo", -1))),
+                    importedLotNo,
                     parseString(getCell(row, headerIndex.getOrDefault("responsibleLeader", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("responsibility", -1))),
@@ -438,7 +445,7 @@ public class ProductionReportService {
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("qualityRate", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("oee", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("evaluationLabel", -1))),
-                    null
+                    importedLotRows
                 );
 
                 ProductionReportResponse imported = createReport(request, resolveImportedCreatedBy(importedOperatorName, createdBy));
@@ -535,6 +542,12 @@ public class ProductionReportService {
                 indexMap.put("externalDefectQuantity", 17 + baseOffset);
                 metricOffset += 2;
             }
+        }
+
+        String lotNoHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+        if ("lotNo".equals(mapHeaderKey(lotNoHeader))) {
+            indexMap.put("lotNo", 15 + metricOffset);
+            metricOffset++;
         }
 
         String responsibilityHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
@@ -701,6 +714,143 @@ public class ProductionReportService {
             }
         }
         return true;
+    }
+
+    private List<ProductionReportLotDto> resolveImportedLotRows(Row row, Map<String, Integer> headerIndex) {
+        List<String> lotNos = parseTextLines(getCell(row, headerIndex.getOrDefault("lotNo", -1)));
+        List<Integer> inputQuantities = parseIntegerLines(getCell(row, headerIndex.getOrDefault("inputQuantity", -1)));
+        List<Integer> goodQuantities = parseIntegerLines(getCell(row, headerIndex.getOrDefault("goodQuantity", -1)));
+        List<Integer> defectQuantities = parseIntegerLines(getCell(row, headerIndex.getOrDefault("defectQuantity", -1)));
+        List<Integer> internalDefectQuantities = parseIntegerLines(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1)));
+        List<Integer> externalDefectQuantities = parseIntegerLines(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1)));
+
+        int count = maxSize(lotNos, inputQuantities, goodQuantities, defectQuantities, internalDefectQuantities, externalDefectQuantities);
+        if (count == 0 || (count == 1 && lotNos.isEmpty())) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<ProductionReportLotDto> lots = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            Integer inputQuantity = valueAt(inputQuantities, index);
+            Integer internalDefectQuantity = valueAt(internalDefectQuantities, index);
+            Integer externalDefectQuantity = valueAt(externalDefectQuantities, index);
+            Integer defectQuantity = valueAt(defectQuantities, index);
+            if (defectQuantity == null && (internalDefectQuantity != null || externalDefectQuantity != null)) {
+                defectQuantity = number(internalDefectQuantity) + number(externalDefectQuantity);
+            }
+            Integer goodQuantity = valueAt(goodQuantities, index);
+            if (goodQuantity == null && inputQuantity != null && defectQuantity != null) {
+                goodQuantity = Math.max(inputQuantity - defectQuantity, 0);
+            }
+
+            ProductionReportLotDto lot = new ProductionReportLotDto(
+                    null,
+                    valueAt(lotNos, index),
+                    inputQuantity,
+                    goodQuantity,
+                    defectQuantity,
+                    internalDefectQuantity,
+                    externalDefectQuantity
+            );
+            if (hasLotData(lot)) {
+                lots.add(lot);
+            }
+        }
+        return lots;
+    }
+
+    private List<String> parseTextLines(Cell cell) {
+        String text = parseString(cell);
+        if (text == null) {
+            return java.util.Collections.emptyList();
+        }
+        return java.util.Arrays.stream(text.split("[\\r\\n]+|\\s*[;；]\\s*"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty() && !"-".equals(value))
+                .toList();
+    }
+
+    private List<Integer> parseIntegerLines(Cell cell) {
+        String text = parseString(cell);
+        if (text == null) {
+            Integer singleValue = parseInteger(cell);
+            return singleValue == null ? java.util.Collections.emptyList() : List.of(singleValue);
+        }
+        List<Integer> values = java.util.Arrays.stream(text.split("[\\r\\n]+|\\s*[;；]\\s*"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty() && !"-".equals(value))
+                .map(this::parseIntegerText)
+                .filter(value -> value != null)
+                .toList();
+        if (!values.isEmpty()) {
+            return values;
+        }
+        Integer singleValue = parseInteger(cell);
+        return singleValue == null ? java.util.Collections.emptyList() : List.of(singleValue);
+    }
+
+    private Integer parseIntegerTotal(Cell cell) {
+        List<Integer> values = parseIntegerLines(cell);
+        return values.isEmpty() ? null : values.stream().mapToInt(Integer::intValue).sum();
+    }
+
+    @SafeVarargs
+    private final int maxSize(List<?>... lists) {
+        int max = 0;
+        for (List<?> list : lists) {
+            if (list != null && list.size() > max) {
+                max = list.size();
+            }
+        }
+        return max;
+    }
+
+    private <T> T valueAt(List<T> values, int index) {
+        return values != null && index >= 0 && index < values.size() ? values.get(index) : null;
+    }
+
+    private Integer sumLotInputQuantity(List<ProductionReportLotDto> lots) {
+        return sumLotQuantity(lots, ProductionReportLotDto::inputQuantity);
+    }
+
+    private Integer sumLotGoodQuantity(List<ProductionReportLotDto> lots) {
+        return sumLotQuantity(lots, ProductionReportLotDto::goodQuantity);
+    }
+
+    private Integer sumLotDefectQuantity(List<ProductionReportLotDto> lots) {
+        return sumLotQuantity(lots, lot -> lot.defectQuantity() != null
+                ? lot.defectQuantity()
+                : number(lot.internalDefectQuantity()) + number(lot.externalDefectQuantity()));
+    }
+
+    private Integer sumLotInternalDefectQuantity(List<ProductionReportLotDto> lots) {
+        return sumLotQuantity(lots, ProductionReportLotDto::internalDefectQuantity);
+    }
+
+    private Integer sumLotExternalDefectQuantity(List<ProductionReportLotDto> lots) {
+        return sumLotQuantity(lots, ProductionReportLotDto::externalDefectQuantity);
+    }
+
+    private Integer sumLotQuantity(List<ProductionReportLotDto> lots, java.util.function.Function<ProductionReportLotDto, Integer> mapper) {
+        if (lots == null || lots.isEmpty()) {
+            return null;
+        }
+        return lots.stream().map(mapper).filter(value -> value != null).mapToInt(Integer::intValue).sum();
+    }
+
+    private <T> T firstNonNull(T first, T second) {
+        return first != null ? first : second;
+    }
+
+    private String joinImportedLotNos(List<ProductionReportLotDto> lots, String fallback) {
+        if (lots == null || lots.isEmpty()) {
+            return fallback;
+        }
+        String joined = lots.stream()
+                .map(ProductionReportLotDto::lotNo)
+                .filter(value -> value != null && !value.isBlank())
+                .collect(java.util.stream.Collectors.joining("； "));
+        return joined.isBlank() ? fallback : joined;
     }
 
     private String parseString(Cell cell) {
