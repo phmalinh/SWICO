@@ -21,6 +21,7 @@ public record ProductionReportResponse(
         Integer internalDefectQuantity,
         Integer externalDefectQuantity,
         String company,
+        String lotNo,
         String operatorName,
         String responsibleLeader,
         String downtimeReason,
@@ -37,5 +38,6 @@ public record ProductionReportResponse(
         String evaluationLabel,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        String createdBy
+        String createdBy,
+        List<ProductionReportLotDto> lots
 ) {}

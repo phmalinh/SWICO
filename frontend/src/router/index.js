@@ -15,7 +15,7 @@ const routes = [
       { path: 'production/history', name: 'ProductionHistory', component: () => import('@/views/production/ProductionHistory.vue'), meta: { title: 'routes.productionHistory', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/oee-dashboard', name: 'OeeDashboard', component: () => import('@/views/reports/OeeDashboard.vue'), meta: { title: 'routes.oeeDashboard', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/search', name: 'ReportSearch', component: ExportV9View, meta: { title: 'routes.reportSearch', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
-      { path: 'reports/pivot-statistics', name: 'PivotStatistics', component: () => import('@/views/reports/PivotStatistics.vue'), meta: { title: 'routes.pivotStatistics', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
+      { path: 'reports/pivot-statistics', name: 'PivotStatistics', component: () => import('@/views/reports/PivotStatistics.vue'), meta: { title: 'routes.pivotStatistics', roles: ['ROLE_LEADER','ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'reports/export-v9', name: 'ExportV9', component: ExportV9View, meta: { title: 'routes.exportV9', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/product-processes', name: 'ProductProcessManagement', component: () => import('@/views/master/ProductProcessManagement.vue'), meta: { title: 'routes.productProcesses', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },
       { path: 'master/line-machines', name: 'LineMachineManagement', component: () => import('@/views/master/LineMachineManagement.vue'), meta: { title: 'routes.lineMachines', roles: ['ROLE_MANAGER','ROLE_ADMIN'] } },

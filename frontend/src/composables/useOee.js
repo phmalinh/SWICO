@@ -23,7 +23,12 @@ export function calculateOee({ operatingMinutes, downtimeMinutes, inputQty, good
 }
 
 export function formatPercent(value) {
-  return `${(value * 100).toFixed(1)}%`
+  return `${formatPercentNumber(value)}%`
+}
+
+export function formatPercentNumber(value) {
+  const percent = Number(value || 0) * 100
+  return Number(percent.toFixed(2)).toString()
 }
 
 export function getOeeColor(oee) {

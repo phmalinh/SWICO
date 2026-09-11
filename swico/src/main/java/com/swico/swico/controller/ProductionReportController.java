@@ -83,9 +83,12 @@ public class ProductionReportController {
     @GetMapping("/today")
     public List<ProductionReportResponse> today(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDate,
-            @RequestParam(required = false) String lineCode
+            @RequestParam(required = false) String lineCode,
+            @RequestParam(required = false) String machineCode,
+            @RequestParam(required = false) String partNumber,
+            @RequestParam(required = false) String operatorName
     ) {
-        return reportService.getTodayReports(reportDate, lineCode);
+        return reportService.getTodayReports(reportDate, lineCode, machineCode, partNumber, operatorName);
     }
 
     @GetMapping

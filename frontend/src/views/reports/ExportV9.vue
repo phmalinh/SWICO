@@ -96,13 +96,52 @@
         </el-table-column>
         <el-table-column prop="shiftStandardTimeMinutes" :label="t('reports.search.table.shiftStandardTimeMinutes')" width="80" align="center" />
         <el-table-column prop="dailyTargetQuantity" :label="t('reports.search.table.dailyTargetQuantity')" width="80" align="center" />
-        <el-table-column :label="t('reports.search.table.inputGoodDefect')" width="130" align="center">
-          <template #default="{ row }">{{ row.inputQuantity }}/{{ row.goodQuantity }}/{{ row.defectQuantity }}</template>
+        <el-table-column :label="t('reports.search.table.inputQuantity')" width="90" align="center">
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.inputQuantity }}</div>
+            </div>
+          </template>
         </el-table-column>
-        <el-table-column prop="internalDefectQuantity" :label="t('reports.search.table.internalDefectQuantity')" width="130" align="center" />
-        <el-table-column prop="externalDefectQuantity" :label="t('reports.search.table.externalDefectQuantity')" width="130" align="center" />
-        <el-table-column prop="productionEfficiency" :label="t('reports.search.table.productionEfficiency')" width="80" align="center" />
-        <el-table-column :label="t('reports.search.table.rates')" width="80" align="center">
+        <el-table-column :label="t('reports.search.table.goodQuantity')" width="90" align="center">
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.goodQuantity }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.defectQuantity')" width="90" align="center">
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.defectQuantity }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.internalDefectQuantity')" width="130" align="center">
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.internalDefectQuantity }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.externalDefectQuantity')" width="130" align="center">
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.externalDefectQuantity }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.lotNo')" width="110" align="center" show-overflow-tooltip>
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.lotNo }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.productionEfficiency')" width="90" align="center">
+          <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.rates')" width="170" align="center">
           <template #default="{ row }">
             <span class="text-xs font-bold">{{ rate(row.availabilityRate) }}/{{ rate(row.performanceRate) }}/{{ rate(row.qualityRate) }}</span>
           </template>
@@ -112,7 +151,7 @@
             <span class="font-black" :class="oeeTextClass(row.oee)">{{ formatPercent(row.oee) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="evaluationLabel" :label="t('reports.search.table.evaluationLabel')" min-width="120" />
+        <el-table-column prop="evaluationLabel" :label="t('reports.search.table.evaluationLabel')" min-width="180" />
       </el-table>
       <div class="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-500 md:flex-row md:items-center md:justify-between">
         <span>{{ t('reports.search.results', { count: reports.length }) }}</span>
@@ -343,7 +382,7 @@ async function importExcelFile(file) {
 }
 
 function formatPercent(value) {
-  return `${(Number(value || 0) * 100).toFixed(1)}%`
+  return `${formatPercentNumber(value)}%`
 }
 
 function formatNumber(value) {
@@ -351,7 +390,42 @@ function formatNumber(value) {
 }
 
 function rate(value) {
-  return `${(Number(value || 0) * 100).toFixed(0)}`
+  return formatPercentNumber(value)
+}
+
+function formatPercentNumber(value) {
+  const percent = Number(value || 0) * 100
+  return Number(percent.toFixed(2)).toString()
+}
+
+function lotDisplayRows(row) {
+  const lots = Array.isArray(row.lots) && row.lots.length
+    ? row.lots
+    : [{
+        lotNo: row.lotNo,
+        inputQuantity: row.inputQuantity,
+        goodQuantity: row.goodQuantity,
+        defectQuantity: row.defectQuantity,
+        internalDefectQuantity: row.internalDefectQuantity,
+        externalDefectQuantity: row.externalDefectQuantity,
+      }]
+
+  return lots.map(lot => {
+    const inputQuantity = Number(lot.inputQuantity || 0)
+    const internalDefectQuantity = Number(lot.internalDefectQuantity || 0)
+    const externalDefectQuantity = Number(lot.externalDefectQuantity || 0)
+    const defectQuantity = lot.defectQuantity ?? (internalDefectQuantity + externalDefectQuantity)
+    const goodQuantity = lot.goodQuantity ?? Math.max(inputQuantity - Number(defectQuantity || 0), 0)
+
+    return {
+      lotNo: lot.lotNo || '-',
+      inputQuantity,
+      goodQuantity,
+      defectQuantity,
+      internalDefectQuantity,
+      externalDefectQuantity,
+    }
+  })
 }
 
 function oeeTextClass(oee) {
@@ -427,3 +501,13 @@ watch([reports, pageSize], () => {
   if (currentPage.value > maxPage) currentPage.value = maxPage
 })
 </script>
+
+<style scoped>
+.export-lot-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+</style>

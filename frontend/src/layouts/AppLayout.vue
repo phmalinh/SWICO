@@ -280,7 +280,7 @@ const workshopNavItems = computed(() => {
   const allowed = roleMenus[userRole.value] || []
   return allMenuItems.value
     .flatMap(g => g.children)
-    .filter(c => allowed.includes(c.id) && c.path.startsWith('/production'))
+    .filter(c => allowed.includes(c.id) && (userRole.value !== 'ROLE_OPERATOR' || c.path.startsWith('/production')))
 })
 
 const roleBadgeClass = computed(() => {

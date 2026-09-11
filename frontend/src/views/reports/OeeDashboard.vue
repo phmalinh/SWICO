@@ -133,9 +133,9 @@ const summaryStats = computed(() => {
   const warningCount = dashboard.value?.warningCount ?? 0
 
   return [
-    { label: t('reports.dashboard.stats.avgOee'), value: `${(Number(avgOee) * 100).toFixed(1)}%`, sub: t('reports.dashboard.labels.wholeFactory'), icon: Gauge, iconColor: 'text-sky-500', valueColor: 'text-sky-600' },
+    { label: t('reports.dashboard.stats.avgOee'), value: `${(Number(avgOee) * 100).toFixed(2)}%`, sub: t('reports.dashboard.labels.wholeFactory'), icon: Gauge, iconColor: 'text-sky-500', valueColor: 'text-sky-600' },
     { label: t('reports.dashboard.stats.activeLines'), value: `${activeLines}/${activeLines}`, sub: t('reports.dashboard.labels.production'), icon: Activity, iconColor: 'text-emerald-500', valueColor: 'text-emerald-600' },
-    { label: t('reports.dashboard.stats.avgQuality'), value: `${(Number(avgQuality) * 100).toFixed(1)}%`, sub: t('reports.dashboard.labels.today'), icon: TrendingUp, iconColor: 'text-indigo-500', valueColor: 'text-indigo-600' },
+    { label: t('reports.dashboard.stats.avgQuality'), value: `${(Number(avgQuality) * 100).toFixed(2)}%`, sub: t('reports.dashboard.labels.today'), icon: TrendingUp, iconColor: 'text-indigo-500', valueColor: 'text-indigo-600' },
     { label: t('reports.dashboard.stats.warnings'), value: String(warningCount), sub: t('reports.dashboard.labels.belowTarget'), icon: AlertTriangle, iconColor: 'text-rose-500', valueColor: 'text-rose-600' },
   ]
 })
@@ -150,7 +150,7 @@ const lineChartOption = computed(() => ({
     type: 'bar',
     barWidth: 42,
     data: (dashboard.value?.lines ?? []).map(l => ({
-      value: (Number(l.oee || 0) * 100).toFixed(1),
+      value: (Number(l.oee || 0) * 100).toFixed(2),
       itemStyle: { color: l.oee >= 0.85 ? '#10b981' : l.oee >= 0.65 ? '#f59e0b' : '#f43f5e', borderRadius: [6, 6, 0, 0] },
     })),
     markLine: { data: [{ yAxis: 85, label: { formatter: `${t('reports.dashboard.labels.target')} 85%` }, lineStyle: { color: '#0284c7', type: 'dashed' } }] },
@@ -198,7 +198,7 @@ const loadLines = async () => {
 
 const lineDetails = computed(() =>
   (dashboard.value?.lines ?? []).map(r => {
-    const oeePct = (Number(r.oee || 0) * 100).toFixed(1)
+    const oeePct = (Number(r.oee || 0) * 100).toFixed(2)
     const isGood = r.oee >= 0.85
     const isWarn = r.oee >= 0.65
     return {
@@ -209,9 +209,9 @@ const lineDetails = computed(() =>
       tagType: isGood ? 'success' : isWarn ? 'warning' : 'danger',
       status: isGood ? t('reports.dashboard.sections.lineStatusStable') : isWarn ? t('reports.dashboard.sections.lineStatusWatch') : t('reports.dashboard.sections.lineStatusWarning'),
       metrics: [
-        { label: t('reports.dashboard.sections.availability'), value: (Number(r.availabilityRate || 0) * 100).toFixed(0), barColor: 'bg-sky-500' },
-        { label: t('reports.dashboard.sections.performance'), value: (Number(r.performanceRate || 0) * 100).toFixed(0), barColor: 'bg-indigo-500' },
-        { label: t('reports.dashboard.sections.quality'), value: (Number(r.qualityRate || 0) * 100).toFixed(0), barColor: r.qualityRate < 0.95 ? 'bg-rose-500' : 'bg-emerald-500' },
+        { label: t('reports.dashboard.sections.availability'), value: (Number(r.availabilityRate || 0) * 100).toFixed(2), barColor: 'bg-sky-500' },
+        { label: t('reports.dashboard.sections.performance'), value: (Number(r.performanceRate || 0) * 100).toFixed(2), barColor: 'bg-indigo-500' },
+        { label: t('reports.dashboard.sections.quality'), value: (Number(r.qualityRate || 0) * 100).toFixed(2), barColor: r.qualityRate < 0.95 ? 'bg-rose-500' : 'bg-emerald-500' },
       ],
     }
   })

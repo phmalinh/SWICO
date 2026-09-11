@@ -59,6 +59,9 @@ public class DailyProductionReport {
     @Column(name = "company", length = 100)
     private String company;
 
+    @Column(name = "lot_no", length = 100)
+    private String lotNo;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
@@ -278,6 +281,14 @@ public class DailyProductionReport {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public String getLotNo() {
+        return lotNo;
+    }
+
+    public void setLotNo(String lotNo) {
+        this.lotNo = lotNo;
     }
 
     public String getProcessIds() {

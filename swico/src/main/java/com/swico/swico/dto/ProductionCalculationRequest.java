@@ -25,6 +25,7 @@ public record ProductionCalculationRequest(
         @Min(0) Integer internalDefectQuantity,
         @Min(0) Integer externalDefectQuantity,
         String company,
+        String lotNo,
         String responsibleLeader,
         String downtimeReason,
         String responsibility,
@@ -37,5 +38,6 @@ public record ProductionCalculationRequest(
         BigDecimal performanceRate,
         BigDecimal qualityRate,
         BigDecimal oee,
-        String evaluationLabel
+        String evaluationLabel,
+        List<ProductionReportLotDto> lotRows
 ) {}

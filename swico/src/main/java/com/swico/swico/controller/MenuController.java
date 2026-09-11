@@ -34,7 +34,7 @@ public class MenuController {
             List<MenuItemDto> reportChildren = new ArrayList<>();
             reportChildren.add(new MenuItemDto("2.1", "Dashboard OEE Realtime", "dashboard", "/reports/oee-dashboard", null));
             reportChildren.add(new MenuItemDto("2.2", "Tra Cứu Báo Cáo / 查詢報表", "search", "/reports/search", null));
-            reportChildren.add(new MenuItemDto("2.3", "Xuất Excel V9 / 導出Excel", "file_download", "/reports/export-v9", null));
+            reportChildren.add(new MenuItemDto("2.3", "Thống Kê Pivot / 樞紐統計", "table_chart", "/reports/pivot-statistics", null));
 
             menu.add(new MenuItemDto("2", "Giám Sát & Báo Cáo / 監控與報表", "analytics", "/reports", reportChildren));
         }

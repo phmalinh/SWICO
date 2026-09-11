@@ -3,10 +3,12 @@ package com.swico.swico.service;
 import com.swico.swico.config.AppClock;
 import com.swico.swico.dto.*;
 import com.swico.swico.entity.DailyProductionReport;
+import com.swico.swico.entity.DailyProductionReportLot;
 import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Product;
 import com.swico.swico.entity.ProductProcess;
 import com.swico.swico.entity.Shift;
+import com.swico.swico.repository.DailyProductionReportLotRepository;
 import com.swico.swico.repository.DailyProductionReportRepository;
 import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.ProductRepository;
@@ -44,6 +46,7 @@ public class ProductionReportService {
     private static final Logger LOG = LoggerFactory.getLogger(ProductionReportService.class);
 
     private final DailyProductionReportRepository reportRepository;
+    private final DailyProductionReportLotRepository reportLotRepository;
     private final LineRepository lineRepository;
     private final ProductRepository productRepository;
     private final ProductProcessRepository productProcessRepository;
@@ -54,6 +57,7 @@ public class ProductionReportService {
 
     public ProductionReportService(
             DailyProductionReportRepository reportRepository,
+            DailyProductionReportLotRepository reportLotRepository,
             LineRepository lineRepository,
             ProductRepository productRepository,
             ProductProcessRepository productProcessRepository,
@@ -63,6 +67,7 @@ public class ProductionReportService {
             ProductionFormulaService formulaService
     ) {
         this.reportRepository = reportRepository;
+        this.reportLotRepository = reportLotRepository;
         this.lineRepository = lineRepository;
         this.productRepository = productRepository;
         this.productProcessRepository = productProcessRepository;
@@ -106,6 +111,7 @@ public class ProductionReportService {
         entity.setInternalDefectQuantity(effectiveRequest.internalDefectQuantity());
         entity.setExternalDefectQuantity(effectiveRequest.externalDefectQuantity());
         entity.setCompany(effectiveRequest.company());
+        entity.setLotNo(effectiveRequest.lotNo());
         entity.setResponsibleLeader(effectiveRequest.responsibleLeader());
         entity.setCreatedBy(createdBy);
         entity.setDowntimeReason(effectiveRequest.downtimeReason());
@@ -115,7 +121,72 @@ public class ProductionReportService {
         applyCalculatedFields(entity, effective);
 
         DailyProductionReport saved = reportRepository.save(entity);
+        replaceReportLots(saved, effectiveRequest.lotRows());
         return toResponse(saved, effective);
+    }
+
+    private void replaceReportLots(DailyProductionReport report, List<ProductionReportLotDto> lotRows) {
+        if (report.getId() == null) return;
+        reportLotRepository.deleteByReportId(report.getId());
+
+        List<ProductionReportLotDto> effectiveRows = lotRows == null || lotRows.isEmpty()
+                ? fallbackLotRows(report)
+                : lotRows;
+
+        effectiveRows.stream()
+                .filter(this::hasLotData)
+                .map(row -> toLotEntity(report, row))
+                .forEach(reportLotRepository::save);
+    }
+
+    private List<ProductionReportLotDto> fallbackLotRows(DailyProductionReport report) {
+        if (report.getLotNo() == null || report.getLotNo().isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return List.of(new ProductionReportLotDto(
+                null,
+                report.getLotNo(),
+                report.getInputQuantity(),
+                report.getGoodQuantity(),
+                report.getDefectQuantity(),
+                report.getInternalDefectQuantity(),
+                report.getExternalDefectQuantity()
+        ));
+    }
+
+    private boolean hasLotData(ProductionReportLotDto row) {
+        return row != null && (
+                (row.lotNo() != null && !row.lotNo().isBlank())
+                        || number(row.inputQuantity()) > 0
+                        || number(row.internalDefectQuantity()) > 0
+                        || number(row.externalDefectQuantity()) > 0
+        );
+    }
+
+    private DailyProductionReportLot toLotEntity(DailyProductionReport report, ProductionReportLotDto row) {
+        int inputQuantity = number(row.inputQuantity());
+        int internalDefectQuantity = number(row.internalDefectQuantity());
+        int externalDefectQuantity = number(row.externalDefectQuantity());
+        int defectQuantity = row.defectQuantity() != null
+                ? number(row.defectQuantity())
+                : internalDefectQuantity + externalDefectQuantity;
+        int goodQuantity = row.goodQuantity() != null
+                ? number(row.goodQuantity())
+                : Math.max(inputQuantity - defectQuantity, 0);
+
+        DailyProductionReportLot entity = new DailyProductionReportLot();
+        entity.setReport(report);
+        entity.setLotNo(row.lotNo());
+        entity.setInputQuantity(inputQuantity);
+        entity.setGoodQuantity(goodQuantity);
+        entity.setDefectQuantity(defectQuantity);
+        entity.setInternalDefectQuantity(internalDefectQuantity);
+        entity.setExternalDefectQuantity(externalDefectQuantity);
+        return entity;
+    }
+
+    private int number(Integer value) {
+        return value != null ? Math.max(value, 0) : 0;
     }
 
     private String joinProcessIds(java.util.List<Long> processIds) {
@@ -161,6 +232,7 @@ public class ProductionReportService {
                 request.internalDefectQuantity(),
                 request.externalDefectQuantity(),
                 request.company(),
+                request.lotNo(),
                 request.responsibleLeader(),
                 request.downtimeReason(),
                 request.responsibility(),
@@ -172,7 +244,8 @@ public class ProductionReportService {
                 request.performanceRate(),
                 request.qualityRate(),
                 request.oee(),
-                request.evaluationLabel()
+                request.evaluationLabel(),
+                request.lotRows()
         );
     }
 
@@ -273,6 +346,7 @@ public class ProductionReportService {
         entity.setInternalDefectQuantity(effectiveRequest.internalDefectQuantity());
         entity.setExternalDefectQuantity(effectiveRequest.externalDefectQuantity());
         entity.setCompany(effectiveRequest.company());
+        entity.setLotNo(effectiveRequest.lotNo());
         entity.setResponsibleLeader(effectiveRequest.responsibleLeader());
         entity.setDowntimeReason(effectiveRequest.downtimeReason());
 
@@ -281,6 +355,7 @@ public class ProductionReportService {
         applyCalculatedFields(entity, effective);
 
         DailyProductionReport saved = reportRepository.save(entity);
+        replaceReportLots(saved, effectiveRequest.lotRows());
         return toResponse(saved, effective);
     }
 
@@ -349,6 +424,7 @@ public class ProductionReportService {
                     parseInteger(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1))),
                     parseInteger(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("company", -1))),
+                    parseString(getCell(row, headerIndex.getOrDefault("lotNo", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("responsibleLeader", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("responsibility", -1))),
@@ -361,7 +437,8 @@ public class ProductionReportService {
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("performanceRate", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("qualityRate", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("oee", -1))),
-                    parseString(getCell(row, headerIndex.getOrDefault("evaluationLabel", -1)))
+                    parseString(getCell(row, headerIndex.getOrDefault("evaluationLabel", -1))),
+                    null
                 );
 
                 ProductionReportResponse imported = createReport(request, resolveImportedCreatedBy(importedOperatorName, createdBy));
@@ -529,6 +606,9 @@ public class ProductionReportService {
         }
         if (header.contains("công ty") || header.contains("khach hang") || header.contains("客戶") || header.contains("客户") || header.contains("公司") || header.equals("company") || header.equals("customer")) {
             return "company";
+        }
+        if (header.contains("lot") || header.contains("lotno") || header.contains("lot no") || header.contains("lot number") || header.contains("lô") || header.contains("lo hang")) {
+            return "lotNo";
         }
         if (header.contains("作員") || header.contains("作業員") || header.contains("nhan vien thao tac") || header.contains("operator")) {
             return "operatorName";
@@ -843,12 +923,20 @@ public class ProductionReportService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductionReportResponse> getTodayReports(LocalDate reportDate, String lineCode) {
+    public List<ProductionReportResponse> getTodayReports(LocalDate reportDate, String lineCode, String machineCode, String partNumber, String operatorName) {
         LocalDate date = reportDate != null ? reportDate : AppClock.today();
         List<DailyProductionReport> reports = (lineCode == null || lineCode.isBlank())
                 ? reportRepository.findByReportDateOrderByCreatedAtDesc(date)
                 : reportRepository.findByReportDateAndLine_LineCodeOrderByCreatedAtDesc(date, lineCode);
-        return reports.stream().map(r -> toResponse(r, null)).toList();
+        String machineTerm = machineCode != null ? machineCode.trim().toLowerCase(Locale.ROOT) : "";
+        String partTerm = partNumber != null ? partNumber.trim().toLowerCase(Locale.ROOT) : "";
+        String operatorTerm = operatorName != null ? operatorName.trim().toLowerCase(Locale.ROOT) : "";
+        return reports.stream()
+                .filter(r -> machineTerm.isBlank() || (r.getMachineCode() != null && r.getMachineCode().toLowerCase(Locale.ROOT).contains(machineTerm)))
+                .filter(r -> partTerm.isBlank() || (r.getProduct() != null && r.getProduct().getPartNumber() != null && r.getProduct().getPartNumber().toLowerCase(Locale.ROOT).contains(partTerm)))
+                .filter(r -> operatorTerm.isBlank() || operatorMatches(r.getCreatedBy(), operatorTerm))
+                .map(r -> toResponse(r, null))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -973,6 +1061,7 @@ public class ProductionReportService {
                 report.getInternalDefectQuantity(),
                 report.getExternalDefectQuantity(),
                 calculated != null ? calculated.company() : report.getCompany(),
+                report.getLotNo(),
                 operatorDisplayName(report.getCreatedBy()),
                 report.getResponsibleLeader(),
                 calculated != null ? calculated.downtimeReason() : report.getDowntimeReason(),
@@ -989,7 +1078,30 @@ public class ProductionReportService {
                 calculated != null ? calculated.evaluationLabel() : report.getEvaluationLabel(),
                 report.getCreatedAt(),
                 report.getUpdatedAt(),
-                report.getCreatedBy()
+                report.getCreatedBy(),
+                reportLots(report)
+        );
+    }
+
+    private List<ProductionReportLotDto> reportLots(DailyProductionReport report) {
+        if (report.getId() == null) {
+            return java.util.Collections.emptyList();
+        }
+        List<ProductionReportLotDto> lots = reportLotRepository.findByReportIdOrderByIdAsc(report.getId()).stream()
+                .map(this::toLotDto)
+                .toList();
+        return lots.isEmpty() ? fallbackLotRows(report) : lots;
+    }
+
+    private ProductionReportLotDto toLotDto(DailyProductionReportLot lot) {
+        return new ProductionReportLotDto(
+                lot.getId(),
+                lot.getLotNo(),
+                lot.getInputQuantity(),
+                lot.getGoodQuantity(),
+                lot.getDefectQuantity(),
+                lot.getInternalDefectQuantity(),
+                lot.getExternalDefectQuantity()
         );
     }
 

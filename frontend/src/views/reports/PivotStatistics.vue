@@ -317,7 +317,8 @@ function formatNumber(value) {
 }
 
 function formatPercent(value) {
-  return `${(Number(value || 0) * 100).toFixed(2)}%`
+  const percent = Number(value || 0) * 100
+  return `${Number(percent.toFixed(2))}%`
 }
 
 function resetFilters() {

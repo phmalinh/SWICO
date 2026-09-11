@@ -65,7 +65,7 @@
             <span class="font-black" :class="oeeTextClass(row.oee)">{{ formatPercent(row.oee) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="productionEfficiency" :label="t('reports.search.table.productionEfficiency')" width="90" align="center">
+        <el-table-column :label="t('reports.search.table.productionEfficiency')" width="90" align="center">
           <template #default="{ row }">
             {{ rate(row.productionEfficiency) }}
           </template>
@@ -170,11 +170,16 @@ function formatProcessIds(processIds) {
 }
 
 function formatPercent(value) {
-  return `${(Number(value || 0) * 100).toFixed(1)}%`
+  return `${formatPercentNumber(value)}%`
 }
 
 function rate(value) {
-  return `${(Number(value || 0) * 100).toFixed(0)}`
+  return formatPercentNumber(value)
+}
+
+function formatPercentNumber(value) {
+  const percent = Number(value || 0) * 100
+  return Number(percent.toFixed(2)).toString()
 }
 
 function oeeTextClass(oee) {

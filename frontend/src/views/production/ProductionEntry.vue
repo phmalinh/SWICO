@@ -20,7 +20,7 @@
             </el-form-item>
             <el-form-item :label="t('productionEntry.line')" class="!mb-0">
               <el-select v-model="form.lineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectLine')" @change="onLineChange">
-                <el-option v-for="l in lines" :key="l.lineCode" :label="`${l.lineCode} - ${l.description}`" :value="l.lineCode" />
+                <el-option v-for="l in lines" :key="l.lineCode" :label="`${l.lineCode}`" :value="l.lineCode" />
               </el-select>
             </el-form-item>
             <el-form-item :label="t('productionEntry.machine')" class="!mb-0">
@@ -144,8 +144,8 @@
 
             </div>
           </div>    
-          <div class="mt-2.5 grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            <el-form-item :label="t('productionEntry.inputQuantity')" class="!mb-0">
+          <div class="production-lot-grid mt-2.5 grid gap-2.5">
+            <el-form-item :label="t('productionEntry.inputQuantity')" class="production-quantity-field !mb-0">
               <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                 <el-button
                   size="default"
@@ -176,11 +176,11 @@
               </div>
             </el-form-item>
 
-            <el-form-item :label="t('productionEntry.goodQuantity')" class="!mb-0">
-              <el-input :model-value="formatNumber(calculatedGoodQuantity, 0)" size="default" readonly class="font-bold text-emerald-700" />
+            <el-form-item :label="t('productionEntry.goodQuantity')" class="production-quantity-field !mb-0">
+              <el-input :model-value="formatNumber(baseGoodQuantity, 0)" size="default" readonly class="font-bold text-emerald-700" />
             </el-form-item>
 
-            <el-form-item :label="t('productionEntry.internalDefectQuantity')" class="!mb-0">
+            <el-form-item :label="t('productionEntry.internalDefectQuantity')" class="production-quantity-field !mb-0">
               <div class=" el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                 <el-button
                   size="default"
@@ -211,7 +211,7 @@
               </div>
             </el-form-item>
 
-            <el-form-item :label="t('productionEntry.externalDefectQuantity')" class="!mb-0">
+            <el-form-item :label="t('productionEntry.externalDefectQuantity')" class="production-quantity-field !mb-0">
               <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                 <el-button
                   size="default"
@@ -238,6 +238,86 @@
                   @click="incrementQuantity('externalDefectQuantity')"
                 >
                   <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
+            </el-form-item>
+
+            <el-form-item :label="t('productionEntry.lotNo')" class="production-lotno-field !mb-0">
+              <div class="flex w-full gap-1.5">
+                <el-input v-model="form.lotNo" size="default" class="min-w-0 flex-1" :placeholder="t('productionEntry.enterLotNo')" />
+                <el-button type="primary" size="default" class="action-icon-button" @click="addLotRow()">
+                  <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
+            </el-form-item>
+          </div>
+
+          <div v-for="(item, index) in form.lotRows" :key="index" class="production-lot-grid mt-2.5 grid gap-2.5">
+            <el-form-item class="production-quantity-field !mb-0">
+              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                  @click="decrementLotQuantity(item, 'inputQuantity')"
+                >
+                  <Minus class="h-4 w-4" />
+                </el-button>
+                <el-input-number v-model="item.inputQuantity" :min="0" :max="999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                  @click="incrementLotQuantity(item, 'inputQuantity')"
+                >
+                  <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
+            </el-form-item>
+            <el-form-item class="production-quantity-field !mb-0">
+              <el-input :model-value="formatNumber(lotRowGoodQuantity(item), 0)" size="default" readonly class="font-bold text-emerald-700" />
+            </el-form-item>
+            <el-form-item class="production-quantity-field !mb-0">
+              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                  @click="decrementLotQuantity(item, 'internalDefectQuantity')"
+                >
+                  <Minus class="h-4 w-4" />
+                </el-button>
+                <el-input-number v-model="item.internalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                  @click="incrementLotQuantity(item, 'internalDefectQuantity')"
+                >
+                  <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
+            </el-form-item>
+            <el-form-item class="production-quantity-field !mb-0">
+              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                  @click="decrementLotQuantity(item, 'externalDefectQuantity')"
+                >
+                  <Minus class="h-4 w-4" />
+                </el-button>
+                <el-input-number v-model="item.externalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                <el-button
+                  size="default"
+                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                  @click="incrementLotQuantity(item, 'externalDefectQuantity')"
+                >
+                  <Plus class="h-4 w-4" />
+                </el-button>
+              </div>
+            </el-form-item>
+            <el-form-item class="production-lotno-field !mb-0">
+              <div class="flex w-full gap-1.5">
+                <el-input v-model="item.lotNo" size="default" class="min-w-0 flex-1" :placeholder="t('productionEntry.enterLotNo')" />
+                <el-button type="danger" plain size="default" class="action-icon-button" @click="removeLotRow(index)">
+                  <Trash2 class="h-4 w-4" />
                 </el-button>
               </div>
             </el-form-item>
@@ -311,19 +391,20 @@
                     </el-button>
                   </div>
                   <el-button
+                    v-if="index === 0"
                     type="primary"
                     size="default"
-                    class="!h-[2.125rem] !w-[2.125rem] !p-0"
+                    class="action-icon-button"
                     @click="addDowntimeItem(index)"
                   >
                     <Plus class="h-4 w-4" />
                   </el-button>
                   <el-button
-                    v-if="form.downtimeItems.length > 1"
+                    v-if="index > 0"
                     type="danger"
                     plain
                     size="default"
-                    class="!h-[2.125rem] !w-[2.125rem] !p-0"
+                    class="action-icon-button"
                     @click="removeDowntimeItem(index)"
                   >
                     <Trash2 class="h-4 w-4" />
@@ -367,14 +448,14 @@
               size="small"
               v-loading="myReportsLoading"
             >
-              <el-table-column type="selection" width="48" />
+              <el-table-column type="selection" width="20" />
               <el-table-column prop="reportDate" :label="t('productionEntry.table.reportDate')" width="90" align="center" />
               <el-table-column prop="lineCode" :label="t('productionEntry.table.lineCode')" width="100" align="center" />
               <el-table-column prop="shiftName" :label="t('productionEntry.table.shiftName')" width="90" align="center" />
               <el-table-column prop="machineCode" :label="t('productionEntry.table.machineCode')" width="70" align="center" />
               <el-table-column prop="partNumber" :label="t('productionEntry.table.partNumber')" width="80" />
-              <el-table-column prop="partName" :label="t('productionEntry.table.partName')" min-width="80" show-overflow-tooltip />
-              <el-table-column :label="t('productionEntry.table.processIds')" min-width="120" show-overflow-tooltip>
+              <el-table-column prop="partName" :label="t('productionEntry.table.partName')" min-width="120" show-overflow-tooltip />
+              <el-table-column :label="t('productionEntry.table.processIds')" min-width="80" show-overflow-tooltip>
                 <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
               </el-table-column>
               <el-table-column prop="company" :label="t('productionEntry.table.company')" min-width="80" show-overflow-tooltip />
@@ -393,28 +474,68 @@
               </el-table-column>
               <el-table-column prop="totalOperatingMinutes" :label="t('productionEntry.table.totalOperatingMinutes')" width="70" align="center" />
               <el-table-column prop="downtimeMinutes" :label="t('productionEntry.table.downtimeMinutes')" width="70" align="center" />
-              <el-table-column prop="inputQuantity" :label="t('productionEntry.table.inputQuantity')" width="70" align="center" />
-              <el-table-column prop="goodQuantity" :label="t('productionEntry.table.goodQuantity')" width="70" align="center" />
-              <el-table-column prop="internalDefectQuantity" :label="t('productionEntry.table.internalDefectQuantity')" width="80" align="center" />
-              <el-table-column prop="externalDefectQuantity" :label="t('productionEntry.table.externalDefectQuantity')" width="80" align="center" />
-              <el-table-column prop="defectQuantity" :label="t('productionEntry.table.defectQuantity')" width="70" align="center" />
+              <el-table-column :label="t('productionEntry.table.inputGoodDefect')" width="100" align="center">
+                <template #default="{ row }">
+                  <div class="report-lot-multiline-cell">
+                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.inputGoodDefect }}</div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.internalDefectQuantity')" width="100" align="center">
+                <template #default="{ row }">
+                  <div class="report-lot-multiline-cell">
+                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.internalDefectQuantity }}</div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.externalDefectQuantity')" width="100" align="center">
+                <template #default="{ row }">
+                  <div class="report-lot-multiline-cell">
+                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.externalDefectQuantity }}</div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.lotNo')" width="70" align="center">
+                <template #default="{ row }">
+                  <div class="report-lot-multiline-cell">
+                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.lotNo }}</div>
+                  </div>
+                </template>
+              </el-table-column>
               <el-table-column prop="shiftStandardTimeMinutes" :label="t('productionEntry.table.shiftStandardTimeMinutes')" width="70" align="center" />
               <el-table-column prop="dailyTargetQuantity" :label="t('productionEntry.table.dailyTargetQuantity')" width="70" align="center" />
-              <el-table-column prop="productionEfficiency" :label="t('productionEntry.table.productionEfficiency')" width="70" align="center" />
-              <el-table-column prop="availabilityRate" :label="t('productionEntry.table.availabilityRate')" width="70" align="center" />
-              <el-table-column prop="performanceRate" :label="t('productionEntry.table.performanceRate')" width="70" align="center" />
-              <el-table-column prop="qualityRate" :label="t('productionEntry.table.qualityRate')" width="70" align="center" />
-              <el-table-column prop="oee" :label="t('productionEntry.table.oee')" width="90" align="center" />
+              <el-table-column :label="t('productionEntry.table.productionEfficiency')" width="86" align="center">
+                <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.availabilityRate')" width="86" align="center">
+                <template #default="{ row }">{{ formatPercent(row.availabilityRate) }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.performanceRate')" width="86" align="center">
+                <template #default="{ row }">{{ formatPercent(row.performanceRate) }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.qualityRate')" width="86" align="center">
+                <template #default="{ row }">{{ formatPercent(row.qualityRate) }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.oee')" width="90" align="center">
+                <template #default="{ row }">{{ formatPercent(row.oee) }}</template>
+              </el-table-column>
               <el-table-column prop="evaluationLabel" :label="t('productionEntry.table.evaluationLabel')" width="70" align="center" />
             </el-table>
-            <div class="flex justify-end px-4 py-3 border-t border-slate-200 bg-slate-50">
-              <el-pagination
-                v-model:current-page="currentPage"
-                :page-size="pageSize"
-                :total="myReports.length"
-                layout="prev, pager, next"
-                background
-              />
+            <div class="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+              <span class="text-sm font-semibold text-slate-500">{{ t('productionEntry.total') }}: {{ myReports.length }}</span>
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-slate-500">{{ t('productionEntry.rowsPerPage') }}</span>
+                <el-select v-model="pageSize" size="small" style="width: 96px">
+                  <el-option v-for="size in pageSizeOptions" :key="size" :label="String(size)" :value="size" />
+                </el-select>
+                <el-pagination
+                  v-model:current-page="currentPage"
+                  :page-size="pageSize"
+                  :total="myReports.length"
+                  layout="prev, pager, next"
+                  background
+                />
+              </div>
             </div>
           </div>
         </el-form>
@@ -482,6 +603,7 @@ const selectedReports = ref([])
 const editedReportId = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
+const pageSizeOptions = [10, 20, 50, 100]
 const leaderSelectRef = ref(null)
 const productSelectRef = ref(null)
 const processSelectRef = ref(null)
@@ -557,6 +679,7 @@ const form = ref({
   shiftName: '',
   partNumber: '',
   partName: '',
+  lotNo: '',
   cycleTime: '',
   processId: null,
   downtimeMinutes: 0,
@@ -570,6 +693,7 @@ const form = ref({
   downtimeReason: '',
   downtimeReasons: [''],
   downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: 0 }],
+  lotRows: [],
 })
 
 const defaultDowntimeReasons = [
@@ -611,6 +735,57 @@ function normalizeDowntimeReasons(value) {
     .map(item => item.trim())
     .filter(Boolean)
   return reasons.length ? reasons : ['']
+}
+
+function splitLotNos(value) {
+  return String(value || '')
+    .split(/\s*[;；]\s*/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function distributeQuantity(total, count, index) {
+  const safeTotal = Number(total || 0)
+  if (count <= 1) return safeTotal
+  const base = Math.floor(safeTotal / count)
+  const remainder = safeTotal % count
+  return base + (index < remainder ? 1 : 0)
+}
+
+function lotDisplayRows(row) {
+  if (Array.isArray(row.lots) && row.lots.length) {
+    return row.lots.map(lot => {
+      const inputQuantity = Number(lot.inputQuantity || 0)
+      const internalDefectQuantity = Number(lot.internalDefectQuantity || 0)
+      const externalDefectQuantity = Number(lot.externalDefectQuantity || 0)
+      const defectQuantity = lot.defectQuantity ?? (internalDefectQuantity + externalDefectQuantity)
+      const goodQuantity = lot.goodQuantity ?? Math.max(inputQuantity - Number(defectQuantity || 0), 0)
+
+      return {
+        lotNo: lot.lotNo || '-',
+        inputGoodDefect: `${inputQuantity} / ${goodQuantity} / ${defectQuantity}`,
+        internalDefectQuantity,
+        externalDefectQuantity,
+      }
+    })
+  }
+
+  const lotNos = splitLotNos(row.lotNo)
+  const count = Math.max(lotNos.length, 1)
+  return Array.from({ length: count }, (_, index) => {
+    const inputQuantity = distributeQuantity(row.inputQuantity, count, index)
+    const internalDefectQuantity = distributeQuantity(row.internalDefectQuantity, count, index)
+    const externalDefectQuantity = distributeQuantity(row.externalDefectQuantity, count, index)
+    const defectQuantity = internalDefectQuantity + externalDefectQuantity
+    const goodQuantity = Math.max(inputQuantity - defectQuantity, 0)
+
+    return {
+      lotNo: lotNos[index] || '-',
+      inputGoodDefect: `${inputQuantity} / ${goodQuantity} / ${defectQuantity}`,
+      internalDefectQuantity,
+      externalDefectQuantity,
+    }
+  })
 }
 
 function normalizeDowntimeItems(reasonValue, minutesValue = null) {
@@ -660,6 +835,33 @@ function decrementQuantity(field) {
 
 function incrementQuantity(field) {
   form.value[field] = Math.min(Number(form.value[field] || 0) + 1, maxQuantityForField(field))
+}
+
+function maxLotQuantityForField(item, field) {
+  if (field === 'inputQuantity') return 999999
+  return Number(item?.inputQuantity || 999999)
+}
+
+function decrementLotQuantity(item, field) {
+  if (!item) return
+  item[field] = Math.max(Number(item[field] || 0) - 1, 0)
+}
+
+function incrementLotQuantity(item, field) {
+  if (!item) return
+  item[field] = Math.min(Number(item[field] || 0) + 1, maxLotQuantityForField(item, field))
+}
+
+function createLotRow() {
+  return { inputQuantity: 0, internalDefectQuantity: 0, externalDefectQuantity: 0, lotNo: '' }
+}
+
+function addLotRow(index = form.value.lotRows.length - 1) {
+  form.value.lotRows.splice(index + 1, 0, createLotRow())
+}
+
+function removeLotRow(index) {
+  form.value.lotRows.splice(index, 1)
 }
 
 function openQuantityKeypad(field) {
@@ -806,6 +1008,44 @@ function formatDowntimeReasonsForSave() {
     .join('； ')
 }
 
+function formatLotNosForSave() {
+  return [
+    form.value.lotNo,
+    ...form.value.lotRows.map(item => item.lotNo),
+  ]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+    .join('； ')
+}
+
+function lotRowsForSave() {
+  return [
+    {
+      lotNo: form.value.lotNo,
+      inputQuantity: Number(form.value.inputQuantity || 0),
+      goodQuantity: Number(baseGoodQuantity.value || 0),
+      defectQuantity: Number(form.value.internalDefectQuantity || 0) + Number(form.value.externalDefectQuantity || 0),
+      internalDefectQuantity: Number(form.value.internalDefectQuantity || 0),
+      externalDefectQuantity: Number(form.value.externalDefectQuantity || 0),
+    },
+    ...form.value.lotRows.map(item => {
+      const internalDefectQuantity = Number(item.internalDefectQuantity || 0)
+      const externalDefectQuantity = Number(item.externalDefectQuantity || 0)
+      return {
+        lotNo: item.lotNo,
+        inputQuantity: Number(item.inputQuantity || 0),
+        goodQuantity: Number(lotRowGoodQuantity(item) || 0),
+        defectQuantity: internalDefectQuantity + externalDefectQuantity,
+        internalDefectQuantity,
+        externalDefectQuantity,
+      }
+    }),
+  ].filter(row => {
+    const lotNo = String(row.lotNo || '').trim()
+    return lotNo || row.inputQuantity > 0 || row.internalDefectQuantity > 0 || row.externalDefectQuantity > 0
+  })
+}
+
 const totalDowntimeMinutes = computed(() => form.value.downtimeItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0))
 
 function resolveDowntimeCategoryCode(reasonValue) {
@@ -831,18 +1071,33 @@ const actualOperatingMinutes = computed(() => {
   return Math.max(shiftMinutes - downtime, 0)
 })
 
-const calculatedGoodQuantity = computed(() => {
+const lotRowsInputQuantity = computed(() => form.value.lotRows.reduce((sum, item) => sum + Number(item.inputQuantity || 0), 0))
+const lotRowsInternalDefectQuantity = computed(() => form.value.lotRows.reduce((sum, item) => sum + Number(item.internalDefectQuantity || 0), 0))
+const lotRowsExternalDefectQuantity = computed(() => form.value.lotRows.reduce((sum, item) => sum + Number(item.externalDefectQuantity || 0), 0))
+const totalInputQuantity = computed(() => Number(form.value.inputQuantity || 0) + lotRowsInputQuantity.value)
+const totalInternalDefectQuantity = computed(() => Number(form.value.internalDefectQuantity || 0) + lotRowsInternalDefectQuantity.value)
+const totalExternalDefectQuantity = computed(() => Number(form.value.externalDefectQuantity || 0) + lotRowsExternalDefectQuantity.value)
+
+function lotRowGoodQuantity(item) {
+  const input = Number(item?.inputQuantity || 0)
+  const defect = Number(item?.internalDefectQuantity || 0) + Number(item?.externalDefectQuantity || 0)
+  return Math.max(input - defect, 0)
+}
+
+const baseGoodQuantity = computed(() => {
   const input = Number(form.value.inputQuantity || 0)
-  const defect = Number(totalDefectQuantity.value || 0)
+  const defect = Number(form.value.internalDefectQuantity || 0) + Number(form.value.externalDefectQuantity || 0)
   return Math.max(input - defect, 0)
 })
 
-const totalDefectQuantity = computed(() => Number(form.value.internalDefectQuantity || 0) + Number(form.value.externalDefectQuantity || 0))
+const calculatedGoodQuantity = computed(() => Math.max(totalInputQuantity.value - totalDefectQuantity.value, 0))
+
+const totalDefectQuantity = computed(() => totalInternalDefectQuantity.value + totalExternalDefectQuantity.value)
 
 const responsibilityPreview = computed(() => {
-  const input = Number(form.value.inputQuantity || 0)
+  const input = Number(totalInputQuantity.value || 0)
   if (input <= 0) return 0
-  return Number(form.value.internalDefectQuantity || 0) / input
+  return Number(totalInternalDefectQuantity.value || 0) / input
 })
 
 const deductionPercentPreview = computed(() => Math.max(Number(responsibilityPreview.value || 0) - 0.0027, 0))
@@ -886,25 +1141,34 @@ function handleRowClick(report) {
 }
 
 function populateFormForEdit(report) {
+  const lots = Array.isArray(report.lots) ? report.lots : []
+  const firstLot = lots[0] || null
   form.value.reportDate = report.reportDate || localTodayString()
   form.value.lineCode = report.lineCode || ''
   form.value.machineCode = report.machineCode || ''
   form.value.shiftName = report.shiftName || ''
   form.value.partNumber = report.partNumber || ''
   form.value.partName = report.partName || ''
+  form.value.lotNo = firstLot?.lotNo || report.lotNo || ''
   form.value.cycleTime = report.cycleTimeSeconds || ''
   form.value.processId = Array.isArray(report.processIds) ? (report.processIds[0] || null) : null
   form.value.downtimeMinutes = report.downtimeMinutes ?? 0
-  form.value.inputQuantity = report.inputQuantity ?? 0
-  form.value.goodQuantity = report.goodQuantity ?? 0
-  form.value.defectQuantity = report.defectQuantity ?? Math.max(Number(report.inputQuantity || 0) - Number(report.goodQuantity || 0), 0)
-  form.value.internalDefectQuantity = report.internalDefectQuantity ?? form.value.defectQuantity
-  form.value.externalDefectQuantity = report.externalDefectQuantity ?? 0
+  form.value.inputQuantity = firstLot?.inputQuantity ?? report.inputQuantity ?? 0
+  form.value.goodQuantity = firstLot?.goodQuantity ?? report.goodQuantity ?? 0
+  form.value.defectQuantity = firstLot?.defectQuantity ?? report.defectQuantity ?? Math.max(Number(report.inputQuantity || 0) - Number(report.goodQuantity || 0), 0)
+  form.value.internalDefectQuantity = firstLot?.internalDefectQuantity ?? report.internalDefectQuantity ?? form.value.defectQuantity
+  form.value.externalDefectQuantity = firstLot?.externalDefectQuantity ?? report.externalDefectQuantity ?? 0
   form.value.company = report.company || ''
   form.value.responsibleLeader = report.responsibleLeader || ''
   form.value.downtimeReason = report.downtimeReason || ''
   form.value.downtimeReasons = normalizeDowntimeReasons(report.downtimeReason)
   form.value.downtimeItems = normalizeDowntimeItems(report.downtimeReason, report.downtimeMinutes)
+  form.value.lotRows = lots.slice(1).map(item => ({
+    inputQuantity: item.inputQuantity ?? 0,
+    internalDefectQuantity: item.internalDefectQuantity ?? 0,
+    externalDefectQuantity: item.externalDefectQuantity ?? 0,
+    lotNo: item.lotNo || '',
+  }))
 
   const product = products.value.find(p => p.partNumber === form.value.partNumber)
   if (product) {
@@ -1267,6 +1531,7 @@ function resetForm() {
   form.value.reportDate = localTodayString()
   form.value.partNumber = ''
   form.value.partName = ''
+  form.value.lotNo = ''
   form.value.cycleTime = ''
   form.value.processId = null
   processOptions.value = []
@@ -1274,6 +1539,7 @@ function resetForm() {
   form.value.downtimeReason = ''
   form.value.downtimeReasons = ['']
   form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 0 }]
+  form.value.lotRows = []
   form.value.inputQuantity = 0
   form.value.goodQuantity = 0
   form.value.defectQuantity = 0
@@ -1432,15 +1698,17 @@ async function saveReport() {
       machineCode: form.value.machineCode,
       partNumber: form.value.partNumber,
       partName: form.value.partName,
+      lotNo: formatLotNosForSave(),
       cycleTimeSeconds,
       processIds: [form.value.processId],
       totalOperatingMinutes: Number(actualOperatingMinutes.value),
       downtimeMinutes: Number(totalDowntimeMinutes.value),
-      inputQuantity: Number(form.value.inputQuantity),
+      inputQuantity: Number(totalInputQuantity.value),
       goodQuantity: Number(calculatedGoodQuantity.value),
       defectQuantity: Number(totalDefectQuantity.value),
-      internalDefectQuantity: Number(form.value.internalDefectQuantity || 0),
-      externalDefectQuantity: Number(form.value.externalDefectQuantity || 0),
+      internalDefectQuantity: Number(totalInternalDefectQuantity.value || 0),
+      externalDefectQuantity: Number(totalExternalDefectQuantity.value || 0),
+      lotRows: lotRowsForSave(),
       company: form.value.company,
       responsibleLeader: form.value.responsibleLeader,
       downtimeReason: formatDowntimeReasonsForSave(),
@@ -1498,6 +1766,11 @@ const resultBadgeClass = computed(() => {
 
 watch(() => form.value.lineCode, () => {
   onLineChange()
+})
+
+watch([myReports, pageSize], () => {
+  const maxPage = Math.max(1, Math.ceil(myReports.value.length / pageSize.value))
+  if (currentPage.value > maxPage) currentPage.value = maxPage
 })
 
 watch([() => form.value.partNumber, products], ([partNumber]) => {
@@ -1559,6 +1832,48 @@ onMounted(loadInitialData)
 :deep(.quantity-stepper-input .el-input__wrapper) {
   box-shadow: none !important;
   border-radius: 0 !important;
+}
+
+.report-lot-multiline-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.report-lot-multiline-row {
+  min-height: 22px;
+}
+
+.production-lot-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .production-lot-grid {
+    grid-template-columns: repeat(4, 160px) minmax(0, 1fr) !important;
+  }
+
+  .production-quantity-field {
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
+  }
+
+  .production-lotno-field {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+:deep(.action-icon-button) {
+  width: 2.125rem !important;
+  min-width: 2.125rem !important;
+  height: 2.125rem !important;
+  padding: 0 !important;
+  margin-left: 0 !important;
+  flex: 0 0 2.125rem !important;
 }
 
 </style>
