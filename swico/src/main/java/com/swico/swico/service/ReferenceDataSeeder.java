@@ -195,6 +195,7 @@ public class ReferenceDataSeeder {
                 null,
                 null,
                 null,
+                null,
                 null
         );
         ProductionCalculationResponse calculated = formulaService.calculate(request, shift.getStandardTimeMinutes());

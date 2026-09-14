@@ -465,7 +465,13 @@
               <el-table-column :label="t('productionEntry.table.responsibleLeader')" width="150" align="center" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
               </el-table-column>
-              <el-table-column prop="downtimeReason" :label="t('productionEntry.table.downtimeReason')" min-width="160" show-overflow-tooltip />
+              <el-table-column :label="t('productionEntry.table.downtimeReason')" min-width="180" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <div class="report-lot-multiline-cell">
+                    <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line }}</div>
+                  </div>
+                </template>
+              </el-table-column>
               <el-table-column :label="t('productionEntry.table.responsibility')" min-width="100" align="center">
                 <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
               </el-table-column>
@@ -1008,6 +1014,31 @@ function formatDowntimeReasonsForSave() {
     .join('； ')
 }
 
+function downtimeRowsForSave() {
+  return form.value.downtimeItems
+    .map(item => ({
+      reasonCategoryCode: item.reasonCategoryCode || '',
+      reason: String(item.reason || '').trim(),
+      minutes: Number(item.minutes || 0),
+    }))
+    .filter(item => item.reason || item.minutes > 0 || item.reasonCategoryCode)
+}
+
+function downtimeDisplayRows(row) {
+  if (Array.isArray(row.downtimes) && row.downtimes.length) {
+    return row.downtimes
+      .map(item => formatDowntimeDisplay(item.reason, item.minutes))
+      .filter(Boolean)
+  }
+  return normalizeDowntimeReasons(row.downtimeReason).map(value => value || '-')
+}
+
+function formatDowntimeDisplay(reason, minutes) {
+  const reasonText = String(reason || '').trim() || '-'
+  const minuteValue = Number(minutes || 0)
+  return minuteValue > 0 ? `${reasonText} - ${minuteValue}` : reasonText
+}
+
 function formatLotNosForSave() {
   return [
     form.value.lotNo,
@@ -1143,6 +1174,7 @@ function handleRowClick(report) {
 function populateFormForEdit(report) {
   const lots = Array.isArray(report.lots) ? report.lots : []
   const firstLot = lots[0] || null
+  const downtimes = Array.isArray(report.downtimes) ? report.downtimes : []
   form.value.reportDate = report.reportDate || localTodayString()
   form.value.lineCode = report.lineCode || ''
   form.value.machineCode = report.machineCode || ''
@@ -1162,7 +1194,13 @@ function populateFormForEdit(report) {
   form.value.responsibleLeader = report.responsibleLeader || ''
   form.value.downtimeReason = report.downtimeReason || ''
   form.value.downtimeReasons = normalizeDowntimeReasons(report.downtimeReason)
-  form.value.downtimeItems = normalizeDowntimeItems(report.downtimeReason, report.downtimeMinutes)
+  form.value.downtimeItems = downtimes.length
+    ? downtimes.map(item => ({
+        reasonCategoryCode: item.reasonCategoryCode || resolveDowntimeCategoryCode(item.reason),
+        reason: item.reason || '',
+        minutes: item.minutes ?? 0,
+      }))
+    : normalizeDowntimeItems(report.downtimeReason, report.downtimeMinutes)
   form.value.lotRows = lots.slice(1).map(item => ({
     inputQuantity: item.inputQuantity ?? 0,
     internalDefectQuantity: item.internalDefectQuantity ?? 0,
@@ -1709,6 +1747,7 @@ async function saveReport() {
       internalDefectQuantity: Number(totalInternalDefectQuantity.value || 0),
       externalDefectQuantity: Number(totalExternalDefectQuantity.value || 0),
       lotRows: lotRowsForSave(),
+      downtimeRows: downtimeRowsForSave(),
       company: form.value.company,
       responsibleLeader: form.value.responsibleLeader,
       downtimeReason: formatDowntimeReasonsForSave(),

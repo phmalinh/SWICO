@@ -58,6 +58,13 @@
             <span class="font-bold text-rose-500">{{ row.downtimeMinutes }}</span>
           </template>
         </el-table-column>
+        <el-table-column :label="t('productionHistory.table.downtimeReason')" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            <div class="history-multiline-cell">
+              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="history-multiline-row">{{ line }}</div>
+            </div>
+          </template>
+        </el-table-column>
             <el-table-column :label="t('productionHistory.table.dailyTargetQuantity')" width="100" align="center">
           <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity) }}</template>
         </el-table-column>
@@ -211,6 +218,29 @@ function splitLotNos(value) {
     .split(/\s*[;；]\s*/)
     .map(item => item.trim())
     .filter(Boolean)
+}
+
+function splitDowntimeReasons(value) {
+  return String(value || '')
+    .split(/\s*[;；]\s*/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function downtimeDisplayRows(row) {
+  if (Array.isArray(row.downtimes) && row.downtimes.length) {
+    return row.downtimes
+      .map(item => formatDowntimeDisplay(item.reason, item.minutes))
+      .filter(Boolean)
+  }
+  const reasons = splitDowntimeReasons(row.downtimeReason)
+  return reasons.length ? reasons : ['-']
+}
+
+function formatDowntimeDisplay(reason, minutes) {
+  const reasonText = String(reason || '').trim() || '-'
+  const minuteValue = Number(minutes || 0)
+  return minuteValue > 0 ? `${reasonText} - ${minuteValue}` : reasonText
 }
 
 function distributeQuantity(total, count, index) {

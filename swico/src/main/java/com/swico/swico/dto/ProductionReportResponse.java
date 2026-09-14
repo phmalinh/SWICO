@@ -39,5 +39,6 @@ public record ProductionReportResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         String createdBy,
-        List<ProductionReportLotDto> lots
+        List<ProductionReportLotDto> lots,
+        List<ProductionReportDowntimeDto> downtimes
 ) {}

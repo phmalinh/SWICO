@@ -39,5 +39,6 @@ public record ProductionCalculationRequest(
         BigDecimal qualityRate,
         BigDecimal oee,
         String evaluationLabel,
-        List<ProductionReportLotDto> lotRows
+        List<ProductionReportLotDto> lotRows,
+        List<ProductionReportDowntimeDto> downtimeRows
 ) {}

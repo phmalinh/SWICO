@@ -90,7 +90,8 @@ class ProductionExportServiceTest {
                         new ProductionReportLotDto(null, "A", 45, 44, 1, 1, 0),
                         new ProductionReportLotDto(null, "B", 23, 21, 2, 2, 0),
                         new ProductionReportLotDto(null, "C", 30, 28, 2, 0, 2)
-                )
+                ),
+                List.of()
         );
     }
 }

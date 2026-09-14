@@ -2,6 +2,7 @@ package com.swico.swico.service;
 
 import com.swico.swico.dto.ProductionCalculationRequest;
 import com.swico.swico.dto.ProductionCalculationResponse;
+import com.swico.swico.dto.ProductionReportDowntimeDto;
 import com.swico.swico.dto.ProductionReportLotDto;
 import com.swico.swico.dto.ProductionReportResponse;
 import com.swico.swico.entity.ProductProcess;
@@ -90,7 +91,7 @@ public class ProductionExportService {
                 setValue(row.createCell(10), report.cycleTimeSeconds(), decimalStyle);
                 setValue(row.createCell(11), report.totalOperatingMinutes(), intStyle);
                 setValue(row.createCell(12), report.downtimeMinutes(), intStyle);
-                setValue(row.createCell(13), report.downtimeReason(), wrappedTextStyle);
+                setValue(row.createCell(13), formatDowntimeReasons(report), multilineStyle);
                 setValue(row.createCell(14), report.shiftStandardTimeMinutes(), intStyle);
                 setValue(row.createCell(15), report.dailyTargetQuantity(), decimalStyle);
                 setValue(row.createCell(16), formatLotInputQuantities(report), multilineStyle);
@@ -218,6 +219,37 @@ public class ProductionExportService {
         return value != null ? value : 0;
     }
 
+    private List<ProductionReportDowntimeDto> effectiveDowntimes(ProductionReportResponse report) {
+        if (report.downtimes() != null && !report.downtimes().isEmpty()) {
+            return report.downtimes();
+        }
+        if (report.downtimeReason() == null || report.downtimeReason().isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return List.of(new ProductionReportDowntimeDto(
+                null,
+                null,
+                report.downtimeReason(),
+                report.downtimeMinutes()
+        ));
+    }
+
+    private String formatDowntimeReasons(ProductionReportResponse report) {
+        List<ProductionReportDowntimeDto> downtimes = effectiveDowntimes(report);
+        if (downtimes.isEmpty()) {
+            return report.downtimeReason();
+        }
+        return downtimes.stream()
+                .map(item -> formatDowntimeReason(item, report.downtimeMinutes()))
+                .collect(java.util.stream.Collectors.joining("\n"));
+    }
+
+    private String formatDowntimeReason(ProductionReportDowntimeDto item, Integer fallbackMinutes) {
+        String reason = item.reason() == null || item.reason().isBlank() ? "-" : item.reason();
+        Integer minutes = item.minutes() != null ? item.minutes() : fallbackMinutes;
+        return minutes != null && minutes > 0 ? reason + " - " + minutes : reason;
+    }
+
     private ProductionCalculationResponse calculateFallback(ProductionReportResponse report) {
         return formulaService.calculate(new ProductionCalculationRequest(
                 parseDate(report.reportDate()),
@@ -249,7 +281,8 @@ public class ProductionExportService {
                 report.qualityRate(),
                 report.oee(),
                 report.evaluationLabel(),
-                report.lots()
+                report.lots(),
+                report.downtimes()
         ), report.shiftStandardTimeMinutes());
     }
 

@@ -43,6 +43,19 @@ public class DatabaseSchemaUpdater {
                         ON DELETE CASCADE
                 )
                 """);
+        jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS daily_production_report_downtimes (
+                    id bigserial PRIMARY KEY,
+                    report_id bigint NOT NULL,
+                    reason_category_code varchar(20),
+                    reason varchar(1000),
+                    minutes integer,
+                    CONSTRAINT fk_daily_report_downtimes_report
+                        FOREIGN KEY (report_id)
+                        REFERENCES daily_production_reports(id)
+                        ON DELETE CASCADE
+                )
+                """);
         jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS team varchar(100)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS user_id bigint");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS product_id bigint");

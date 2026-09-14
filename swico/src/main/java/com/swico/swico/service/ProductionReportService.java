@@ -2,6 +2,7 @@ package com.swico.swico.service;
 
 import com.swico.swico.config.AppClock;
 import com.swico.swico.dto.*;
+import com.swico.swico.entity.DailyProductionReportDowntime;
 import com.swico.swico.entity.DailyProductionReport;
 import com.swico.swico.entity.DailyProductionReportLot;
 import com.swico.swico.entity.Line;
@@ -9,6 +10,7 @@ import com.swico.swico.entity.Product;
 import com.swico.swico.entity.ProductProcess;
 import com.swico.swico.entity.Shift;
 import com.swico.swico.repository.DailyProductionReportLotRepository;
+import com.swico.swico.repository.DailyProductionReportDowntimeRepository;
 import com.swico.swico.repository.DailyProductionReportRepository;
 import com.swico.swico.repository.LineRepository;
 import com.swico.swico.repository.ProductRepository;
@@ -47,6 +49,7 @@ public class ProductionReportService {
 
     private final DailyProductionReportRepository reportRepository;
     private final DailyProductionReportLotRepository reportLotRepository;
+    private final DailyProductionReportDowntimeRepository reportDowntimeRepository;
     private final LineRepository lineRepository;
     private final ProductRepository productRepository;
     private final ProductProcessRepository productProcessRepository;
@@ -58,6 +61,7 @@ public class ProductionReportService {
     public ProductionReportService(
             DailyProductionReportRepository reportRepository,
             DailyProductionReportLotRepository reportLotRepository,
+            DailyProductionReportDowntimeRepository reportDowntimeRepository,
             LineRepository lineRepository,
             ProductRepository productRepository,
             ProductProcessRepository productProcessRepository,
@@ -68,6 +72,7 @@ public class ProductionReportService {
     ) {
         this.reportRepository = reportRepository;
         this.reportLotRepository = reportLotRepository;
+        this.reportDowntimeRepository = reportDowntimeRepository;
         this.lineRepository = lineRepository;
         this.productRepository = productRepository;
         this.productProcessRepository = productProcessRepository;
@@ -122,6 +127,7 @@ public class ProductionReportService {
 
         DailyProductionReport saved = reportRepository.save(entity);
         replaceReportLots(saved, effectiveRequest.lotRows());
+        replaceReportDowntimes(saved, effectiveRequest.downtimeRows(), effectiveRequest.downtimeReason(), effectiveRequest.downtimeMinutes());
         return toResponse(saved, effective);
     }
 
@@ -189,6 +195,81 @@ public class ProductionReportService {
         return value != null ? Math.max(value, 0) : 0;
     }
 
+    private void replaceReportDowntimes(DailyProductionReport report, List<ProductionReportDowntimeDto> downtimeRows, String downtimeReason, Integer downtimeMinutes) {
+        if (report.getId() == null) return;
+        reportDowntimeRepository.deleteByReportId(report.getId());
+
+        List<ProductionReportDowntimeDto> effectiveRows = downtimeRows == null || downtimeRows.isEmpty()
+                ? fallbackDowntimeRows(downtimeReason, downtimeMinutes)
+                : downtimeRows;
+
+        effectiveRows.stream()
+                .filter(this::hasDowntimeData)
+                .map(row -> toDowntimeEntity(report, row))
+                .forEach(reportDowntimeRepository::save);
+    }
+
+    private List<ProductionReportDowntimeDto> fallbackDowntimeRows(String downtimeReason, Integer downtimeMinutes) {
+        if (downtimeReason == null || downtimeReason.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        List<String> reasons = splitTextValues(downtimeReason);
+        if (reasons.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return java.util.stream.IntStream.range(0, reasons.size())
+                .mapToObj(index -> {
+                    String reasonText = reasons.get(index);
+                    Integer minutes = extractDowntimeMinutes(reasonText);
+                    String reason = stripDowntimeMinutes(reasonText);
+                    return new ProductionReportDowntimeDto(
+                            null,
+                            null,
+                            reason,
+                            minutes != null ? minutes : (index == 0 ? downtimeMinutes : 0)
+                    );
+                })
+                .toList();
+    }
+
+    private boolean hasDowntimeData(ProductionReportDowntimeDto row) {
+        return row != null && (
+                (row.reason() != null && !row.reason().isBlank())
+                        || number(row.minutes()) > 0
+                        || (row.reasonCategoryCode() != null && !row.reasonCategoryCode().isBlank())
+        );
+    }
+
+    private DailyProductionReportDowntime toDowntimeEntity(DailyProductionReport report, ProductionReportDowntimeDto row) {
+        DailyProductionReportDowntime entity = new DailyProductionReportDowntime();
+        entity.setReport(report);
+        entity.setReasonCategoryCode(row.reasonCategoryCode());
+        entity.setReason(row.reason());
+        entity.setMinutes(number(row.minutes()));
+        return entity;
+    }
+
+    private List<String> splitTextValues(String text) {
+        if (text == null || text.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return java.util.Arrays.stream(text.split("[\\r\\n]+|\\s*[;；]\\s*"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
+    }
+
+    private Integer extractDowntimeMinutes(String reasonText) {
+        if (reasonText == null) return null;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\s+-\\s+(\\d+)\\s*$").matcher(reasonText);
+        return matcher.find() ? parseIntegerText(matcher.group(1)) : null;
+    }
+
+    private String stripDowntimeMinutes(String reasonText) {
+        if (reasonText == null) return null;
+        return reasonText.replaceFirst("\\s+-\\s+\\d+\\s*$", "").trim();
+    }
+
     private String joinProcessIds(java.util.List<Long> processIds) {
         if (processIds == null || processIds.isEmpty()) {
             return null;
@@ -245,7 +326,8 @@ public class ProductionReportService {
                 request.qualityRate(),
                 request.oee(),
                 request.evaluationLabel(),
-                request.lotRows()
+                request.lotRows(),
+                request.downtimeRows()
         );
     }
 
@@ -356,6 +438,7 @@ public class ProductionReportService {
 
         DailyProductionReport saved = reportRepository.save(entity);
         replaceReportLots(saved, effectiveRequest.lotRows());
+        replaceReportDowntimes(saved, effectiveRequest.downtimeRows(), effectiveRequest.downtimeReason(), effectiveRequest.downtimeMinutes());
         return toResponse(saved, effective);
     }
 
@@ -407,6 +490,9 @@ public class ProductionReportService {
                 String importedProcessText = parseString(getCell(row, headerIndex.getOrDefault("processIds", -1)));
                 String importedOperatorName = parseString(getCell(row, headerIndex.getOrDefault("operatorName", -1)));
                 List<ProductionReportLotDto> importedLotRows = resolveImportedLotRows(row, headerIndex);
+                Integer importedDowntimeMinutes = resolveImportedDowntimeMinutes(row, headerIndex);
+                String importedDowntimeReason = parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1)));
+                List<ProductionReportDowntimeDto> importedDowntimeRows = fallbackDowntimeRows(importedDowntimeReason, importedDowntimeMinutes);
                 Integer importedInputQuantity = firstNonNull(sumLotInputQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("inputQuantity", -1))));
                 Integer importedGoodQuantity = firstNonNull(sumLotGoodQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("goodQuantity", -1))));
                 Integer importedDefectQuantity = firstNonNull(sumLotDefectQuantity(importedLotRows), resolveImportedDefectQuantity(row, headerIndex));
@@ -424,7 +510,7 @@ public class ProductionReportService {
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("cycleTimeSeconds", -1))),
                     resolveImportedProcessIds(importedPartNumber, importedProcessText),
                     parseInteger(getCell(row, headerIndex.getOrDefault("totalOperatingMinutes", -1))),
-                    resolveImportedDowntimeMinutes(row, headerIndex),
+                    importedDowntimeMinutes,
                     importedInputQuantity,
                     importedGoodQuantity,
                     importedDefectQuantity,
@@ -433,7 +519,7 @@ public class ProductionReportService {
                     parseString(getCell(row, headerIndex.getOrDefault("company", -1))),
                     importedLotNo,
                     parseString(getCell(row, headerIndex.getOrDefault("responsibleLeader", -1))),
-                    parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
+                    importedDowntimeReason,
                     parseString(getCell(row, headerIndex.getOrDefault("responsibility", -1))),
                     parsePercentPoints(getCell(row, headerIndex.getOrDefault("deductionPercent", -1))),
                     // optional calculated/override fields from import
@@ -445,7 +531,8 @@ public class ProductionReportService {
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("qualityRate", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("oee", -1))),
                     parseString(getCell(row, headerIndex.getOrDefault("evaluationLabel", -1))),
-                    importedLotRows
+                    importedLotRows,
+                    importedDowntimeRows
                 );
 
                 ProductionReportResponse imported = createReport(request, resolveImportedCreatedBy(importedOperatorName, createdBy));
@@ -1229,7 +1316,8 @@ public class ProductionReportService {
                 report.getCreatedAt(),
                 report.getUpdatedAt(),
                 report.getCreatedBy(),
-                reportLots(report)
+                reportLots(report),
+                reportDowntimes(report)
         );
     }
 
@@ -1252,6 +1340,25 @@ public class ProductionReportService {
                 lot.getDefectQuantity(),
                 lot.getInternalDefectQuantity(),
                 lot.getExternalDefectQuantity()
+        );
+    }
+
+    private List<ProductionReportDowntimeDto> reportDowntimes(DailyProductionReport report) {
+        if (report.getId() == null) {
+            return java.util.Collections.emptyList();
+        }
+        List<ProductionReportDowntimeDto> downtimes = reportDowntimeRepository.findByReportIdOrderByIdAsc(report.getId()).stream()
+                .map(this::toDowntimeDto)
+                .toList();
+        return downtimes.isEmpty() ? fallbackDowntimeRows(report.getDowntimeReason(), report.getDowntimeMinutes()) : downtimes;
+    }
+
+    private ProductionReportDowntimeDto toDowntimeDto(DailyProductionReportDowntime downtime) {
+        return new ProductionReportDowntimeDto(
+                downtime.getId(),
+                downtime.getReasonCategoryCode(),
+                downtime.getReason(),
+                downtime.getMinutes()
         );
     }
 
