@@ -40,12 +40,13 @@ class ProductionExportServiceTest {
             Sheet sheet = workbook.getSheetAt(0);
             Row row = sheet.getRow(1);
 
-            assertEquals("45\n23\n30", row.getCell(16).getStringCellValue());
-            assertEquals("44\n21\n28", row.getCell(17).getStringCellValue());
-            assertEquals("1\n2\n2", row.getCell(18).getStringCellValue());
-            assertEquals("1\n2\n0", row.getCell(19).getStringCellValue());
-            assertEquals("0\n0\n2", row.getCell(20).getStringCellValue());
-            assertEquals("A\nB\nC", row.getCell(21).getStringCellValue());
+            assertEquals("\u505c\u6a5f\u6642\u9593\nThời Gian", sheet.getRow(0).getCell(14).getStringCellValue());
+            assertEquals("45\n23\n30", row.getCell(17).getStringCellValue());
+            assertEquals("44\n21\n28", row.getCell(18).getStringCellValue());
+            assertEquals("1\n2\n2", row.getCell(19).getStringCellValue());
+            assertEquals("1\n2\n0", row.getCell(20).getStringCellValue());
+            assertEquals("0\n0\n2", row.getCell(21).getStringCellValue());
+            assertEquals("A\nB\nC", row.getCell(22).getStringCellValue());
             assertEquals(66.0, row.getHeightInPoints());
         }
     }

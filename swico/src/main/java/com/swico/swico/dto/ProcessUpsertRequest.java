@@ -9,5 +9,6 @@ public record ProcessUpsertRequest(
         Integer sequence,
         String lineCode,
         String machineCode,
-        BigDecimal cycleTimeSeconds
+        BigDecimal cycleTimeSeconds,
+        Boolean active
 ) {}

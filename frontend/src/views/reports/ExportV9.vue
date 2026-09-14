@@ -87,7 +87,20 @@
         <el-table-column prop="cycleTimeSeconds" :label="t('reports.search.table.cycleTime')" width="70" align="center" />
         <el-table-column prop="totalOperatingMinutes" :label="t('reports.search.table.totalOperatingMinutes')" width="70" align="center" />
         <el-table-column prop="downtimeMinutes" :label="t('reports.search.table.downtimeMinutes')" width="80" align="center" />
-        <el-table-column prop="downtimeReason" :label="t('reports.search.table.downtimeReason')" min-width="80" show-overflow-tooltip />
+        <el-table-column :label="t('reports.search.table.downtimeReason')" min-width="160" show-overflow-tooltip>
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index">{{ line.reason }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.downtimeTime')" width="100" align="center">
+          <template #default="{ row }">
+            <div class="export-lot-cell">
+              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index">{{ line.minutes }}</div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column :label="t('reports.search.table.responsibility')" min-width="100" align="center">
           <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
         </el-table-column>
@@ -387,6 +400,41 @@ function formatPercent(value) {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
+}
+
+function splitDowntimeReasons(value) {
+  return String(value || '')
+    .split(/\s*[;；]\s*|\r?\n/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
+function downtimeDisplayRows(row) {
+  if (Array.isArray(row.downtimes) && row.downtimes.length) {
+    return row.downtimes
+      .map(item => formatDowntimeDisplay(item.reason, item.minutes))
+      .filter(item => item.reason || item.minutes)
+  }
+  const reasons = splitDowntimeReasons(row.downtimeReason)
+  return reasons.length ? reasons.map(item => parseDowntimeDisplay(item)) : [{ reason: '-', minutes: '-' }]
+}
+
+function formatDowntimeDisplay(reason, minutes) {
+  const reasonText = String(reason || '').trim() || '-'
+  const minuteValue = Number(minutes || 0)
+  return {
+    reason: reasonText,
+    minutes: minuteValue > 0 ? formatNumber(minuteValue) : '-',
+  }
+}
+
+function parseDowntimeDisplay(value) {
+  const text = String(value || '').trim()
+  const match = text.match(/^(.*?)(?:\s+-\s+(\d+))?$/)
+  return {
+    reason: match?.[1]?.trim() || '-',
+    minutes: match?.[2] ? formatNumber(match[2]) : '-',
+  }
 }
 
 function rate(value) {

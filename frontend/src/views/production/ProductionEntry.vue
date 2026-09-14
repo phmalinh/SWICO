@@ -468,7 +468,14 @@
               <el-table-column :label="t('productionEntry.table.downtimeReason')" min-width="180" show-overflow-tooltip>
                 <template #default="{ row }">
                   <div class="report-lot-multiline-cell">
-                    <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line }}</div>
+                    <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.reason }}</div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.downtimeTime')" width="80" align="center">
+                <template #default="{ row }">
+                  <div class="report-lot-multiline-cell">
+                    <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.minutes }}</div>
                   </div>
                 </template>
               </el-table-column>
@@ -1028,15 +1035,28 @@ function downtimeDisplayRows(row) {
   if (Array.isArray(row.downtimes) && row.downtimes.length) {
     return row.downtimes
       .map(item => formatDowntimeDisplay(item.reason, item.minutes))
-      .filter(Boolean)
+      .filter(item => item.reason || item.minutes)
   }
-  return normalizeDowntimeReasons(row.downtimeReason).map(value => value || '-')
+  const reasons = normalizeDowntimeReasons(row.downtimeReason)
+  return reasons.length ? reasons.map(parseDowntimeDisplay) : [{ reason: '-', minutes: '-' }]
 }
 
 function formatDowntimeDisplay(reason, minutes) {
   const reasonText = String(reason || '').trim() || '-'
   const minuteValue = Number(minutes || 0)
-  return minuteValue > 0 ? `${reasonText} - ${minuteValue}` : reasonText
+  return {
+    reason: reasonText,
+    minutes: minuteValue > 0 ? formatNumber(minuteValue, 0) : '-',
+  }
+}
+
+function parseDowntimeDisplay(value) {
+  const text = String(value || '').trim()
+  const match = text.match(/^(.*?)(?:\s+-\s+(\d+))?$/)
+  return {
+    reason: match?.[1]?.trim() || '-',
+    minutes: match?.[2] ? formatNumber(match[2], 0) : '-',
+  }
 }
 
 function formatLotNosForSave() {
@@ -1533,8 +1553,9 @@ function onLineChange() {
 
 async function loadProductProcesses(productId) {
   try {
-    processOptions.value = await masterApi.getProductProcesses(productId)
-    mergeProcessNames(processOptions.value)
+    const productProcesses = await masterApi.getProductProcesses(productId)
+    mergeProcessNames(productProcesses)
+    processOptions.value = productProcesses.filter(process => process.active !== false)
   } catch (error) {
     processOptions.value = []
     console.warn('Không tải được danh sách công đoạn', error)

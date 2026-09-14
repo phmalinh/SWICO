@@ -445,6 +445,10 @@ public class ProductionReportService {
     @Transactional
     public void deleteReportsByIds(java.util.List<Long> ids) {
         if (ids == null || ids.isEmpty()) return;
+        ids.forEach(id -> {
+            reportDowntimeRepository.deleteByReportId(id);
+            reportLotRepository.deleteByReportId(id);
+        });
         reportRepository.deleteAllById(ids);
     }
 
@@ -492,7 +496,7 @@ public class ProductionReportService {
                 List<ProductionReportLotDto> importedLotRows = resolveImportedLotRows(row, headerIndex);
                 Integer importedDowntimeMinutes = resolveImportedDowntimeMinutes(row, headerIndex);
                 String importedDowntimeReason = parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1)));
-                List<ProductionReportDowntimeDto> importedDowntimeRows = fallbackDowntimeRows(importedDowntimeReason, importedDowntimeMinutes);
+                List<ProductionReportDowntimeDto> importedDowntimeRows = resolveImportedDowntimeRows(row, headerIndex, importedDowntimeReason, importedDowntimeMinutes);
                 Integer importedInputQuantity = firstNonNull(sumLotInputQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("inputQuantity", -1))));
                 Integer importedGoodQuantity = firstNonNull(sumLotGoodQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("goodQuantity", -1))));
                 Integer importedDefectQuantity = firstNonNull(sumLotDefectQuantity(importedLotRows), resolveImportedDefectQuantity(row, headerIndex));
@@ -607,12 +611,17 @@ public class ProductionReportService {
         indexMap.put("totalOperatingMinutes", 8 + baseOffset);
         indexMap.put("downtimeMinutes", 9 + baseOffset);
         indexMap.put("downtimeReason", 10 + baseOffset);
-        indexMap.put("shiftStandardTimeMinutes", 11 + baseOffset);
-        indexMap.put("dailyTargetQuantity", 12 + baseOffset);
-        indexMap.put("inputQuantity", 13 + baseOffset);
-        indexMap.put("goodQuantity", 14 + baseOffset);
+        String downtimeRowMinutesHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(11 + baseOffset)));
+        int downtimeOffset = "downtimeRowMinutes".equals(mapHeaderKey(downtimeRowMinutesHeader)) ? 1 : 0;
+        if (downtimeOffset > 0) {
+            indexMap.put("downtimeRowMinutes", 11 + baseOffset);
+        }
+        indexMap.put("shiftStandardTimeMinutes", 11 + baseOffset + downtimeOffset);
+        indexMap.put("dailyTargetQuantity", 12 + baseOffset + downtimeOffset);
+        indexMap.put("inputQuantity", 13 + baseOffset + downtimeOffset);
+        indexMap.put("goodQuantity", 14 + baseOffset + downtimeOffset);
 
-        int metricOffset = baseOffset;
+        int metricOffset = baseOffset + downtimeOffset;
         String defectOrInternalHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
         boolean firstDefectColumnIsInternal = "internalDefectQuantity".equals(mapHeaderKey(defectOrInternalHeader));
         if (firstDefectColumnIsInternal) {
@@ -621,12 +630,12 @@ public class ProductionReportService {
             metricOffset += 2;
         } else {
             indexMap.put("defectQuantity", 15 + metricOffset);
-            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + baseOffset)));
+            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + metricOffset)));
             boolean hasDefectSplitColumns = "internalDefectQuantity".equals(mapHeaderKey(internalDefectHeader));
             metricOffset += 1;
             if (hasDefectSplitColumns) {
-                indexMap.put("internalDefectQuantity", 16 + baseOffset);
-                indexMap.put("externalDefectQuantity", 17 + baseOffset);
+                indexMap.put("internalDefectQuantity", 16 + baseOffset + downtimeOffset);
+                indexMap.put("externalDefectQuantity", 17 + baseOffset + downtimeOffset);
                 metricOffset += 2;
             }
         }
@@ -727,6 +736,9 @@ public class ProductionReportService {
         }
         if (header.contains("tổng giờ chạy") || header.contains("總動時間") || header.contains("tổng tg") || header.contains("working") || header.contains("run time") || header.contains("operating") || header.contains("稼働時間") || header.contains("稼動時間") || header.contains("runtime") || header.contains("operating time")) {
             return "totalOperatingMinutes";
+        }
+        if (header.contains("thoi gian") || header.contains("停機時間")) {
+            return "downtimeRowMinutes";
         }
         if (header.contains("tg dung") || (header.contains("停機") && (header.contains("分") || header.contains("分鐘"))) || header.contains("downtime") || header.contains("stop time") || header.contains("stop") || header.contains("down time")) {
             return "downtimeMinutes";
@@ -844,6 +856,33 @@ public class ProductionReportService {
             }
         }
         return lots;
+    }
+
+    private List<ProductionReportDowntimeDto> resolveImportedDowntimeRows(Row row, Map<String, Integer> headerIndex, String downtimeReason, Integer downtimeMinutes) {
+        if (!headerIndex.containsKey("downtimeRowMinutes")) {
+            return fallbackDowntimeRows(downtimeReason, downtimeMinutes);
+        }
+
+        List<String> reasons = parseTextLines(getCell(row, headerIndex.getOrDefault("downtimeReason", -1)));
+        List<Integer> minutes = parseIntegerLines(getCell(row, headerIndex.getOrDefault("downtimeRowMinutes", -1)));
+        int count = maxSize(reasons, minutes);
+        if (count == 0) {
+            return fallbackDowntimeRows(downtimeReason, downtimeMinutes);
+        }
+
+        List<ProductionReportDowntimeDto> downtimes = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            ProductionReportDowntimeDto downtime = new ProductionReportDowntimeDto(
+                    null,
+                    null,
+                    valueAt(reasons, index),
+                    valueAt(minutes, index)
+            );
+            if (hasDowntimeData(downtime)) {
+                downtimes.add(downtime);
+            }
+        }
+        return downtimes;
     }
 
     private List<String> parseTextLines(Cell cell) {
@@ -1057,6 +1096,11 @@ public class ProductionReportService {
         Integer downtime = parseInteger(getCell(row, headerIndex.getOrDefault("downtimeMinutes", -1)));
         if (downtime != null) {
             return downtime;
+        }
+
+        Integer rowMinutesTotal = parseIntegerTotal(getCell(row, headerIndex.getOrDefault("downtimeRowMinutes", -1)));
+        if (rowMinutesTotal != null) {
+            return rowMinutesTotal;
         }
 
         Integer shiftMinutes = parseInteger(getCell(row, headerIndex.getOrDefault("shiftStandardTimeMinutes", -1)));

@@ -33,6 +33,9 @@ public class ProductProcess {
     @Column(name = "cycle_time_seconds", precision = 10, scale = 2)
     private BigDecimal cycleTimeSeconds;
 
+    @Column(name = "active", nullable = false, columnDefinition = "boolean default true")
+    private Boolean active = true;
+
     public Long getId() {
         return id;
     }
@@ -95,5 +98,13 @@ public class ProductProcess {
 
     public void setCycleTimeSeconds(BigDecimal cycleTimeSeconds) {
         this.cycleTimeSeconds = cycleTimeSeconds;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

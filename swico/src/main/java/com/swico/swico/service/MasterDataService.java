@@ -130,7 +130,7 @@ public class MasterDataService {
 
     public java.util.List<com.swico.swico.dto.ProcessDto> getProcessesByProduct(Long productId) {
         return productProcessRepository.findByProductIdOrderBySequence(productId).stream()
-                .map(pp -> new com.swico.swico.dto.ProcessDto(pp.getId(), pp.getProduct().getId(), pp.getProcessCode(), pp.getProcess(), pp.getSequence(), pp.getLineCode(), pp.getMachineCode(), pp.getCycleTimeSeconds()))
+                .map(this::toProcessDto)
                 .toList();
     }
 
@@ -144,8 +144,9 @@ public class MasterDataService {
         pp.setLineCode(req.lineCode());
         pp.setMachineCode(req.machineCode());
         pp.setCycleTimeSeconds(req.cycleTimeSeconds());
+        pp.setActive(req.active() != null ? req.active() : true);
         ProductProcess saved = productProcessRepository.save(pp);
-        return new com.swico.swico.dto.ProcessDto(saved.getId(), product.getId(), saved.getProcessCode(), saved.getProcess(), saved.getSequence(), saved.getLineCode(), saved.getMachineCode(), saved.getCycleTimeSeconds());
+        return toProcessDto(saved);
     }
 
     public com.swico.swico.dto.ProcessDto updateProcess(Long id, com.swico.swico.dto.ProcessUpsertRequest req) {
@@ -156,8 +157,23 @@ public class MasterDataService {
         pp.setLineCode(req.lineCode());
         pp.setMachineCode(req.machineCode());
         pp.setCycleTimeSeconds(req.cycleTimeSeconds());
+        pp.setActive(req.active() != null ? req.active() : true);
         ProductProcess saved = productProcessRepository.save(pp);
-        return new com.swico.swico.dto.ProcessDto(saved.getId(), saved.getProduct().getId(), saved.getProcessCode(), saved.getProcess(), saved.getSequence(), saved.getLineCode(), saved.getMachineCode(), saved.getCycleTimeSeconds());
+        return toProcessDto(saved);
+    }
+
+    private com.swico.swico.dto.ProcessDto toProcessDto(ProductProcess process) {
+        return new com.swico.swico.dto.ProcessDto(
+                process.getId(),
+                process.getProduct().getId(),
+                process.getProcessCode(),
+                process.getProcess(),
+                process.getSequence(),
+                process.getLineCode(),
+                process.getMachineCode(),
+                process.getCycleTimeSeconds(),
+                process.getActive() != null ? process.getActive() : true
+        );
     }
 
     public void deleteProcess(Long id) {

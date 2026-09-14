@@ -50,6 +50,13 @@
         <el-table-column prop="sequence" width="120" align="center">
           <template #header><HeaderCell :label="l('sequence')" /></template>
         </el-table-column>
+        <el-table-column width="130" align="center">
+          <template #header><HeaderCell :label="l('active')" /></template>
+          <template #default="{ row }">
+            <el-switch v-if="row.processId" v-model="row.active" @change="toggleProcessActive(row)" />
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="l('actions')" width="130" fixed="right" align="center">
           <template #header><HeaderCell :label="l('actions')" /></template>
           <template #default="{ row }">
@@ -116,6 +123,7 @@
           <el-form-item label="C/T"><el-input-number v-model="processForm.cycleTimeSeconds" :min="0" :precision="2" class="!w-full" /></el-form-item>
           <el-form-item :label="l('sequence')"><el-input-number v-model="processForm.sequence" :min="1" class="!w-full" /></el-form-item>
         </div>
+        <el-form-item :label="l('active')"><el-switch v-model="processForm.active" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="processDialogVisible = false">{{ l('cancel') }}</el-button>
@@ -158,7 +166,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 20, 50, 100]
 const productForm = ref({ id: null, customer: '', partNumber: '', partName: '' })
-const processForm = ref({ id: null, productId: null, processCode: '', process: '', lineCodes: [], machineCodes: [], cycleTimeSeconds: null, sequence: null })
+const processForm = ref({ id: null, productId: null, processCode: '', process: '', lineCodes: [], machineCodes: [], cycleTimeSeconds: null, sequence: null, active: true })
 const l = (key, params) => t(`master.productProcesses.${key}`, params)
 const productDialogTitle = computed(() => productForm.value.id ? l('productEditTitle') : l('productCreateTitle'))
 const processDialogTitle = computed(() => processForm.value.id ? l('processEditTitle') : l('processCreateTitle'))
@@ -242,6 +250,7 @@ async function loadData() {
         machineCode: process.machineCode || '',
         cycleTimeSeconds: process.cycleTimeSeconds ?? null,
         sequence: process.sequence,
+        active: process.active !== false,
       }))
     })
   } catch (error) {
@@ -294,7 +303,7 @@ function downloadCsv(filename, headers, dataRows) {
 }
 
 function exportCsv() {
-  const headers = [l('customer'), l('partNumber'), l('partName'), l('process'), l('machineCode'), l('lineCode'), 'C/T', l('sequence')]
+  const headers = [l('customer'), l('partNumber'), l('partName'), l('process'), l('machineCode'), l('lineCode'), 'C/T', l('sequence'), l('active')]
   const dataRows = filteredRows.value.map(row => ({
     [l('customer')]: row.customer,
     [l('partNumber')]: row.partNumber,
@@ -304,6 +313,7 @@ function exportCsv() {
     [l('lineCode')]: row.lineCode,
     'C/T': row.cycleTimeSeconds,
     [l('sequence')]: row.sequence,
+    [l('active')]: row.processId ? (row.active !== false ? l('activeYes') : l('activeNo')) : '',
   }))
   downloadCsv(`product-processes-${new Date().toISOString().slice(0, 10)}.csv`, headers, dataRows)
 }
@@ -326,8 +336,9 @@ function openProcessDialog(row) {
         machineCodes: splitCodes(row.machineCode),
         cycleTimeSeconds: row.cycleTimeSeconds,
         sequence: row.sequence,
+        active: row.active !== false,
       }
-    : { id: null, productId: row?.productId || products.value[0]?.id || null, processCode: '', process: '', lineCodes: [], machineCodes: [], cycleTimeSeconds: null, sequence: null }
+    : { id: null, productId: row?.productId || products.value[0]?.id || null, processCode: '', process: '', lineCodes: [], machineCodes: [], cycleTimeSeconds: null, sequence: null, active: true }
   processDialogVisible.value = true
 }
 
@@ -368,6 +379,7 @@ async function saveProcess() {
     machineCode: joinCodes(processForm.value.machineCodes),
     cycleTimeSeconds: processForm.value.cycleTimeSeconds != null ? Number(processForm.value.cycleTimeSeconds) : null,
     sequence: processForm.value.sequence != null ? Number(processForm.value.sequence) : null,
+    active: processForm.value.active !== false,
   }
   try {
     if (processForm.value.id) {
@@ -379,6 +391,25 @@ async function saveProcess() {
     ElMessage.success(l('saved'))
     await loadData()
   } catch (error) {
+    ElMessage.error(error.message)
+  }
+}
+
+async function toggleProcessActive(row) {
+  const previous = row.active === false
+  try {
+    await masterApi.updateProcess(row.processId, {
+      processCode: row.processCode || null,
+      process: row.process,
+      lineCode: row.lineCode || null,
+      machineCode: row.machineCode || null,
+      cycleTimeSeconds: row.cycleTimeSeconds != null ? Number(row.cycleTimeSeconds) : null,
+      sequence: row.sequence != null ? Number(row.sequence) : null,
+      active: row.active !== false,
+    })
+    ElMessage.success(l('saved'))
+  } catch (error) {
+    row.active = previous
     ElMessage.error(error.message)
   }
 }

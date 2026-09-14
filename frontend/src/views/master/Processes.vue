@@ -20,6 +20,11 @@
         <el-table-column prop="machineCode" :label="t('common.machine')" min-width="180" show-overflow-tooltip />
         <el-table-column prop="sequence" :label="t('master.processes.table.sequence')" width="120" align="center" />
         <el-table-column prop="cycleTimeSeconds" :label="t('master.processes.table.cycleTime')" width="160" align="center" />
+        <el-table-column :label="t('master.processes.table.active')" width="130" align="center">
+          <template #default="{ row }">
+            <el-switch v-model="row.active" @change="toggleActive(row)" />
+          </template>
+        </el-table-column>
         <el-table-column :label="t('master.products.table.actions')" width="160" align="center">
           <template #default="{ row }">
             <el-button type="primary" link @click="openEdit(row)">{{ t('common.edit') }}</el-button>
@@ -45,6 +50,7 @@
         </el-form-item>
         <el-form-item :label="t('master.processes.dialog.sequence')"><el-input-number v-model="form.sequence" :min="1" class="!w-full" /></el-form-item>
         <el-form-item :label="t('master.processes.dialog.cycleTime')"><el-input-number v-model="form.cycleTimeSeconds" :min="0" :precision="1" class="!w-full" /></el-form-item>
+        <el-form-item :label="t('master.processes.dialog.active')"><el-switch v-model="form.active" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
@@ -70,7 +76,7 @@ const selectedProductId = ref(null)
 const selectedRows = ref([])
 const dialogVisible = ref(false)
 const editId = ref(null)
-const form = ref({ processCode: '', process: '', sequence: null, lineCodes: [], machineCodes: [], cycleTimeSeconds: null })
+const form = ref({ processCode: '', process: '', sequence: null, lineCodes: [], machineCodes: [], cycleTimeSeconds: null, active: true })
 
 const filteredMachines = computed(() => {
   if (!form.value.lineCodes.length) return machines.value
@@ -131,7 +137,7 @@ function openAdd() {
     return
   }
   editId.value = null
-  form.value = { processCode: '', process: '', sequence: null, lineCodes: [], machineCodes: [], cycleTimeSeconds: null }
+  form.value = { processCode: '', process: '', sequence: null, lineCodes: [], machineCodes: [], cycleTimeSeconds: null, active: true }
   dialogVisible.value = true
 }
 
@@ -144,6 +150,7 @@ function openEdit(row) {
     lineCodes: splitCodes(row.lineCode),
     machineCodes: splitCodes(row.machineCode),
     cycleTimeSeconds: row.cycleTimeSeconds,
+    active: row.active !== false,
   }
   dialogVisible.value = true
 }
@@ -162,6 +169,7 @@ async function save() {
       lineCode: joinCodes(form.value.lineCodes),
       machineCode: joinCodes(form.value.machineCodes),
       cycleTimeSeconds: form.value.cycleTimeSeconds != null ? Number(form.value.cycleTimeSeconds) : null,
+      active: form.value.active !== false,
     }
     if (editId.value) {
       await masterApi.updateProcess(editId.value, payload)
@@ -196,6 +204,25 @@ async function deleteSelected() {
     ElMessage.success(t('master.processes.messages.deleteSuccess'))
     await loadProcesses()
   } catch (e) {
+    ElMessage.error(e.message)
+  }
+}
+
+async function toggleActive(row) {
+  const previous = row.active === false
+  try {
+    await masterApi.updateProcess(row.id, {
+      processCode: row.processCode || null,
+      process: row.process,
+      sequence: row.sequence,
+      lineCode: row.lineCode || null,
+      machineCode: row.machineCode || null,
+      cycleTimeSeconds: row.cycleTimeSeconds != null ? Number(row.cycleTimeSeconds) : null,
+      active: row.active !== false,
+    })
+    ElMessage.success(t('master.processes.messages.saveSuccess'))
+  } catch (e) {
+    row.active = previous
     ElMessage.error(e.message)
   }
 }

@@ -21,6 +21,8 @@ public class DatabaseSchemaUpdater {
         jdbcTemplate.execute("ALTER TABLE IF EXISTS product_process ALTER COLUMN line_code TYPE varchar(1000)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS product_process ALTER COLUMN machine_code TYPE varchar(1000)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS product_process ALTER COLUMN process TYPE varchar(1000)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS product_process ADD COLUMN IF NOT EXISTS active boolean DEFAULT true");
+        jdbcTemplate.execute("UPDATE product_process SET active = true WHERE active IS NULL");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS responsibility numeric(6,4)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ALTER COLUMN responsibility TYPE numeric(6,4) USING NULLIF(responsibility::text, '')::numeric");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS deduction_percent numeric(6,4)");

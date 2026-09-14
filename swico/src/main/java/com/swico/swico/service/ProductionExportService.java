@@ -59,7 +59,7 @@ public class ProductionExportService {
                     "\u65e5\u671f\nNgày", "\u7dda\u5225\nChuyền", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMã Máy", "\u5ba2\u6236\nKhách hàng",
                     "\u4f5c\u54e1\nNhân Viên Thao Tác", "\u8ca0\u8cac\u5e79\u90e8\nCán Bộ Phụ Trách", "\u6599\u865f\nMã Hàng",
                     "\u54c1\u540d\nTên Hàng", "\u5de5\u5e8f\nCông Đoạn", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTổng TG", "\u505c\u6a5f(\u5206)\nTG Dừng",
-                    "\u505c\u6a5f\u539f\u56e0\nLý Do Dừng", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMục Tiêu", "\u6295\u5165\u6578\nSL Nhập",
+                    "\u505c\u6a5f\u539f\u56e0\nLý Do Dừng", "\u505c\u6a5f\u6642\u9593\nThời Gian", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMục Tiêu", "\u6295\u5165\u6578\nSL Nhập",
                     "\u826f\u54c1\u6578\nSL Đạt", "\u4e0d\u826f\u6578\nSL Lỗi",
                     "\u4e0d\u826f\u6578\nSL Lỗi\n(\u5167\u88fd)", "\u4e0d\u826f\u6578\nSL Lỗi\n(\u5916\u88fd)", "Lotno",
                     "\u8cac\u4efb\nTrách Nhiệm", "\u6263\u9ede\u6578\n% Trừ", "\u751f\u7522\u6548\u7387\nHiệu Suất", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nĐánh Giá", "\u7c3d\u540d"
@@ -76,7 +76,7 @@ public class ProductionExportService {
             int rowIndex = 1;
             for (ProductionReportResponse report : reports) {
                 Row row = sheet.createRow(rowIndex++);
-                row.setHeightInPoints(Math.max(22, lotLineCount(report) * 22));
+                row.setHeightInPoints(Math.max(22, Math.max(lotLineCount(report), downtimeLineCount(report)) * 22));
 
                 setValue(row.createCell(0), report.reportDate(), dateStyle);
                 setValue(row.createCell(1), report.lineCode(), textStyle);
@@ -92,14 +92,15 @@ public class ProductionExportService {
                 setValue(row.createCell(11), report.totalOperatingMinutes(), intStyle);
                 setValue(row.createCell(12), report.downtimeMinutes(), intStyle);
                 setValue(row.createCell(13), formatDowntimeReasons(report), multilineStyle);
-                setValue(row.createCell(14), report.shiftStandardTimeMinutes(), intStyle);
-                setValue(row.createCell(15), report.dailyTargetQuantity(), decimalStyle);
-                setValue(row.createCell(16), formatLotInputQuantities(report), multilineStyle);
-                setValue(row.createCell(17), formatLotGoodQuantities(report), multilineStyle);
-                setValue(row.createCell(18), formatLotDefects(report), multilineStyle);
-                setValue(row.createCell(19), formatLotInternalDefects(report), multilineStyle);
-                setValue(row.createCell(20), formatLotExternalDefects(report), multilineStyle);
-                setValue(row.createCell(21), formatLotNos(report), multilineStyle);
+                setValue(row.createCell(14), formatDowntimeMinutes(report), multilineStyle);
+                setValue(row.createCell(15), report.shiftStandardTimeMinutes(), intStyle);
+                setValue(row.createCell(16), report.dailyTargetQuantity(), decimalStyle);
+                setValue(row.createCell(17), formatLotInputQuantities(report), multilineStyle);
+                setValue(row.createCell(18), formatLotGoodQuantities(report), multilineStyle);
+                setValue(row.createCell(19), formatLotDefects(report), multilineStyle);
+                setValue(row.createCell(20), formatLotInternalDefects(report), multilineStyle);
+                setValue(row.createCell(21), formatLotExternalDefects(report), multilineStyle);
+                setValue(row.createCell(22), formatLotNos(report), multilineStyle);
                 ProductionCalculationResponse fallback = null;
                 if (report.responsibility() == null
                         || report.deductionPercent() == null
@@ -107,15 +108,15 @@ public class ProductionExportService {
                         || report.availabilityRate() == null) {
                     fallback = calculateFallback(report);
                 }
-                setValue(row.createCell(22), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
-                setValue(row.createCell(23), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
-                setValue(row.createCell(24), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
-                setValue(row.createCell(25), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
-                setValue(row.createCell(26), report.performanceRate(), percentStyle);
-                setValue(row.createCell(27), report.qualityRate(), percentStyle);
-                setValue(row.createCell(28), report.oee(), percentStyle);
-                setValue(row.createCell(29), report.evaluationLabel(), textStyle);
-                row.createCell(30).setCellValue("");
+                setValue(row.createCell(23), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
+                setValue(row.createCell(24), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
+                setValue(row.createCell(25), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
+                setValue(row.createCell(26), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
+                setValue(row.createCell(27), report.performanceRate(), percentStyle);
+                setValue(row.createCell(28), report.qualityRate(), percentStyle);
+                setValue(row.createCell(29), report.oee(), percentStyle);
+                setValue(row.createCell(30), report.evaluationLabel(), textStyle);
+                row.createCell(31).setCellValue("");
             }
 
             for (int i = 0; i < headers.length; i++) {
@@ -155,6 +156,10 @@ public class ProductionExportService {
 
     private int lotLineCount(ProductionReportResponse report) {
         return Math.max(effectiveLots(report).size(), 1);
+    }
+
+    private int downtimeLineCount(ProductionReportResponse report) {
+        return Math.max(effectiveDowntimes(report).size(), 1);
     }
 
     private List<ProductionReportLotDto> effectiveLots(ProductionReportResponse report) {
@@ -226,12 +231,22 @@ public class ProductionExportService {
         if (report.downtimeReason() == null || report.downtimeReason().isBlank()) {
             return java.util.Collections.emptyList();
         }
-        return List.of(new ProductionReportDowntimeDto(
-                null,
-                null,
-                report.downtimeReason(),
-                report.downtimeMinutes()
-        ));
+        List<String> reasons = splitTextValues(report.downtimeReason());
+        if (reasons.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return java.util.stream.IntStream.range(0, reasons.size())
+                .mapToObj(index -> {
+                    String reasonText = reasons.get(index);
+                    Integer minutes = extractDowntimeMinutes(reasonText);
+                    return new ProductionReportDowntimeDto(
+                            null,
+                            null,
+                            stripDowntimeMinutes(reasonText),
+                            minutes != null ? minutes : (index == 0 ? report.downtimeMinutes() : 0)
+                    );
+                })
+                .toList();
     }
 
     private String formatDowntimeReasons(ProductionReportResponse report) {
@@ -240,14 +255,52 @@ public class ProductionExportService {
             return report.downtimeReason();
         }
         return downtimes.stream()
-                .map(item -> formatDowntimeReason(item, report.downtimeMinutes()))
+                .map(item -> item.reason() == null || item.reason().isBlank() ? "-" : item.reason())
                 .collect(java.util.stream.Collectors.joining("\n"));
     }
 
-    private String formatDowntimeReason(ProductionReportDowntimeDto item, Integer fallbackMinutes) {
-        String reason = item.reason() == null || item.reason().isBlank() ? "-" : item.reason();
-        Integer minutes = item.minutes() != null ? item.minutes() : fallbackMinutes;
-        return minutes != null && minutes > 0 ? reason + " - " + minutes : reason;
+    private String formatDowntimeMinutes(ProductionReportResponse report) {
+        List<ProductionReportDowntimeDto> downtimes = effectiveDowntimes(report);
+        if (downtimes.isEmpty()) {
+            return null;
+        }
+        return downtimes.stream()
+                .map(item -> item.minutes() != null && item.minutes() > 0 ? String.valueOf(item.minutes()) : "-")
+                .collect(java.util.stream.Collectors.joining("\n"));
+    }
+
+    private List<String> splitTextValues(String text) {
+        if (text == null || text.isBlank()) {
+            return java.util.Collections.emptyList();
+        }
+        return java.util.Arrays.stream(text.split("[\\r\\n]+|\\s*[;；]\\s*"))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .toList();
+    }
+
+    private Integer extractDowntimeMinutes(String reasonText) {
+        if (reasonText == null) return null;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\s+-\\s+(\\d+)\\s*$").matcher(reasonText);
+        return matcher.find() ? parseIntegerText(matcher.group(1)) : null;
+    }
+
+    private String stripDowntimeMinutes(String reasonText) {
+        if (reasonText == null) return null;
+        return reasonText.replaceFirst("\\s+-\\s+\\d+\\s*$", "").trim();
+    }
+
+    private Integer parseIntegerText(String text) {
+        if (text == null) return null;
+        try {
+            return Integer.parseInt(text.replaceAll("[, ]", ""));
+        } catch (Exception ignored) {
+            try {
+                return (int) Double.parseDouble(text.replaceAll("[, ]", ""));
+            } catch (Exception ex) {
+                return null;
+            }
+        }
     }
 
     private ProductionCalculationResponse calculateFallback(ProductionReportResponse report) {

@@ -61,7 +61,14 @@
         <el-table-column :label="t('productionHistory.table.downtimeReason')" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="history-multiline-cell">
-              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="history-multiline-row">{{ line }}</div>
+              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.reason }}</div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('productionHistory.table.downtimeMinutes')" width="110" align="center">
+          <template #default="{ row }">
+            <div class="history-multiline-cell">
+              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.minutes }}</div>
             </div>
           </template>
         </el-table-column>
@@ -231,16 +238,28 @@ function downtimeDisplayRows(row) {
   if (Array.isArray(row.downtimes) && row.downtimes.length) {
     return row.downtimes
       .map(item => formatDowntimeDisplay(item.reason, item.minutes))
-      .filter(Boolean)
+      .filter(item => item.reason || item.minutes)
   }
   const reasons = splitDowntimeReasons(row.downtimeReason)
-  return reasons.length ? reasons : ['-']
+  return reasons.length ? reasons.map(item => parseDowntimeDisplay(item)) : [{ reason: '-', minutes: '-' }]
 }
 
 function formatDowntimeDisplay(reason, minutes) {
   const reasonText = String(reason || '').trim() || '-'
   const minuteValue = Number(minutes || 0)
-  return minuteValue > 0 ? `${reasonText} - ${minuteValue}` : reasonText
+  return {
+    reason: reasonText,
+    minutes: minuteValue > 0 ? formatNumber(minuteValue) : '-',
+  }
+}
+
+function parseDowntimeDisplay(value) {
+  const text = String(value || '').trim()
+  const match = text.match(/^(.*?)(?:\s+-\s+(\d+))?$/)
+  return {
+    reason: match?.[1]?.trim() || '-',
+    minutes: match?.[2] ? formatNumber(match[2]) : '-',
+  }
 }
 
 function distributeQuantity(total, count, index) {
