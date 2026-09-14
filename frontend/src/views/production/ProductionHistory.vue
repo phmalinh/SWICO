@@ -109,6 +109,14 @@
         <el-table-column :label="t('productionHistory.table.deductionPercent')" width="90" align="center">
           <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
         </el-table-column>
+        <el-table-column :label="t('productionHistory.table.productionEfficiency')" width="110" align="center">
+          <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('productionHistory.table.rates')" width="130" align="center">
+          <template #default="{ row }">
+            <span class="text-xs font-bold">{{ rate(row.availabilityRate) }}/{{ rate(row.performanceRate) }}/{{ rate(row.qualityRate) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="t('productionHistory.table.oee')" width="110" align="center">
           <template #default="{ row }">
             <span class="rounded-full px-2.5 py-1 text-sm font-black" :class="oeeClass(row.oee)">
@@ -212,8 +220,12 @@ function formatTime(iso) {
 }
 
 function formatPercent(value) {
+  return `${rate(value)}%`
+}
+
+function rate(value) {
   const percent = Number(value || 0) * 100
-  return `${Number(percent.toFixed(2))}%`
+  return Number(percent.toFixed(2)).toString()
 }
 
 function formatNumber(value) {
