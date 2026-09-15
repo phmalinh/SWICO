@@ -3,23 +3,26 @@ package com.swico.swico.service;
 import com.swico.swico.config.AppClock;
 import com.swico.swico.dto.ProductionCalculationRequest;
 import com.swico.swico.dto.ProductionCalculationResponse;
+import com.swico.swico.dto.ProductionReportDowntimeDto;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.Normalizer;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class ProductionFormulaService {
 
-    private static final String SAME_MACHINE_CHANGEOVER_REASON = "chuyển mã hàng gia công cùng máy";
+    private static final String SAME_MACHINE_CHANGEOVER_KEYWORD = "chuyen ma";
 
     private static final Map<String, Integer> SHIFT_MINUTES = Map.of(
             "白班 06:00-14:00 (Ca Ngày)", 440,
             "中班 14:00-22:00 (Ca Chiều)", 440,
             "夜班 22:00-06:00 (Ca Đêm)", 425,
-            "全天1 06:00-18:00", 670,
+            "全天1 06:00-18:00", 660,
             "全天2 18:00-06:00", 635
     );
 
@@ -49,13 +52,12 @@ public class ProductionFormulaService {
         BigDecimal qualityRate = null;
         BigDecimal oee = null;
 
-        if (isSameMachineChangeover(request.downtimeReason())) {
-            availabilityRate = BigDecimal.ONE.setScale(4, RoundingMode.HALF_UP);
-        } else if (downtimeMinutes != null && shiftMinutes != null && shiftMinutes > 0) {
-            availabilityRate = BigDecimal.valueOf(Math.max(shiftMinutes - downtimeMinutes, 0))
+        Integer availabilityDowntimeMinutes = availabilityDowntimeMinutes(request);
+        if (availabilityDowntimeMinutes != null && shiftMinutes != null && shiftMinutes > 0) {
+            availabilityRate = BigDecimal.valueOf(Math.max(shiftMinutes - availabilityDowntimeMinutes, 0))
                     .divide(BigDecimal.valueOf(shiftMinutes), 4, RoundingMode.HALF_UP);
-        } else if (operatingMinutes != null && operatingMinutes > 0 && downtimeMinutes != null) {
-            availabilityRate = BigDecimal.valueOf(Math.max(operatingMinutes - downtimeMinutes, 0))
+        } else if (operatingMinutes != null && operatingMinutes > 0 && availabilityDowntimeMinutes != null) {
+            availabilityRate = BigDecimal.valueOf(Math.max(operatingMinutes - availabilityDowntimeMinutes, 0))
                     .divide(BigDecimal.valueOf(operatingMinutes), 4, RoundingMode.HALF_UP);
         }
 
@@ -126,9 +128,43 @@ public class ProductionFormulaService {
         return SHIFT_MINUTES.get(shiftName);
     }
 
+    private Integer availabilityDowntimeMinutes(ProductionCalculationRequest request) {
+        List<ProductionReportDowntimeDto> downtimeRows = request.downtimeRows();
+        if (downtimeRows != null && !downtimeRows.isEmpty()) {
+            return downtimeRows.stream()
+                    .filter(row -> row != null && !isSameMachineChangeover(row.reason()))
+                    .map(ProductionReportDowntimeDto::minutes)
+                    .mapToInt(this::number)
+                    .sum();
+        }
+
+        Integer downtimeMinutes = request.downtimeMinutes();
+        if (downtimeMinutes == null) {
+            return null;
+        }
+        if (isSameMachineChangeover(request.downtimeReason())) {
+            return 0;
+        }
+        return downtimeMinutes;
+    }
+
+    private int number(Integer value) {
+        return value != null ? Math.max(value, 0) : 0;
+    }
+
     private boolean isSameMachineChangeover(String downtimeReason) {
-        return downtimeReason != null
-                && downtimeReason.toLowerCase().contains(SAME_MACHINE_CHANGEOVER_REASON);
+        return normalizeText(downtimeReason).contains(SAME_MACHINE_CHANGEOVER_KEYWORD);
+    }
+
+    private String normalizeText(String text) {
+        if (text == null) {
+            return "";
+        }
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase()
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     public String evaluationLabel(BigDecimal oee) {

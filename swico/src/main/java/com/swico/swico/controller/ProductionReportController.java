@@ -7,7 +7,6 @@ import com.swico.swico.dto.ProductionCalculationResponse;
 import com.swico.swico.dto.ProductionReportResponse;
 import com.swico.swico.service.AuditLogService;
 import com.swico.swico.service.ProductionExportService;
-import com.swico.swico.service.ProductionFormulaService;
 import com.swico.swico.service.ProductionReportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,16 +30,13 @@ public class ProductionReportController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductionReportController.class);
 
-    private final ProductionFormulaService formulaService;
     private final ProductionReportService reportService;
     private final ProductionExportService exportService;
     private final AuditLogService auditLogService;
 
-    public ProductionReportController(ProductionFormulaService formulaService,
-                                      ProductionReportService reportService,
+    public ProductionReportController(ProductionReportService reportService,
                                       ProductionExportService exportService,
                                       AuditLogService auditLogService) {
-        this.formulaService = formulaService;
         this.reportService = reportService;
         this.exportService = exportService;
         this.auditLogService = auditLogService;
@@ -48,8 +44,7 @@ public class ProductionReportController {
 
     @PostMapping("/calculate")
     public ProductionCalculationResponse calculate(@Valid @RequestBody ProductionCalculationRequest request) {
-        Integer shiftMinutes = formulaService.resolveShiftMinutes(request.shiftName());
-        return formulaService.calculate(request, shiftMinutes);
+        return reportService.calculate(request);
     }
 
     @PostMapping

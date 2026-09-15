@@ -85,21 +85,13 @@ public class ProductionReportService {
     @Transactional
     public ProductionReportResponse createReport(ProductionCalculationRequest request, String createdBy) {
         ProductionCalculationRequest effectiveRequest = withEffectiveCycleTime(request);
-        String normalizedShiftName = request.shiftName() != null ? request.shiftName().trim() : null;
-        Integer shiftMinutes = formulaService.resolveShiftMinutes(normalizedShiftName);
-        if (shiftMinutes == null) {
-            Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
-                    .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveRequest.totalOperatingMinutes()));
-            shiftMinutes = shift.getStandardTimeMinutes();
-        }
-        final Integer effectiveShiftMinutes = shiftMinutes;
+        Shift shift = getOrCreateShift(effectiveRequest);
+        final Integer effectiveShiftMinutes = shift.getStandardTimeMinutes();
 
         Line line = lineRepository.findByLineCode(effectiveRequest.lineCode())
                 .orElseGet(() -> masterDataService.upsertLine(effectiveRequest.lineCode(), effectiveRequest.lineCode()));
         Product product = productRepository.findByPartNumber(effectiveRequest.partNumber())
                 .orElseGet(() -> masterDataService.upsertProduct(effectiveRequest.partNumber(), effectiveRequest.partName(), null, effectiveRequest.cycleTimeSeconds()));
-        Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
-            .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
         DailyProductionReport entity = new DailyProductionReport();
         entity.setReportDate(effectiveRequest.reportDate() != null ? effectiveRequest.reportDate() : AppClock.today());
@@ -288,6 +280,36 @@ public class ProductionReportService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public ProductionCalculationResponse calculate(ProductionCalculationRequest request) {
+        ProductionCalculationRequest effectiveRequest = withEffectiveCycleTime(request);
+        Integer shiftMinutes = resolveShiftMinutes(effectiveRequest);
+        return formulaService.calculate(effectiveRequest, shiftMinutes);
+    }
+
+    private Shift getOrCreateShift(ProductionCalculationRequest request) {
+        String normalizedShiftName = normalizeShiftName(request.shiftName());
+        return shiftRepository.findByShiftName(normalizedShiftName)
+                .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, resolveShiftMinutes(request)));
+    }
+
+    private Integer resolveShiftMinutes(ProductionCalculationRequest request) {
+        String normalizedShiftName = normalizeShiftName(request.shiftName());
+        return shiftRepository.findByShiftName(normalizedShiftName)
+                .map(Shift::getStandardTimeMinutes)
+                .orElseGet(() -> {
+                    if (request.shiftStandardTimeMinutes() != null) {
+                        return request.shiftStandardTimeMinutes();
+                    }
+                    Integer formulaMinutes = formulaService.resolveShiftMinutes(normalizedShiftName);
+                    return formulaMinutes != null ? formulaMinutes : request.totalOperatingMinutes();
+                });
+    }
+
+    private String normalizeShiftName(String shiftName) {
+        return shiftName != null ? shiftName.trim() : null;
+    }
+
     private ProductionCalculationRequest withEffectiveCycleTime(ProductionCalculationRequest request) {
         BigDecimal cycleTimeSeconds = resolveProcessCycleTime(request.processIds());
         if (cycleTimeSeconds == null || cycleTimeSeconds.compareTo(BigDecimal.ZERO) <= 0) {
@@ -398,21 +420,13 @@ public class ProductionReportService {
         DailyProductionReport entity = reportRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Report not found: " + id));
 
-        String normalizedShiftName = effectiveRequest.shiftName() != null ? effectiveRequest.shiftName().trim() : null;
-        Integer shiftMinutes = formulaService.resolveShiftMinutes(normalizedShiftName);
-        if (shiftMinutes == null) {
-            Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
-                .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveRequest.totalOperatingMinutes()));
-            shiftMinutes = shift.getStandardTimeMinutes();
-        }
-        final Integer effectiveShiftMinutes = shiftMinutes;
+        Shift shift = getOrCreateShift(effectiveRequest);
+        final Integer effectiveShiftMinutes = shift.getStandardTimeMinutes();
 
         Line line = lineRepository.findByLineCode(effectiveRequest.lineCode())
                 .orElseGet(() -> masterDataService.upsertLine(effectiveRequest.lineCode(), effectiveRequest.lineCode()));
         Product product = productRepository.findByPartNumber(effectiveRequest.partNumber())
                 .orElseGet(() -> masterDataService.upsertProduct(effectiveRequest.partNumber(), effectiveRequest.partName(), null, effectiveRequest.cycleTimeSeconds()));
-        Shift shift = shiftRepository.findByShiftName(normalizedShiftName)
-            .orElseGet(() -> masterDataService.upsertShift(normalizedShiftName, effectiveShiftMinutes));
 
         entity.setReportDate(effectiveRequest.reportDate() != null ? effectiveRequest.reportDate() : AppClock.today());
         entity.setLine(line);
