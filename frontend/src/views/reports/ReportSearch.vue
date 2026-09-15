@@ -60,6 +60,12 @@
         <el-table-column :label="t('reports.search.table.processIds')" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
         </el-table-column>
+        <el-table-column :label="t('reports.search.table.dailyTargetDayQuantity')" width="112" align="center">
+          <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.dailyTargetQuantity')" width="92" align="center">
+          <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity) }}</template>
+        </el-table-column>
         <el-table-column :label="t('reports.search.table.oee')" width="88" align="center">
           <template #default="{ row }">
             <span class="font-black" :class="oeeTextClass(row.oee)">{{ formatPercent(row.oee) }}</span>
@@ -68,6 +74,11 @@
         <el-table-column :label="t('reports.search.table.productionEfficiency')" width="90" align="center">
           <template #default="{ row }">
             {{ rate(row.productionEfficiency) }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.dailyTargetEfficiency')" width="120" align="center">
+          <template #default="{ row }">
+            {{ formatPercent(row.dailyTargetEfficiency) }}
           </template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.rates')" width="132" align="center">
@@ -180,6 +191,10 @@ function rate(value) {
 function formatPercentNumber(value) {
   const percent = Number(value || 0) * 100
   return Number(percent.toFixed(2)).toString()
+}
+
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString()
 }
 
 function oeeTextClass(oee) {

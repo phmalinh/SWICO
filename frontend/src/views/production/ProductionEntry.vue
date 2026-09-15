@@ -61,7 +61,7 @@
               </el-select>
             </el-form-item>
           </div>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             <el-form-item :label="t('productionEntry.shiftTime')" class="!mb-0">
               <el-input 
                 :model-value="formatNumber(selectedShiftMinutes, 0)" 
@@ -71,7 +71,16 @@
               />
             </el-form-item>
 
-            <el-form-item :label="t('productionEntry.dailyTarget')" class="!mb-0">
+            <el-form-item :label="t('productionEntry.dailyTargetDay')" class="!mb-0">
+              <el-input
+                :model-value="formatNumber(dailyTargetDayPreview, 0)"
+                size="default"
+                readonly
+                class="font-bold text-indigo-700"
+              />
+            </el-form-item>
+
+            <el-form-item :label="t('productionEntry.actualTarget')" class="!mb-0">
               <el-input 
                 :model-value="formatNumber(dailyTargetPreview, 0)" 
                 size="default" 
@@ -516,9 +525,17 @@
                 </template>
               </el-table-column>
               <el-table-column prop="shiftStandardTimeMinutes" :label="t('productionEntry.table.shiftStandardTimeMinutes')" width="70" align="center" />
-              <el-table-column prop="dailyTargetQuantity" :label="t('productionEntry.table.dailyTargetQuantity')" width="70" align="center" />
+              <el-table-column :label="t('productionEntry.table.dailyTargetDayQuantity')" width="84" align="center">
+                <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity, 0) }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.dailyTargetQuantity')" width="76" align="center">
+                <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity, 0) }}</template>
+              </el-table-column>
               <el-table-column :label="t('productionEntry.table.productionEfficiency')" width="86" align="center">
                 <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
+              </el-table-column>
+              <el-table-column :label="t('productionEntry.table.dailyTargetEfficiency')" width="98" align="center">
+                <template #default="{ row }">{{ formatPercent(row.dailyTargetEfficiency) }}</template>
               </el-table-column>
               <el-table-column :label="t('productionEntry.table.availabilityRate')" width="86" align="center">
                 <template #default="{ row }">{{ formatPercent(row.availabilityRate) }}</template>
@@ -1160,6 +1177,13 @@ const dailyTargetPreview = computed(() => {
   return (actualMinutes * 60) / cycleTime
 })
 
+const dailyTargetDayPreview = computed(() => {
+  const shiftMinutes = Number(selectedShiftMinutes.value || 0)
+  const cycleTime = Number(form.value.cycleTime || 0)
+  if (shiftMinutes <= 0 || cycleTime <= 0) return null
+  return (shiftMinutes * 60) / cycleTime
+})
+
 const isOperator = computed(() => currentUser.value?.role === 'ROLE_OPERATOR')
 
 async function loadMyReports(params = {}) {
@@ -1798,6 +1822,7 @@ const oeeCards = computed(() => {
   return [
     { key: 'oee', label: 'OEE', value: formatPercent(Number(r.oee || 0)), textClass: oeeColor.text, cardClass: 'border-slate-200 bg-slate-50' },
     { key: 'prod-eff', label: t('productionEntry.productionEfficiency'), value: formatPercent(Number(r.productionEfficiency || 0)), textClass: 'text-amber-600', cardClass: 'border-amber-100 bg-amber-50' },
+    { key: 'daily-target-eff', label: t('productionEntry.dailyTargetEfficiency'), value: formatPercent(Number(r.dailyTargetEfficiency || 0)), textClass: 'text-cyan-600', cardClass: 'border-cyan-100 bg-cyan-50' },
     { key: 'a', label: t('reports.dashboard.sections.availability'), value: formatPercent(Number(r.availabilityRate || 0)), textClass: 'text-sky-600', cardClass: 'border-sky-100 bg-sky-50' },
     { key: 'p', label: t('reports.dashboard.sections.performance'), value: formatPercent(Number(r.performanceRate || 0)), textClass: 'text-indigo-600', cardClass: 'border-indigo-100 bg-indigo-50' },
     { key: 'q', label: t('reports.dashboard.sections.quality'), value: formatPercent(Number(r.qualityRate || 0)), textClass: 'text-emerald-600', cardClass: 'border-emerald-100 bg-emerald-50' },

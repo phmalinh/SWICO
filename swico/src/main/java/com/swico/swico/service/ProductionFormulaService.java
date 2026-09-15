@@ -38,6 +38,7 @@ public class ProductionFormulaService {
         Integer shiftMinutes = resolvedShiftMinutes != null ? resolvedShiftMinutes : resolveShiftMinutes(request.shiftName());
 
         BigDecimal dailyTarget = null;
+        BigDecimal dailyTargetDay = null;
         if (operatingMinutes != null && cycleTimeSeconds != null && cycleTimeSeconds.compareTo(BigDecimal.ZERO) > 0) {
             if (operatingMinutes > 0) {
                 dailyTarget = BigDecimal.valueOf(operatingMinutes)
@@ -45,8 +46,14 @@ public class ProductionFormulaService {
                         .divide(cycleTimeSeconds, 4, RoundingMode.HALF_UP);
             }
         }
+        if (shiftMinutes != null && shiftMinutes > 0 && cycleTimeSeconds != null && cycleTimeSeconds.compareTo(BigDecimal.ZERO) > 0) {
+            dailyTargetDay = BigDecimal.valueOf(shiftMinutes)
+                    .multiply(BigDecimal.valueOf(60))
+                    .divide(cycleTimeSeconds, 4, RoundingMode.HALF_UP);
+        }
 
         BigDecimal productionEfficiency = null;
+        BigDecimal dailyTargetEfficiency = null;
         BigDecimal availabilityRate = null;
         BigDecimal performanceRate = null;
         BigDecimal qualityRate = null;
@@ -64,6 +71,11 @@ public class ProductionFormulaService {
         if (dailyTarget != null && dailyTarget.compareTo(BigDecimal.ZERO) > 0) {
             performanceRate = BigDecimal.valueOf(inputQuantity)
                     .divide(dailyTarget, 4, RoundingMode.HALF_UP);
+        }
+
+        if (dailyTargetDay != null && dailyTargetDay.compareTo(BigDecimal.ZERO) > 0 && inputQuantity != null) {
+            dailyTargetEfficiency = BigDecimal.valueOf(inputQuantity)
+                    .divide(dailyTargetDay, 4, RoundingMode.HALF_UP);
         }
 
         if (inputQuantity != null && inputQuantity > 0) {
@@ -111,7 +123,9 @@ public class ProductionFormulaService {
                 defectQuantity,
                 shiftMinutes,
                 dailyTarget,
+                dailyTargetDay,
                 productionEfficiency,
+                dailyTargetEfficiency,
                 availabilityRate,
                 performanceRate,
                 qualityRate,

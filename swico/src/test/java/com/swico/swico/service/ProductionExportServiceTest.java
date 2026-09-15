@@ -41,12 +41,17 @@ class ProductionExportServiceTest {
             Row row = sheet.getRow(1);
 
             assertEquals("\u505c\u6a5f\u6642\u9593\nThời Gian", sheet.getRow(0).getCell(14).getStringCellValue());
-            assertEquals("45\n23\n30", row.getCell(17).getStringCellValue());
-            assertEquals("44\n21\n28", row.getCell(18).getStringCellValue());
-            assertEquals("1\n2\n2", row.getCell(19).getStringCellValue());
-            assertEquals("1\n2\n0", row.getCell(20).getStringCellValue());
-            assertEquals("0\n0\n2", row.getCell(21).getStringCellValue());
-            assertEquals("A\nB\nC", row.getCell(22).getStringCellValue());
+            assertEquals("\u6bcf\u65e5\u76ee\u6a19\nMục tiêu ngày", sheet.getRow(0).getCell(16).getStringCellValue());
+            assertEquals("\u5be6\u969b\u76ee\u6a19\nMục Tiêu", sheet.getRow(0).getCell(17).getStringCellValue());
+            assertEquals("\u6bcf\u65e5\u76ee\u6a19\u6548\u7387\nHiệu suất mục tiêu ngày", sheet.getRow(0).getCell(27).getStringCellValue());
+            assertEquals("P2*60/K2", row.getCell(16).getCellFormula());
+            assertEquals("S2/Q2", row.getCell(27).getCellFormula());
+            assertEquals("45\n23\n30", row.getCell(18).getStringCellValue());
+            assertEquals("44\n21\n28", row.getCell(19).getStringCellValue());
+            assertEquals("1\n2\n2", row.getCell(20).getStringCellValue());
+            assertEquals("1\n2\n0", row.getCell(21).getStringCellValue());
+            assertEquals("0\n0\n2", row.getCell(22).getStringCellValue());
+            assertEquals("A\nB\nC", row.getCell(23).getStringCellValue());
             assertEquals(66.0, row.getHeightInPoints());
         }
     }
@@ -78,7 +83,9 @@ class ProductionExportServiceTest {
                 List.of(1L, 1L),
                 480,
                 new BigDecimal("7620"),
+                new BigDecimal("28800.00"),
                 BigDecimal.ONE,
+                new BigDecimal("0.0034"),
                 BigDecimal.ONE,
                 BigDecimal.ONE,
                 BigDecimal.ONE,

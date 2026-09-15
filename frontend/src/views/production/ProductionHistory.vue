@@ -72,7 +72,10 @@
             </div>
           </template>
         </el-table-column>
-            <el-table-column :label="t('productionHistory.table.dailyTargetQuantity')" width="100" align="center">
+        <el-table-column :label="t('productionHistory.table.dailyTargetDayQuantity')" width="140" align="center">
+          <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('productionHistory.table.dailyTargetQuantity')" width="100" align="center">
           <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity) }}</template>
         </el-table-column>
         <el-table-column :label="t('productionHistory.table.inputGoodDefect')" width="130" align="center">
@@ -112,7 +115,10 @@
         <el-table-column :label="t('productionHistory.table.productionEfficiency')" width="110" align="center">
           <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
         </el-table-column>
-        <el-table-column :label="t('productionHistory.table.rates')" width="130" align="center">
+        <el-table-column :label="t('productionHistory.table.dailyTargetEfficiency')" width="160" align="center">
+          <template #default="{ row }">{{ formatPercent(row.dailyTargetEfficiency) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('productionHistory.table.rates')" width="160" align="center">
           <template #default="{ row }">
             <span class="text-xs font-bold">{{ rate(row.availabilityRate) }}/{{ rate(row.performanceRate) }}/{{ rate(row.qualityRate) }}</span>
           </template>

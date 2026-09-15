@@ -108,7 +108,12 @@
           <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
         </el-table-column>
         <el-table-column prop="shiftStandardTimeMinutes" :label="t('reports.search.table.shiftStandardTimeMinutes')" width="80" align="center" />
-        <el-table-column prop="dailyTargetQuantity" :label="t('reports.search.table.dailyTargetQuantity')" width="80" align="center" />
+        <el-table-column :label="t('reports.search.table.dailyTargetDayQuantity')" width="110" align="center">
+          <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.dailyTargetQuantity')" width="90" align="center">
+          <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity) }}</template>
+        </el-table-column>
         <el-table-column :label="t('reports.search.table.inputQuantity')" width="90" align="center">
           <template #default="{ row }">
             <div class="export-lot-cell">
@@ -153,6 +158,9 @@
         </el-table-column>
         <el-table-column :label="t('reports.search.table.productionEfficiency')" width="90" align="center">
           <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
+        </el-table-column>
+        <el-table-column :label="t('reports.search.table.dailyTargetEfficiency')" width="120" align="center">
+          <template #default="{ row }">{{ formatPercent(row.dailyTargetEfficiency) }}</template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.rates')" width="170" align="center">
           <template #default="{ row }">

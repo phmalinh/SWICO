@@ -68,8 +68,8 @@ class ProductionFormulaServiceTest {
         ProductionCalculationResponse response = service.calculate(
                 request(
                         "全天1 06:00-18:00",
-                        0,
-                        0,
+                        146,
+                        146,
                         0,
                         new BigDecimal("22"),
                         60,
@@ -85,6 +85,8 @@ class ProductionFormulaServiceTest {
         );
 
         assertEquals(660, response.shiftStandardTimeMinutes());
+        assertEquals(new BigDecimal("1800.0000"), response.dailyTargetDayQuantity());
+        assertEquals(new BigDecimal("0.0811"), response.dailyTargetEfficiency());
         assertEquals(new BigDecimal("0.4848"), response.availabilityRate());
     }
 
@@ -126,6 +128,8 @@ class ProductionFormulaServiceTest {
                 null,
                 null,
                 downtimeReason,
+                null,
+                null,
                 null,
                 null,
                 null,

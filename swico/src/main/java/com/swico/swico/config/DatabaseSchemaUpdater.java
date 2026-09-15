@@ -29,6 +29,8 @@ public class DatabaseSchemaUpdater {
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ALTER COLUMN deduction_percent TYPE numeric(6,4)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS responsible_leader varchar(100)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS lot_no varchar(100)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS daily_target_quantity numeric(10,2)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS daily_target_efficiency numeric(5,4)");
         jdbcTemplate.execute("""
                 CREATE TABLE IF NOT EXISTS daily_production_report_lots (
                     id bigserial PRIMARY KEY,

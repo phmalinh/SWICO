@@ -342,7 +342,9 @@ public class ProductionReportService {
                 request.deductionPercent(),
                 request.shiftStandardTimeMinutes(),
                 request.dailyTargetQuantity(),
+                request.dailyTargetDayQuantity(),
                 request.productionEfficiency(),
+                request.dailyTargetEfficiency(),
                 request.availabilityRate(),
                 request.performanceRate(),
                 request.qualityRate(),
@@ -543,7 +545,10 @@ public class ProductionReportService {
                     // optional calculated/override fields from import
                     parseInteger(getCell(row, headerIndex.getOrDefault("shiftStandardTimeMinutes", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("dailyTargetQuantity", -1))),
+                    // Formula-only fields are recalculated server-side to avoid stale Excel cached values.
+                    null,
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("productionEfficiency", -1))),
+                    null,
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("availabilityRate", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("performanceRate", -1))),
                     parseBigDecimal(getCell(row, headerIndex.getOrDefault("qualityRate", -1))),
@@ -631,25 +636,30 @@ public class ProductionReportService {
             indexMap.put("downtimeRowMinutes", 11 + baseOffset);
         }
         indexMap.put("shiftStandardTimeMinutes", 11 + baseOffset + downtimeOffset);
-        indexMap.put("dailyTargetQuantity", 12 + baseOffset + downtimeOffset);
-        indexMap.put("inputQuantity", 13 + baseOffset + downtimeOffset);
-        indexMap.put("goodQuantity", 14 + baseOffset + downtimeOffset);
+        String dailyTargetDayHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(12 + baseOffset + downtimeOffset)));
+        int dailyTargetDayOffset = isDailyTargetDayHeader(dailyTargetDayHeader) ? 1 : 0;
+        if (dailyTargetDayOffset > 0) {
+            indexMap.put("dailyTargetDayQuantity", 12 + baseOffset + downtimeOffset);
+        }
+        indexMap.put("dailyTargetQuantity", 12 + baseOffset + downtimeOffset + dailyTargetDayOffset);
+        indexMap.put("inputQuantity", 13 + baseOffset + downtimeOffset + dailyTargetDayOffset);
+        indexMap.put("goodQuantity", 14 + baseOffset + downtimeOffset + dailyTargetDayOffset);
 
-        int metricOffset = baseOffset + downtimeOffset;
+        int metricOffset = baseOffset + downtimeOffset + dailyTargetDayOffset;
         String defectOrInternalHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
-        boolean firstDefectColumnIsInternal = "internalDefectQuantity".equals(mapHeaderKey(defectOrInternalHeader));
+        boolean firstDefectColumnIsInternal = isInternalDefectHeader(defectOrInternalHeader);
         if (firstDefectColumnIsInternal) {
             indexMap.put("internalDefectQuantity", 15 + metricOffset);
             indexMap.put("externalDefectQuantity", 16 + metricOffset);
             metricOffset += 2;
         } else {
             indexMap.put("defectQuantity", 15 + metricOffset);
-            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + metricOffset)));
-            boolean hasDefectSplitColumns = "internalDefectQuantity".equals(mapHeaderKey(internalDefectHeader));
             metricOffset += 1;
+            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+            boolean hasDefectSplitColumns = isInternalDefectHeader(internalDefectHeader);
             if (hasDefectSplitColumns) {
-                indexMap.put("internalDefectQuantity", 16 + baseOffset + downtimeOffset);
-                indexMap.put("externalDefectQuantity", 17 + baseOffset + downtimeOffset);
+                indexMap.put("internalDefectQuantity", 15 + metricOffset);
+                indexMap.put("externalDefectQuantity", 16 + metricOffset);
                 metricOffset += 2;
             }
         }
@@ -671,11 +681,28 @@ public class ProductionReportService {
             metricOffset++;
         }
         indexMap.put("productionEfficiency", 15 + metricOffset);
-        indexMap.put("availabilityRate", 16 + metricOffset);
-        indexMap.put("performanceRate", 17 + metricOffset);
-        indexMap.put("qualityRate", 18 + metricOffset);
-        indexMap.put("oee", 19 + metricOffset);
-        indexMap.put("evaluationLabel", 20 + metricOffset);
+        String dailyTargetEfficiencyHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + metricOffset)));
+        int dailyTargetEfficiencyOffset = isDailyTargetEfficiencyHeader(dailyTargetEfficiencyHeader) ? 1 : 0;
+        if (dailyTargetEfficiencyOffset > 0) {
+            indexMap.put("dailyTargetEfficiency", 16 + metricOffset);
+        }
+        indexMap.put("availabilityRate", 16 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("performanceRate", 17 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("qualityRate", 18 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("oee", 19 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("evaluationLabel", 20 + metricOffset + dailyTargetEfficiencyOffset);
+    }
+
+    private boolean isDailyTargetDayHeader(String header) {
+        return header != null && (header.contains("每日目標") || header.contains("muc tieu ngay") || header.contains("daily target"));
+    }
+
+    private boolean isDailyTargetEfficiencyHeader(String header) {
+        return header != null && (header.contains("每日目標效率") || header.contains("hieu suat muc tieu ngay") || header.contains("daily target efficiency"));
+    }
+
+    private boolean isInternalDefectHeader(String header) {
+        return header != null && (header.contains("內製") || header.contains("内製") || header.contains("noi che") || header.contains("noi bo") || header.contains("internal"));
     }
 
     private Row findHeaderRow(Sheet sheet, int maxHeaderScanRows) {
@@ -784,7 +811,13 @@ public class ProductionReportService {
         if (header.contains("不良數") || header.contains("sl lỗi") || header.contains("defect") || header.contains("reject") || header.contains("bad")) {
             return "defectQuantity";
         }
-        if (header.contains("mục tiêu") || header.contains("每日目標") || header.contains("目標") || header.contains("daily target") || header.contains("target") || header.contains("target qty") || header.contains("target quantity") || header.contains("target amount") || header.contains("target value") || header.contains("muc tieu")) {
+        if (isDailyTargetEfficiencyHeader(header)) {
+            return "dailyTargetEfficiency";
+        }
+        if (isDailyTargetDayHeader(header)) {
+            return "dailyTargetDayQuantity";
+        }
+        if (header.contains("mục tiêu") || header.contains("實際目標") || header.contains("实际目标") || header.contains("目標") || header.contains("target") || header.contains("target qty") || header.contains("target quantity") || header.contains("target amount") || header.contains("target value") || header.contains("muc tieu")) {
             return "dailyTargetQuantity";
         }
         if (header.contains("hiệu suất") || header.contains("生產效率") || header.contains("productionEfficiency") || header.contains("efficiency") || header.contains("eff") || header.contains("productivity") || header.contains("efficiency rate") || header.contains("production rate") || header.contains("hieu suat")) {
@@ -1283,7 +1316,9 @@ public class ProductionReportService {
 
     private void applyCalculatedFields(DailyProductionReport entity, ProductionCalculationResponse calculated) {
         entity.setTargetQuantity(calculated.dailyTargetQuantity());
+        entity.setDailyTargetQuantity(calculated.dailyTargetDayQuantity());
         entity.setProductionEfficiency(calculated.productionEfficiency());
+        entity.setDailyTargetEfficiency(calculated.dailyTargetEfficiency());
         entity.setAvailabilityRate(calculated.availabilityRate());
         entity.setPerformanceRate(calculated.performanceRate());
         entity.setQualityRate(calculated.qualityRate());
@@ -1320,7 +1355,9 @@ public class ProductionReportService {
                 request.defectQuantity() != null ? request.defectQuantity() : calculated.defectQuantity(),
                 request.shiftStandardTimeMinutes() != null ? request.shiftStandardTimeMinutes() : calculated.shiftStandardTimeMinutes(),
                 request.dailyTargetQuantity() != null ? request.dailyTargetQuantity() : calculated.dailyTargetQuantity(),
+                calculated.dailyTargetDayQuantity(),
                 request.productionEfficiency() != null ? request.productionEfficiency() : calculated.productionEfficiency(),
+                calculated.dailyTargetEfficiency(),
                 request.availabilityRate() != null ? request.availabilityRate() : calculated.availabilityRate(),
                 request.performanceRate() != null ? request.performanceRate() : calculated.performanceRate(),
                 request.qualityRate() != null ? request.qualityRate() : calculated.qualityRate(),
@@ -1365,7 +1402,9 @@ public class ProductionReportService {
                 parseProcessIds(report.getProcessIds()),
                 shiftMinutes,
                 calculated != null ? calculated.dailyTargetQuantity() : report.getTargetQuantity(),
+                calculated != null ? calculated.dailyTargetDayQuantity() : report.getDailyTargetQuantity(),
                 calculated != null ? calculated.productionEfficiency() : report.getProductionEfficiency(),
+                calculated != null ? calculated.dailyTargetEfficiency() : report.getDailyTargetEfficiency(),
                 report.getAvailabilityRate(),
                 report.getPerformanceRate(),
                 report.getQualityRate(),

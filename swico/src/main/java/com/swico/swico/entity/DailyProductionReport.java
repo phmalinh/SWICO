@@ -80,8 +80,14 @@ public class DailyProductionReport {
     @Column(name = "target_quantity", precision = 10, scale = 2)
     private BigDecimal targetQuantity;
 
+    @Column(name = "daily_target_quantity", precision = 10, scale = 2)
+    private BigDecimal dailyTargetQuantity;
+
     @Column(name = "production_efficiency", precision = 5, scale = 4)
     private BigDecimal productionEfficiency;
+
+    @Column(name = "daily_target_efficiency", precision = 5, scale = 4)
+    private BigDecimal dailyTargetEfficiency;
 
     @Column(name = "availability_rate", precision = 5, scale = 4)
     private BigDecimal availabilityRate;
@@ -227,12 +233,28 @@ public class DailyProductionReport {
         this.targetQuantity = targetQuantity;
     }
 
+    public BigDecimal getDailyTargetQuantity() {
+        return dailyTargetQuantity;
+    }
+
+    public void setDailyTargetQuantity(BigDecimal dailyTargetQuantity) {
+        this.dailyTargetQuantity = dailyTargetQuantity;
+    }
+
     public BigDecimal getProductionEfficiency() {
         return productionEfficiency;
     }
 
     public void setProductionEfficiency(BigDecimal productionEfficiency) {
         this.productionEfficiency = productionEfficiency;
+    }
+
+    public BigDecimal getDailyTargetEfficiency() {
+        return dailyTargetEfficiency;
+    }
+
+    public void setDailyTargetEfficiency(BigDecimal dailyTargetEfficiency) {
+        this.dailyTargetEfficiency = dailyTargetEfficiency;
     }
 
     public BigDecimal getAvailabilityRate() {

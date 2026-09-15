@@ -196,6 +196,8 @@ public class ReferenceDataSeeder {
                 null,
                 null,
                 null,
+                null,
+                null,
                 null
         );
         ProductionCalculationResponse calculated = formulaService.calculate(request, shift.getStandardTimeMinutes());
@@ -212,6 +214,8 @@ public class ReferenceDataSeeder {
         report.setGoodQuantity(goodQuantity);
         report.setDefectQuantity(defectQuantity);
         report.setTargetQuantity(calculated.dailyTargetQuantity());
+        report.setDailyTargetQuantity(calculated.dailyTargetDayQuantity());
+        report.setDailyTargetEfficiency(calculated.dailyTargetEfficiency());
         report.setAvailabilityRate(calculated.availabilityRate());
         report.setPerformanceRate(calculated.performanceRate());
         report.setQualityRate(calculated.qualityRate());

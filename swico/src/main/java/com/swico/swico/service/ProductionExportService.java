@@ -19,6 +19,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
@@ -59,10 +60,10 @@ public class ProductionExportService {
                     "\u65e5\u671f\nNgày", "\u7dda\u5225\nChuyền", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMã Máy", "\u5ba2\u6236\nKhách hàng",
                     "\u4f5c\u54e1\nNhân Viên Thao Tác", "\u8ca0\u8cac\u5e79\u90e8\nCán Bộ Phụ Trách", "\u6599\u865f\nMã Hàng",
                     "\u54c1\u540d\nTên Hàng", "\u5de5\u5e8f\nCông Đoạn", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTổng TG", "\u505c\u6a5f(\u5206)\nTG Dừng",
-                    "\u505c\u6a5f\u539f\u56e0\nLý Do Dừng", "\u505c\u6a5f\u6642\u9593\nThời Gian", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMục Tiêu", "\u6295\u5165\u6578\nSL Nhập",
+                    "\u505c\u6a5f\u539f\u56e0\nLý Do Dừng", "\u505c\u6a5f\u6642\u9593\nThời Gian", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMục tiêu ngày", "\u5be6\u969b\u76ee\u6a19\nMục Tiêu", "\u6295\u5165\u6578\nSL Nhập",
                     "\u826f\u54c1\u6578\nSL Đạt", "\u4e0d\u826f\u6578\nSL Lỗi",
                     "\u4e0d\u826f\u6578\nSL Lỗi\n(\u5167\u88fd)", "\u4e0d\u826f\u6578\nSL Lỗi\n(\u5916\u88fd)", "Lotno",
-                    "\u8cac\u4efb\nTrách Nhiệm", "\u6263\u9ede\u6578\n% Trừ", "\u751f\u7522\u6548\u7387\nHiệu Suất", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nĐánh Giá", "\u7c3d\u540d"
+                    "\u8cac\u4efb\nTrách Nhiệm", "\u6263\u9ede\u6578\n% Trừ", "\u751f\u7522\u6548\u7387\nHiệu Suất", "\u6bcf\u65e5\u76ee\u6a19\u6548\u7387\nHiệu suất mục tiêu ngày", "\u7a3c\u52d5\u7387 A", "\u6027\u80fd\u7387 P", "\u826f\u54c1\u7387 Q", "OEE", "\u8a55\u50f9\nĐánh Giá", "\u7c3d\u540d"
             };
 
             Row header = sheet.createRow(0);
@@ -94,13 +95,14 @@ public class ProductionExportService {
                 setValue(row.createCell(13), formatDowntimeReasons(report), multilineStyle);
                 setValue(row.createCell(14), formatDowntimeMinutes(report), multilineStyle);
                 setValue(row.createCell(15), report.shiftStandardTimeMinutes(), intStyle);
-                setValue(row.createCell(16), report.dailyTargetQuantity(), decimalStyle);
-                setValue(row.createCell(17), formatLotInputQuantities(report), multilineStyle);
-                setValue(row.createCell(18), formatLotGoodQuantities(report), multilineStyle);
-                setValue(row.createCell(19), formatLotDefects(report), multilineStyle);
-                setValue(row.createCell(20), formatLotInternalDefects(report), multilineStyle);
-                setValue(row.createCell(21), formatLotExternalDefects(report), multilineStyle);
-                setValue(row.createCell(22), formatLotNos(report), multilineStyle);
+                setFormula(row.createCell(16), dailyTargetFormula(row), decimalStyle);
+                setValue(row.createCell(17), report.dailyTargetQuantity(), decimalStyle);
+                setValue(row.createCell(18), formatLotInputQuantities(report), multilineStyle);
+                setValue(row.createCell(19), formatLotGoodQuantities(report), multilineStyle);
+                setValue(row.createCell(20), formatLotDefects(report), multilineStyle);
+                setValue(row.createCell(21), formatLotInternalDefects(report), multilineStyle);
+                setValue(row.createCell(22), formatLotExternalDefects(report), multilineStyle);
+                setValue(row.createCell(23), formatLotNos(report), multilineStyle);
                 ProductionCalculationResponse fallback = null;
                 if (report.responsibility() == null
                         || report.deductionPercent() == null
@@ -108,15 +110,16 @@ public class ProductionExportService {
                         || report.availabilityRate() == null) {
                     fallback = calculateFallback(report);
                 }
-                setValue(row.createCell(23), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
-                setValue(row.createCell(24), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
-                setValue(row.createCell(25), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
-                setValue(row.createCell(26), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
-                setValue(row.createCell(27), report.performanceRate(), percentStyle);
-                setValue(row.createCell(28), report.qualityRate(), percentStyle);
-                setValue(row.createCell(29), report.oee(), percentStyle);
-                setValue(row.createCell(30), report.evaluationLabel(), textStyle);
-                row.createCell(31).setCellValue("");
+                setValue(row.createCell(24), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
+                setValue(row.createCell(25), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
+                setValue(row.createCell(26), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
+                setFormula(row.createCell(27), dailyTargetEfficiencyFormula(row), percentStyle);
+                setValue(row.createCell(28), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
+                setValue(row.createCell(29), report.performanceRate(), percentStyle);
+                setValue(row.createCell(30), report.qualityRate(), percentStyle);
+                setValue(row.createCell(31), report.oee(), percentStyle);
+                setValue(row.createCell(32), report.evaluationLabel(), textStyle);
+                row.createCell(33).setCellValue("");
             }
 
             for (int i = 0; i < headers.length; i++) {
@@ -128,6 +131,20 @@ public class ProductionExportService {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to generate V9 Excel export", e);
         }
+    }
+
+    private String dailyTargetFormula(Row row) {
+        int rowNumber = row.getRowNum() + 1;
+        return cellRef(rowNumber, 15) + "*60/" + cellRef(rowNumber, 10);
+    }
+
+    private String dailyTargetEfficiencyFormula(Row row) {
+        int rowNumber = row.getRowNum() + 1;
+        return cellRef(rowNumber, 18) + "/" + cellRef(rowNumber, 16);
+    }
+
+    private String cellRef(int rowNumber, int columnIndex) {
+        return CellReference.convertNumToColString(columnIndex) + rowNumber;
     }
 
     private String formatProcesses(List<Long> processIds) {
@@ -328,7 +345,9 @@ public class ProductionExportService {
                 report.deductionPercent(),
                 report.shiftStandardTimeMinutes(),
                 report.dailyTargetQuantity(),
+                report.dailyTargetDayQuantity(),
                 report.productionEfficiency(),
+                report.dailyTargetEfficiency(),
                 report.availabilityRate(),
                 report.performanceRate(),
                 report.qualityRate(),
@@ -364,6 +383,11 @@ public class ProductionExportService {
 
     private void setValue(Cell cell, BigDecimal value, CellStyle style) {
         if (value != null) cell.setCellValue(value.doubleValue());
+        cell.setCellStyle(style);
+    }
+
+    private void setFormula(Cell cell, String formula, CellStyle style) {
+        cell.setCellFormula(formula);
         cell.setCellStyle(style);
     }
 

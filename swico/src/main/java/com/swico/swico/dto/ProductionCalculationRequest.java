@@ -33,7 +33,9 @@ public record ProductionCalculationRequest(
         // Optional: overrides supplied by import file. If present they will be used instead of calculated values.
         Integer shiftStandardTimeMinutes,
         BigDecimal dailyTargetQuantity,
+        BigDecimal dailyTargetDayQuantity,
         BigDecimal productionEfficiency,
+        BigDecimal dailyTargetEfficiency,
         BigDecimal availabilityRate,
         BigDecimal performanceRate,
         BigDecimal qualityRate,
