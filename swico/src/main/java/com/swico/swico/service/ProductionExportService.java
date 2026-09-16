@@ -19,7 +19,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
@@ -76,8 +78,16 @@ public class ProductionExportService {
 
             int rowIndex = 1;
             for (ProductionReportResponse report : reports) {
+                List<ProductionReportDowntimeDto> downtimes = effectiveDowntimes(report);
+                List<ProductionReportLotDto> lots = effectiveLots(report);
+                int reportLineCount = Math.max(Math.max(downtimes.size(), lots.size()), 1);
+                int firstRowIndex = rowIndex;
                 Row row = sheet.createRow(rowIndex++);
-                row.setHeightInPoints(Math.max(22, Math.max(lotLineCount(report), downtimeLineCount(report)) * 22));
+                row.setHeightInPoints(22);
+                for (int i = 1; i < reportLineCount; i++) {
+                    Row detailRow = sheet.createRow(rowIndex++);
+                    detailRow.setHeightInPoints(22);
+                }
 
                 setValue(row.createCell(0), report.reportDate(), dateStyle);
                 setValue(row.createCell(1), report.lineCode(), textStyle);
@@ -92,17 +102,11 @@ public class ProductionExportService {
                 setValue(row.createCell(10), report.cycleTimeSeconds(), decimalStyle);
                 setValue(row.createCell(11), report.totalOperatingMinutes(), intStyle);
                 setValue(row.createCell(12), report.downtimeMinutes(), intStyle);
-                setValue(row.createCell(13), formatDowntimeReasons(report), multilineStyle);
-                setValue(row.createCell(14), formatDowntimeMinutes(report), multilineStyle);
+                writeDowntimeRows(sheet, firstRowIndex, reportLineCount, downtimes, multilineStyle, intStyle);
                 setValue(row.createCell(15), report.shiftStandardTimeMinutes(), intStyle);
                 setFormula(row.createCell(16), dailyTargetFormula(row), decimalStyle);
                 setValue(row.createCell(17), report.dailyTargetQuantity(), decimalStyle);
-                setValue(row.createCell(18), formatLotInputQuantities(report), multilineStyle);
-                setValue(row.createCell(19), formatLotGoodQuantities(report), multilineStyle);
-                setValue(row.createCell(20), formatLotDefects(report), multilineStyle);
-                setValue(row.createCell(21), formatLotInternalDefects(report), multilineStyle);
-                setValue(row.createCell(22), formatLotExternalDefects(report), multilineStyle);
-                setValue(row.createCell(23), formatLotNos(report), multilineStyle);
+                writeLotRows(sheet, firstRowIndex, reportLineCount, lots, intStyle, multilineStyle);
                 ProductionCalculationResponse fallback = null;
                 if (report.responsibility() == null
                         || report.deductionPercent() == null
@@ -119,7 +123,8 @@ public class ProductionExportService {
                 setValue(row.createCell(30), report.qualityRate(), percentStyle);
                 setValue(row.createCell(31), report.oee(), percentStyle);
                 setValue(row.createCell(32), report.evaluationLabel(), textStyle);
-                row.createCell(33).setCellValue("");
+                setValue(row.createCell(33), "", textStyle);
+                mergeReportRows(sheet, firstRowIndex, rowIndex - 1, headers.length);
             }
 
             for (int i = 0; i < headers.length; i++) {
@@ -136,6 +141,98 @@ public class ProductionExportService {
     private String dailyTargetFormula(Row row) {
         int rowNumber = row.getRowNum() + 1;
         return cellRef(rowNumber, 15) + "*60/" + cellRef(rowNumber, 10);
+    }
+
+    private void writeDowntimeRows(
+            Sheet sheet,
+            int firstRowIndex,
+            List<ProductionReportDowntimeDto> downtimes,
+            CellStyle reasonStyle,
+            CellStyle minutesStyle
+    ) {
+        writeDowntimeRows(sheet, firstRowIndex, Math.max(downtimes.size(), 1), downtimes, reasonStyle, minutesStyle);
+    }
+
+    private void writeDowntimeRows(
+            Sheet sheet,
+            int firstRowIndex,
+            int lineCount,
+            List<ProductionReportDowntimeDto> downtimes,
+            CellStyle reasonStyle,
+            CellStyle minutesStyle
+    ) {
+        for (int i = 0; i < lineCount; i++) {
+            Row row = sheet.getRow(firstRowIndex + i);
+            ProductionReportDowntimeDto downtime = i < downtimes.size() ? downtimes.get(i) : null;
+            setValue(row.createCell(13), downtimeReasonText(downtime), reasonStyle);
+            setValue(row.createCell(14), downtimeMinutesValue(downtime), minutesStyle);
+        }
+    }
+
+    private void writeLotRows(
+            Sheet sheet,
+            int firstRowIndex,
+            int lineCount,
+            List<ProductionReportLotDto> lots,
+            CellStyle intStyle,
+            CellStyle textStyle
+    ) {
+        for (int i = 0; i < lineCount; i++) {
+            Row row = sheet.getRow(firstRowIndex + i);
+            ProductionReportLotDto lot = i < lots.size() ? lots.get(i) : null;
+            setValue(row.createCell(18), lot != null ? lot.inputQuantity() : null, intStyle);
+            setValue(row.createCell(19), lot != null ? lot.goodQuantity() : null, intStyle);
+            setValue(row.createCell(20), lot != null ? lotDefectQuantity(lot) : null, intStyle);
+            setValue(row.createCell(21), lot != null ? lot.internalDefectQuantity() : null, intStyle);
+            setValue(row.createCell(22), lot != null ? lot.externalDefectQuantity() : null, intStyle);
+            setValue(row.createCell(23), lotNoText(lot), textStyle);
+        }
+    }
+
+    private String downtimeReasonText(ProductionReportDowntimeDto downtime) {
+        if (downtime == null || downtime.reason() == null || downtime.reason().isBlank()) {
+            return "-";
+        }
+        return downtime.reason();
+    }
+
+    private Integer downtimeMinutesValue(ProductionReportDowntimeDto downtime) {
+        if (downtime == null || downtime.minutes() == null) {
+            return null;
+        }
+        return downtime.minutes();
+    }
+
+    private void mergeReportRows(Sheet sheet, int firstRowIndex, int lastRowIndex, int columnCount) {
+        if (lastRowIndex <= firstRowIndex) {
+            return;
+        }
+        for (int col = 0; col < columnCount; col++) {
+            if (col == 13 || col == 14 || (col >= 18 && col <= 23)) {
+                continue;
+            }
+            CellRangeAddress region = new CellRangeAddress(firstRowIndex, lastRowIndex, col, col);
+            sheet.addMergedRegion(region);
+            applyBlackBorders(region, sheet);
+        }
+    }
+
+    private void applyBlackBorders(CellRangeAddress region, Sheet sheet) {
+        RegionUtil.setBorderTop(BorderStyle.THIN, region, sheet);
+        RegionUtil.setBorderBottom(BorderStyle.THIN, region, sheet);
+        RegionUtil.setBorderLeft(BorderStyle.THIN, region, sheet);
+        RegionUtil.setBorderRight(BorderStyle.THIN, region, sheet);
+        RegionUtil.setTopBorderColor(IndexedColors.BLACK.getIndex(), region, sheet);
+        RegionUtil.setBottomBorderColor(IndexedColors.BLACK.getIndex(), region, sheet);
+        RegionUtil.setLeftBorderColor(IndexedColors.BLACK.getIndex(), region, sheet);
+        RegionUtil.setRightBorderColor(IndexedColors.BLACK.getIndex(), region, sheet);
+    }
+
+    private String lotNoText(ProductionReportLotDto lot) {
+        if (lot == null) {
+            return null;
+        }
+        return lot.lotNo() == null || lot.lotNo().isBlank() ? "-" : lot.lotNo();
     }
 
     private String dailyTargetEfficiencyFormula(Row row) {
@@ -463,5 +560,9 @@ public class ProductionExportService {
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.BLACK.getIndex());
+        style.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+        style.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+        style.setRightBorderColor(IndexedColors.BLACK.getIndex());
     }
 }

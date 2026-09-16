@@ -24,6 +24,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -494,6 +495,7 @@ public class ProductionReportService {
                 if (row == null || isRowEmpty(row)) {
                     continue;
                 }
+                int blockLastRow = resolveImportBlockLastRow(sheet, rowIndex, headerIndex);
 
                 // debug: show parsed values for key columns to detect swapped mapping
                 BigDecimal dbgCycle = parseBigDecimal(getCell(row, headerIndex.getOrDefault("cycleTimeSeconds", -1)));
@@ -509,10 +511,10 @@ public class ProductionReportService {
                 String importedPartNumber = parseString(getCell(row, headerIndex.getOrDefault("partNumber", -1)));
                 String importedProcessText = parseString(getCell(row, headerIndex.getOrDefault("processIds", -1)));
                 String importedOperatorName = parseString(getCell(row, headerIndex.getOrDefault("operatorName", -1)));
-                List<ProductionReportLotDto> importedLotRows = resolveImportedLotRows(row, headerIndex);
+                List<ProductionReportLotDto> importedLotRows = resolveImportedLotRows(sheet, rowIndex, blockLastRow, headerIndex);
                 Integer importedDowntimeMinutes = resolveImportedDowntimeMinutes(row, headerIndex);
                 String importedDowntimeReason = parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1)));
-                List<ProductionReportDowntimeDto> importedDowntimeRows = resolveImportedDowntimeRows(row, headerIndex, importedDowntimeReason, importedDowntimeMinutes);
+                List<ProductionReportDowntimeDto> importedDowntimeRows = resolveImportedDowntimeRows(sheet, rowIndex, blockLastRow, headerIndex, importedDowntimeReason, importedDowntimeMinutes);
                 Integer importedInputQuantity = firstNonNull(sumLotInputQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("inputQuantity", -1))));
                 Integer importedGoodQuantity = firstNonNull(sumLotGoodQuantity(importedLotRows), parseIntegerTotal(getCell(row, headerIndex.getOrDefault("goodQuantity", -1))));
                 Integer importedDefectQuantity = firstNonNull(sumLotDefectQuantity(importedLotRows), resolveImportedDefectQuantity(row, headerIndex));
@@ -560,6 +562,7 @@ public class ProductionReportService {
 
                 ProductionReportResponse imported = createReport(request, resolveImportedCreatedBy(importedOperatorName, createdBy));
                 importedReports.add(imported);
+                rowIndex = blockLastRow;
             }
 
             return importedReports;
@@ -862,6 +865,61 @@ public class ProductionReportService {
         return true;
     }
 
+    private int resolveImportBlockLastRow(Sheet sheet, int rowIndex, Map<String, Integer> headerIndex) {
+        int reportDateColumn = headerIndex.getOrDefault("reportDate", 0);
+        for (CellRangeAddress region : sheet.getMergedRegions()) {
+            if (region.getFirstColumn() == reportDateColumn
+                    && region.getLastColumn() == reportDateColumn
+                    && rowIndex >= region.getFirstRow()
+                    && rowIndex <= region.getLastRow()) {
+                return region.getLastRow();
+            }
+        }
+        return rowIndex;
+    }
+
+    private List<ProductionReportLotDto> resolveImportedLotRows(Sheet sheet, int firstRowIndex, int lastRowIndex, Map<String, Integer> headerIndex) {
+        if (lastRowIndex <= firstRowIndex) {
+            return resolveImportedLotRows(sheet.getRow(firstRowIndex), headerIndex);
+        }
+
+        List<ProductionReportLotDto> lots = new ArrayList<>();
+        for (int rowIndex = firstRowIndex; rowIndex <= lastRowIndex; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            if (row == null) {
+                continue;
+            }
+            ProductionReportLotDto lot = importedSingleLineLot(row, headerIndex);
+            if (hasLotData(lot)) {
+                lots.add(lot);
+            }
+        }
+        return lots.isEmpty() ? resolveImportedLotRows(sheet.getRow(firstRowIndex), headerIndex) : lots;
+    }
+
+    private ProductionReportLotDto importedSingleLineLot(Row row, Map<String, Integer> headerIndex) {
+        Integer inputQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("inputQuantity", -1)));
+        Integer goodQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("goodQuantity", -1)));
+        Integer defectQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("defectQuantity", -1)));
+        Integer internalDefectQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("internalDefectQuantity", -1)));
+        Integer externalDefectQuantity = parseInteger(getCell(row, headerIndex.getOrDefault("externalDefectQuantity", -1)));
+        if (defectQuantity == null && (internalDefectQuantity != null || externalDefectQuantity != null)) {
+            defectQuantity = number(internalDefectQuantity) + number(externalDefectQuantity);
+        }
+        if (goodQuantity == null && inputQuantity != null && defectQuantity != null) {
+            goodQuantity = Math.max(inputQuantity - defectQuantity, 0);
+        }
+        return new ProductionReportLotDto(
+                null,
+                parseString(getCell(row, headerIndex.getOrDefault("lotNo", -1))),
+                inputQuantity,
+                goodQuantity,
+                defectQuantity,
+                internalDefectQuantity,
+                externalDefectQuantity
+        );
+    }
+
     private List<ProductionReportLotDto> resolveImportedLotRows(Row row, Map<String, Integer> headerIndex) {
         List<String> lotNos = parseTextLines(getCell(row, headerIndex.getOrDefault("lotNo", -1)));
         List<Integer> inputQuantities = parseIntegerLines(getCell(row, headerIndex.getOrDefault("inputQuantity", -1)));
@@ -930,6 +988,40 @@ public class ProductionReportService {
             }
         }
         return downtimes;
+    }
+
+    private List<ProductionReportDowntimeDto> resolveImportedDowntimeRows(
+            Sheet sheet,
+            int firstRowIndex,
+            int lastRowIndex,
+            Map<String, Integer> headerIndex,
+            String downtimeReason,
+            Integer downtimeMinutes
+    ) {
+        if (lastRowIndex <= firstRowIndex) {
+            return resolveImportedDowntimeRows(sheet.getRow(firstRowIndex), headerIndex, downtimeReason, downtimeMinutes);
+        }
+        if (!headerIndex.containsKey("downtimeRowMinutes")) {
+            return fallbackDowntimeRows(downtimeReason, downtimeMinutes);
+        }
+
+        List<ProductionReportDowntimeDto> downtimes = new ArrayList<>();
+        for (int rowIndex = firstRowIndex; rowIndex <= lastRowIndex; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            if (row == null) {
+                continue;
+            }
+            ProductionReportDowntimeDto downtime = new ProductionReportDowntimeDto(
+                    null,
+                    null,
+                    parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
+                    parseInteger(getCell(row, headerIndex.getOrDefault("downtimeRowMinutes", -1)))
+            );
+            if (hasDowntimeData(downtime)) {
+                downtimes.add(downtime);
+            }
+        }
+        return downtimes.isEmpty() ? fallbackDowntimeRows(downtimeReason, downtimeMinutes) : downtimes;
     }
 
     private List<String> parseTextLines(Cell cell) {

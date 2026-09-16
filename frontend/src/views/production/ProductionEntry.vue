@@ -12,24 +12,24 @@
             {{ t('productionEntry.touchMode') }}
           </div>
         </div>
-        <el-form :model="form" label-position="top" class="p-3 space-y-2.5">
+        <el-form ref="formRef" :model="form" :rules="formRules" label-position="top" class="p-3 space-y-2.5">
 
           <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 " >
-            <el-form-item :label="t('productionEntry.reportDate')" class="!mb-0 ">
+            <el-form-item prop="reportDate" :label="t('productionEntry.reportDate')" class="!mb-0 ">
               <el-date-picker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" class="w-full el-form-item__content" size="default"/>
             </el-form-item>
-            <el-form-item :label="t('productionEntry.line')" class="!mb-0">
+            <el-form-item prop="lineCode" :label="t('productionEntry.line')" class="!mb-0">
               <el-select v-model="form.lineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectLine')" @change="onLineChange">
                 <el-option v-for="l in lines" :key="l.lineCode" :label="`${l.lineCode}`" :value="l.lineCode" />
               </el-select>
             </el-form-item>
-            <el-form-item :label="t('productionEntry.machine')" class="!mb-0">
+            <el-form-item prop="machineCode" :label="t('productionEntry.machine')" class="!mb-0">
               <el-select v-model="form.machineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectMachine')">
                 <el-option v-for="m in filteredMachines" :key="m.machineCode" :label="`${m.machineCode} - ${m.description}`" :value="m.machineCode" />
               </el-select>
             </el-form-item>
 
-            <el-form-item :label="t('productionEntry.shift')" class="!mb-0">
+            <el-form-item prop="shiftName" :label="t('productionEntry.shift')" class="!mb-0">
               <el-select v-model="form.shiftName" size="default" class="w-full" :placeholder="t('productionEntry.selectShift')">
                 <el-option v-for="s in shifts" :key="s.shiftName" :label="s.shiftName" :value="s.shiftName" />
               </el-select>
@@ -37,7 +37,7 @@
              <el-form-item :label="t('productionEntry.company')" class="!mb-0">
               <el-input v-model="form.company" size="default" readonly :placeholder="t('productionEntry.enterCompany')" />
             </el-form-item>
-            <el-form-item :label="t('productionEntry.responsibleLeader')" class="!mb-0">
+            <el-form-item prop="responsibleLeader" :label="t('productionEntry.responsibleLeader')" class="!mb-0">
               <el-select
                 ref="leaderSelectRef"
                 v-model="form.responsibleLeader"
@@ -100,7 +100,7 @@
           </div>
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
-              <el-form-item :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-6">
+              <el-form-item prop="partNumber" :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-6">
                 <el-select
                   ref="productSelectRef"
                   v-model="form.partNumber"
@@ -123,7 +123,7 @@
               <el-form-item :label="t('productionEntry.partName')" class="!mb-0 md:col-span-6">
                 <el-input v-model="form.partName" size="default" readonly placeholder="-" />
               </el-form-item>
-              <el-form-item :label="t('productionEntry.processes')" class="!mb-0 md:col-span-6">
+              <el-form-item prop="processId" :label="t('productionEntry.processes')" class="!mb-0 md:col-span-6">
                 <el-select
                   ref="processSelectRef"
                   v-model="form.processId"
@@ -154,7 +154,7 @@
             </div>
           </div>    
           <div class="production-lot-grid mt-2.5 grid gap-2.5">
-            <el-form-item :label="t('productionEntry.inputQuantity')" class="production-quantity-field !mb-0">
+            <el-form-item prop="inputQuantity" :label="t('productionEntry.inputQuantity')" class="production-quantity-field !mb-0">
               <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                 <el-button
                   size="default"
@@ -634,6 +634,7 @@ const editedReportId = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 20, 50, 100]
+const formRef = ref(null)
 const leaderSelectRef = ref(null)
 const productSelectRef = ref(null)
 const processSelectRef = ref(null)
@@ -725,6 +726,34 @@ const form = ref({
   downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: 0 }],
   lotRows: [],
 })
+
+const requiredTrigger = ['blur', 'change']
+const formRules = computed(() => ({
+  reportDate: [{ required: true, message: requiredMessage(t('productionEntry.reportDate')), trigger: requiredTrigger }],
+  lineCode: [{ required: true, message: requiredMessage(t('productionEntry.line')), trigger: requiredTrigger }],
+  machineCode: [{ required: true, message: requiredMessage(t('productionEntry.machine')), trigger: requiredTrigger }],
+  shiftName: [{ required: true, message: requiredMessage(t('productionEntry.shift')), trigger: requiredTrigger }],
+  responsibleLeader: [{ required: true, message: requiredMessage(t('productionEntry.responsibleLeader')), trigger: requiredTrigger }],
+  partNumber: [{ required: true, message: requiredMessage(t('productionEntry.partNumber')), trigger: requiredTrigger }],
+  processId: [{ required: true, message: requiredMessage(t('productionEntry.processes')), trigger: requiredTrigger }],
+  inputQuantity: [{ validator: validatePositiveInputQuantity, trigger: requiredTrigger }],
+}))
+
+function requiredMessage(label) {
+  return t('productionEntry.messages.requiredField', { field: cleanLabel(label) })
+}
+
+function cleanLabel(label) {
+  return String(label || '').replace(/\s+/g, ' ').trim()
+}
+
+function validatePositiveInputQuantity(_rule, value, callback) {
+  if (Number(value || 0) > 0) {
+    callback()
+    return
+  }
+  callback(new Error(t('productionEntry.messages.inputQuantityRequired')))
+}
 
 const defaultDowntimeReasons = [
   'A. 換刀（粗／精面銑刀、內孔鏜刀、鑽頭等） / Thay dao (dao phay mặt thô + tinh, dao móc lỗ, mũi khoan, ...)',
@@ -1759,6 +1788,12 @@ async function loadInitialData() {
 }
 
 async function saveReport() {
+  try {
+    await formRef.value?.validate()
+  } catch {
+    ElMessage.warning(t('productionEntry.messages.requiredFields'))
+    return
+  }
   if (!form.value.partNumber) {
     ElMessage.warning(t('productionEntry.messages.selectProduct'))
     return

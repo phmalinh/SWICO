@@ -1,8 +1,12 @@
 package com.swico.swico.service;
 
 import com.swico.swico.dto.ProductionReportLotDto;
+import com.swico.swico.dto.ProductionReportDowntimeDto;
 import com.swico.swico.dto.ProductionReportResponse;
 import com.swico.swico.repository.ProductProcessRepository;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -44,16 +48,56 @@ class ProductionExportServiceTest {
             assertEquals("\u6bcf\u65e5\u76ee\u6a19\nMục tiêu ngày", sheet.getRow(0).getCell(16).getStringCellValue());
             assertEquals("\u5be6\u969b\u76ee\u6a19\nMục Tiêu", sheet.getRow(0).getCell(17).getStringCellValue());
             assertEquals("\u6bcf\u65e5\u76ee\u6a19\u6548\u7387\nHiệu suất mục tiêu ngày", sheet.getRow(0).getCell(27).getStringCellValue());
+            assertEquals("6-1. Chuyển mã hàng gia công cùng máy", sheet.getRow(1).getCell(13).getStringCellValue());
+            assertEquals(260.0, sheet.getRow(1).getCell(14).getNumericCellValue());
+            assertEquals("1-2. Hết đá, thay đá", sheet.getRow(2).getCell(13).getStringCellValue());
+            assertEquals(20.0, sheet.getRow(2).getCell(14).getNumericCellValue());
+            assertEquals("3-4. Không có lệnh sản xuất", sheet.getRow(3).getCell(13).getStringCellValue());
+            assertEquals(60.0, sheet.getRow(3).getCell(14).getNumericCellValue());
             assertEquals("P2*60/K2", row.getCell(16).getCellFormula());
             assertEquals("S2/Q2", row.getCell(27).getCellFormula());
-            assertEquals("45\n23\n30", row.getCell(18).getStringCellValue());
-            assertEquals("44\n21\n28", row.getCell(19).getStringCellValue());
-            assertEquals("1\n2\n2", row.getCell(20).getStringCellValue());
-            assertEquals("1\n2\n0", row.getCell(21).getStringCellValue());
-            assertEquals("0\n0\n2", row.getCell(22).getStringCellValue());
-            assertEquals("A\nB\nC", row.getCell(23).getStringCellValue());
-            assertEquals(66.0, row.getHeightInPoints());
+            assertEquals(45.0, sheet.getRow(1).getCell(18).getNumericCellValue());
+            assertEquals(44.0, sheet.getRow(1).getCell(19).getNumericCellValue());
+            assertEquals(1.0, sheet.getRow(1).getCell(20).getNumericCellValue());
+            assertEquals(1.0, sheet.getRow(1).getCell(21).getNumericCellValue());
+            assertEquals(0.0, sheet.getRow(1).getCell(22).getNumericCellValue());
+            assertEquals("A", sheet.getRow(1).getCell(23).getStringCellValue());
+            assertEquals(23.0, sheet.getRow(2).getCell(18).getNumericCellValue());
+            assertEquals(21.0, sheet.getRow(2).getCell(19).getNumericCellValue());
+            assertEquals(2.0, sheet.getRow(2).getCell(20).getNumericCellValue());
+            assertEquals(2.0, sheet.getRow(2).getCell(21).getNumericCellValue());
+            assertEquals(0.0, sheet.getRow(2).getCell(22).getNumericCellValue());
+            assertEquals("B", sheet.getRow(2).getCell(23).getStringCellValue());
+            assertEquals(30.0, sheet.getRow(3).getCell(18).getNumericCellValue());
+            assertEquals(28.0, sheet.getRow(3).getCell(19).getNumericCellValue());
+            assertEquals(2.0, sheet.getRow(3).getCell(20).getNumericCellValue());
+            assertEquals(0.0, sheet.getRow(3).getCell(21).getNumericCellValue());
+            assertEquals(2.0, sheet.getRow(3).getCell(22).getNumericCellValue());
+            assertEquals("C", sheet.getRow(3).getCell(23).getStringCellValue());
+            assertEquals(22.0, row.getHeightInPoints());
+            assertEquals(26L, sheet.getMergedRegions().stream()
+                    .filter(region -> region.getFirstRow() == 1 && region.getLastRow() == 3)
+                    .filter(region -> region.getFirstColumn() == region.getLastColumn())
+                    .filter(region -> region.getFirstColumn() != 13 && region.getFirstColumn() != 14)
+                    .filter(region -> region.getFirstColumn() < 18 || region.getFirstColumn() > 23)
+                    .count());
+            assertMergedRegionBlackBorders(sheet, 0);
+            assertMergedRegionBlackBorders(sheet, 33);
         }
+    }
+
+    private void assertMergedRegionBlackBorders(Sheet sheet, int column) {
+        CellStyle top = sheet.getRow(1).getCell(column).getCellStyle();
+        CellStyle middle = sheet.getRow(2).getCell(column).getCellStyle();
+        CellStyle bottom = sheet.getRow(3).getCell(column).getCellStyle();
+        assertEquals(BorderStyle.THIN, top.getBorderTop());
+        assertEquals(BorderStyle.THIN, middle.getBorderLeft());
+        assertEquals(BorderStyle.THIN, middle.getBorderRight());
+        assertEquals(BorderStyle.THIN, bottom.getBorderBottom());
+        assertEquals(IndexedColors.BLACK.getIndex(), top.getTopBorderColor());
+        assertEquals(IndexedColors.BLACK.getIndex(), middle.getLeftBorderColor());
+        assertEquals(IndexedColors.BLACK.getIndex(), middle.getRightBorderColor());
+        assertEquals(IndexedColors.BLACK.getIndex(), bottom.getBottomBorderColor());
     }
 
     private ProductionReportResponse report() {
@@ -99,7 +143,11 @@ class ProductionExportServiceTest {
                         new ProductionReportLotDto(null, "B", 23, 21, 2, 2, 0),
                         new ProductionReportLotDto(null, "C", 30, 28, 2, 0, 2)
                 ),
-                List.of()
+                List.of(
+                        new ProductionReportDowntimeDto(null, null, "6-1. Chuyển mã hàng gia công cùng máy", 260),
+                        new ProductionReportDowntimeDto(null, null, "1-2. Hết đá, thay đá", 20),
+                        new ProductionReportDowntimeDto(null, null, "3-4. Không có lệnh sản xuất", 60)
+                )
         );
     }
 }

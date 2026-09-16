@@ -16,7 +16,7 @@ import java.util.Map;
 @Service
 public class ProductionFormulaService {
 
-    private static final String SAME_MACHINE_CHANGEOVER_KEYWORD = "chuyen ma";
+    private static final String SAME_MACHINE_CHANGEOVER_KEYWORD = "chuyen ma hang gia cong cung may";
 
     private static final Map<String, Integer> SHIFT_MINUTES = Map.of(
             "白班 06:00-14:00 (Ca Ngày)", 440,

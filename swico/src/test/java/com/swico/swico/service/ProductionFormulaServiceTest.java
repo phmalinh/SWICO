@@ -53,7 +53,7 @@ class ProductionFormulaServiceTest {
                         360,
                         "chuyển mã - 340； hỏng máy - 20",
                         List.of(
-                                new ProductionReportDowntimeDto(null, null, "chuyển mã", 340),
+                                new ProductionReportDowntimeDto(null, null, "chuyển mã hàng gia công cùng máy", 340),
                                 new ProductionReportDowntimeDto(null, null, "hỏng máy", 20)
                         )
                 ),
@@ -61,6 +61,27 @@ class ProductionFormulaServiceTest {
         );
 
         assertEquals(new BigDecimal("0.9697"), response.availabilityRate());
+    }
+
+    @Test
+    void availabilityShouldCountMachineTransferDowntime() {
+        ProductionCalculationResponse response = service.calculate(
+                request(
+                        59,
+                        52,
+                        6,
+                        new BigDecimal("601"),
+                        620,
+                        40,
+                        "chuyển máy",
+                        List.of(
+                                new ProductionReportDowntimeDto(null, null, "chuyển máy", 40)
+                        )
+                ),
+                660
+        );
+
+        assertEquals(new BigDecimal("0.9394"), response.availabilityRate());
     }
 
     @Test

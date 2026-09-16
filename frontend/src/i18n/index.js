@@ -242,6 +242,9 @@ const messages = {
         space: 'Khoảng trắng',
       },
       messages: {
+        requiredField: 'Vui lòng nhập {field}',
+        requiredFields: 'Vui lòng nhập đầy đủ các ô bắt buộc.',
+        inputQuantityRequired: 'Vui lòng nhập Số lượng nhập lớn hơn 0',
         selectProduct: 'Vui lòng chọn mã hàng',
         selectOneReportForEdit: 'Vui lòng chọn 1 báo cáo để sửa.',
         selectOneReportToDelete: 'Vui lòng chọn ít nhất 1 báo cáo để xóa.',
@@ -1224,6 +1227,9 @@ const messages = {
         space: '空白',
       },
       messages: {
+        requiredField: '請輸入{field}',
+        requiredFields: '請填寫所有必填欄位。',
+        inputQuantityRequired: '請輸入大於 0 的投入數量',
         selectProduct: '請選擇料號',
         selectOneReportForEdit: '請選擇一筆報表以進行編輯。',
         selectOneReportToDelete: '請至少選擇一筆報表以刪除。',
