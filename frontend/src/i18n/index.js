@@ -1173,7 +1173,7 @@ const messages = {
       refresh: '重新整理',
       deleteSelected: '刪除已選',
       search: '搜尋',
-      reportDate: '日期',
+      reportDate: '工作日期',
       operatingTime: '運轉時間',
       downtimeTime: '停機時間',
       target: '目標',
@@ -1185,7 +1185,7 @@ const messages = {
       total: '總筆數',
       rowsPerPage: '每頁筆數',
       table: {
-        reportDate: '日期',
+        reportDate: '工作日期',
         lineCode: '產線',
         shiftName: '班別',
         machineCode: '機台',
@@ -1373,7 +1373,7 @@ const messages = {
           selectAll: '全選',
         },
         table: {
-          date: '日期',
+          date: '工作日期',
           line: '產線',
           shift: '班別',
           machine: '機台',
