@@ -244,7 +244,7 @@ const messages = {
       messages: {
         requiredField: 'Vui lòng nhập {field}',
         requiredFields: 'Vui lòng nhập đầy đủ các ô bắt buộc.',
-        inputQuantityRequired: 'Vui lòng nhập Số lượng nhập lớn hơn 0',
+        inputQuantityRequired: 'Vui lòng nhập Số lượng nhập',
         selectProduct: 'Vui lòng chọn mã hàng',
         selectOneReportForEdit: 'Vui lòng chọn 1 báo cáo để sửa.',
         selectOneReportToDelete: 'Vui lòng chọn ít nhất 1 báo cáo để xóa.',
