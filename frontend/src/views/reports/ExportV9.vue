@@ -72,7 +72,7 @@
         <el-table-column prop="lineCode" :label="t('reports.search.table.line')" width="80" align="center" />
         <el-table-column prop="shiftName" :label="t('reports.search.table.shift')" width="150" />
         <el-table-column prop="machineCode" :label="t('reports.search.table.machine')" width="80" />
-        <el-table-column prop="company" :label="t('reports.search.table.company')" min-width="80" show-overflow-tooltip />
+        <el-table-column prop="company" :label="t('reports.search.table.company')" min-width="100" show-overflow-tooltip />
         <el-table-column :label="t('reports.search.table.operatorName')" width="150" align="center" show-overflow-tooltip>
           <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
         </el-table-column>
@@ -80,13 +80,13 @@
           <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
         </el-table-column>
         <el-table-column prop="partNumber" :label="t('reports.search.table.partNumber')" width="120" />
-        <el-table-column prop="partName" :label="t('reports.search.table.partName')" min-width="80" show-overflow-tooltip />
+        <el-table-column prop="partName" :label="t('reports.search.table.partName')" min-width="100" show-overflow-tooltip />
         <el-table-column :label="t('reports.search.table.processIds')" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
         </el-table-column>
-        <el-table-column prop="cycleTimeSeconds" :label="t('reports.search.table.cycleTime')" width="70" align="center" />
-        <el-table-column prop="totalOperatingMinutes" :label="t('reports.search.table.totalOperatingMinutes')" width="70" align="center" />
-        <el-table-column prop="downtimeMinutes" :label="t('reports.search.table.downtimeMinutes')" width="80" align="center" />
+        <el-table-column prop="cycleTimeSeconds" :label="t('reports.search.table.cycleTime')" width="90" align="center" />
+        <el-table-column prop="totalOperatingMinutes" :label="t('reports.search.table.totalOperatingMinutes')" width="120" align="center" />
+        <el-table-column prop="downtimeMinutes" :label="t('reports.search.table.downtimeMinutes')" width="100" align="center" />
         <el-table-column :label="t('reports.search.table.downtimeReason')" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="export-lot-cell">
@@ -101,14 +101,14 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="t('reports.search.table.responsibility')" min-width="100" align="center">
+        <el-table-column :label="t('reports.search.table.responsibility')" min-width="110" align="center">
           <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.deductionPercent')" width="90" align="center">
           <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
         </el-table-column>
-        <el-table-column prop="shiftStandardTimeMinutes" :label="t('reports.search.table.shiftStandardTimeMinutes')" width="80" align="center" />
-        <el-table-column :label="t('reports.search.table.dailyTargetDayQuantity')" width="110" align="center">
+        <el-table-column prop="shiftStandardTimeMinutes" :label="t('reports.search.table.shiftStandardTimeMinutes')" width="110" align="center" />
+        <el-table-column :label="t('reports.search.table.dailyTargetDayQuantity')" width="120" align="center">
           <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity) }}</template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.dailyTargetQuantity')" width="90" align="center">

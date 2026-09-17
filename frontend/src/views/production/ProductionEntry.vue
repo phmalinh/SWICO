@@ -97,7 +97,7 @@
                 class="font-bold text-emerald-700" 
               />
             </el-form-item>
-          </div>
+          </div>   
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
               <el-form-item prop="partNumber" :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-6">
@@ -149,187 +149,191 @@
               <el-form-item :label="t('productionEntry.cycleTime')" class="!mb-0 md:col-span-6">
                 <el-input v-model="form.cycleTime" size="default" readonly placeholder="-" />
               </el-form-item>
-
-
             </div>
           </div>    
-          <div class="production-lot-grid mt-2.5 grid gap-2.5">
-            <el-form-item prop="inputQuantity" :label="t('productionEntry.inputQuantity')" class="production-quantity-field !mb-0">
-              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                  @click="decrementQuantity('inputQuantity')"
-                >
-                  <Minus class="h-4 w-4" />
-                </el-button>
-                <el-input-number
-                  v-model="form.inputQuantity"
-                  :min="0"
-                  :max="999999"
-                  size="default"
-                  class="min-w-0 flex-1 quantity-stepper-input"
-                  data-no-global-keyboard="true"
-                  :controls="false"
-                  @focus="handleQuantityFocus('inputQuantity', $event)"
-                  @click="openQuantityKeypad('inputQuantity')"
-                  @update:model-value="syncQuantityKeypad('inputQuantity', $event)"
-                />
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                  @click="incrementQuantity('inputQuantity')"
-                >
-                  <Plus class="h-4 w-4" />
-                </el-button>
-              </div>
-            </el-form-item>
+          <!-- nhập số lượng -->
+          <div class="grid grid-cols-2 md:grid-cols-2 gap-2.5">
+            <div class="mt-2.5 grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
+              <el-form-item prop="inputQuantity" :label="t('productionEntry.inputQuantity')" class=" !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementQuantity('inputQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number
+                    v-model="form.inputQuantity"
+                    :min="0"
+                    :max="999999"
+                    size="default"
+                    class="min-w-0 flex-1 quantity-stepper-input"
+                    data-no-global-keyboard="true"
+                    :controls="false"
+                    @focus="handleQuantityFocus('inputQuantity', $event)"
+                    @click="openQuantityKeypad('inputQuantity')"
+                    @update:model-value="syncQuantityKeypad('inputQuantity', $event)"
+                  />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementQuantity('inputQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
 
-            <el-form-item :label="t('productionEntry.goodQuantity')" class="production-quantity-field !mb-0">
-              <el-input :model-value="formatNumber(baseGoodQuantity, 0)" size="default" readonly class="font-bold text-emerald-700" />
-            </el-form-item>
+              <el-form-item :label="t('productionEntry.goodQuantity')" class=" !mb-0">
+                <el-input :model-value="formatNumber(baseGoodQuantity, 0)" size="default" readonly class="font-bold text-emerald-700" />
+              </el-form-item>
 
-            <el-form-item :label="t('productionEntry.internalDefectQuantity')" class="production-quantity-field !mb-0">
-              <div class=" el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                  @click="decrementQuantity('internalDefectQuantity')"
-                >
-                  <Minus class="h-4 w-4" />
-                </el-button>
-                <el-input-number
-                  v-model="form.internalDefectQuantity"
-                  :min="0"
-                  :max="form.inputQuantity || 999999"
-                  size="default"
-                  class="min-w-0 flex-1 quantity-stepper-input"
-                  data-no-global-keyboard="true"
-                  :controls="false"
-                  @focus="handleQuantityFocus('internalDefectQuantity', $event)"
-                  @click="openQuantityKeypad('internalDefectQuantity')"
-                  @update:model-value="syncQuantityKeypad('internalDefectQuantity', $event)"
-                />
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                  @click="incrementQuantity('internalDefectQuantity')"
-                >
-                  <Plus class="h-4 w-4" />
-                </el-button>
-              </div>
-            </el-form-item>
-
-            <el-form-item :label="t('productionEntry.externalDefectQuantity')" class="production-quantity-field !mb-0">
-              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                  @click="decrementQuantity('externalDefectQuantity')"
-                >
-                  <Minus class="h-4 w-4" />
-                </el-button>
-                <el-input-number
-                  v-model="form.externalDefectQuantity"
-                  :min="0"
-                  :max="form.inputQuantity || 999999"
-                  size="default"
-                  class="min-w-0 flex-1 quantity-stepper-input"
-                  data-no-global-keyboard="true"
-                  :controls="false"
-                  @focus="handleQuantityFocus('externalDefectQuantity', $event)"
-                  @click="openQuantityKeypad('externalDefectQuantity')"
-                  @update:model-value="syncQuantityKeypad('externalDefectQuantity', $event)"
-                />
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                  @click="incrementQuantity('externalDefectQuantity')"
-                >
-                  <Plus class="h-4 w-4" />
-                </el-button>
-              </div>
-            </el-form-item>
-
-            <el-form-item :label="t('productionEntry.lotNo')" class="production-lotno-field !mb-0">
+              <el-form-item :label="t('productionEntry.internalDefectQuantity')" class=" !mb-0">
+                <div class=" el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementQuantity('internalDefectQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number
+                    v-model="form.internalDefectQuantity"
+                    :min="0"
+                    :max="form.inputQuantity || 999999"
+                    size="default"
+                    class="min-w-0 flex-1 quantity-stepper-input"
+                    data-no-global-keyboard="true"
+                    :controls="false"
+                    @focus="handleQuantityFocus('internalDefectQuantity', $event)"
+                    @click="openQuantityKeypad('internalDefectQuantity')"
+                    @update:model-value="syncQuantityKeypad('internalDefectQuantity', $event)"
+                  />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementQuantity('internalDefectQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+            </div>
+            <div class="mt-2.5 grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
+              <el-form-item :label="t('productionEntry.externalDefectQuantity')" class="col-span-1 !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementQuantity('externalDefectQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number
+                    v-model="form.externalDefectQuantity"
+                    :min="0"
+                    :max="form.inputQuantity || 999999"
+                    size="default"
+                    class="min-w-0 flex-1 quantity-stepper-input"
+                    data-no-global-keyboard="true"
+                    :controls="false"
+                    @focus="handleQuantityFocus('externalDefectQuantity', $event)"
+                    @click="openQuantityKeypad('externalDefectQuantity')"
+                    @update:model-value="syncQuantityKeypad('externalDefectQuantity', $event)"
+                  />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementQuantity('externalDefectQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+              <el-form-item :label="t('productionEntry.lotNo')" class=" col-span-2 !mb-0">
               <div class="flex w-full gap-1.5">
                 <el-input v-model="form.lotNo" size="default" class="min-w-0 flex-1" :placeholder="t('productionEntry.enterLotNo')" />
                 <el-button type="primary" size="default" class="action-icon-button" @click="addLotRow()">
                   <Plus class="h-4 w-4" />
                 </el-button>
               </div>
-            </el-form-item>
+              </el-form-item>
+            </div>
           </div>
-
-          <div v-for="(item, index) in form.lotRows" :key="index" class="production-lot-grid mt-2.5 grid gap-2.5">
-            <el-form-item class="production-quantity-field !mb-0">
-              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                  @click="decrementLotQuantity(item, 'inputQuantity')"
-                >
-                  <Minus class="h-4 w-4" />
-                </el-button>
-                <el-input-number v-model="item.inputQuantity" :min="0" :max="999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                  @click="incrementLotQuantity(item, 'inputQuantity')"
-                >
-                  <Plus class="h-4 w-4" />
-                </el-button>
-              </div>
-            </el-form-item>
-            <el-form-item class="production-quantity-field !mb-0">
-              <el-input :model-value="formatNumber(lotRowGoodQuantity(item), 0)" size="default" readonly class="font-bold text-emerald-700" />
-            </el-form-item>
-            <el-form-item class="production-quantity-field !mb-0">
-              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                  @click="decrementLotQuantity(item, 'internalDefectQuantity')"
-                >
-                  <Minus class="h-4 w-4" />
-                </el-button>
-                <el-input-number v-model="item.internalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                  @click="incrementLotQuantity(item, 'internalDefectQuantity')"
-                >
-                  <Plus class="h-4 w-4" />
-                </el-button>
-              </div>
-            </el-form-item>
-            <el-form-item class="production-quantity-field !mb-0">
-              <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                  @click="decrementLotQuantity(item, 'externalDefectQuantity')"
-                >
-                  <Minus class="h-4 w-4" />
-                </el-button>
-                <el-input-number v-model="item.externalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
-                <el-button
-                  size="default"
-                  class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                  @click="incrementLotQuantity(item, 'externalDefectQuantity')"
-                >
-                  <Plus class="h-4 w-4" />
-                </el-button>
-              </div>
-            </el-form-item>
-            <el-form-item class="production-lotno-field !mb-0">
-              <div class="flex w-full gap-1.5">
-                <el-input v-model="item.lotNo" size="default" class="min-w-0 flex-1" :placeholder="t('productionEntry.enterLotNo')" />
-                <el-button type="danger" plain size="default" class="action-icon-button" @click="removeLotRow(index)">
-                  <Trash2 class="h-4 w-4" />
-                </el-button>
-              </div>
-            </el-form-item>
+          <div v-for="(item, index) in form.lotRows" :key="index" class="grid grid-cols-2 md:grid-cols-2 gap-2.5">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
+              <el-form-item class=" !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementLotQuantity(item, 'inputQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number v-model="item.inputQuantity" :min="0" :max="999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementLotQuantity(item, 'inputQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+              <el-form-item class=" !mb-0">
+                <el-input :model-value="formatNumber(lotRowGoodQuantity(item), 0)" size="default" readonly class="font-bold text-emerald-700" />
+              </el-form-item>
+              <el-form-item class=" !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementLotQuantity(item, 'internalDefectQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number v-model="item.internalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementLotQuantity(item, 'internalDefectQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
+              <el-form-item class="col-span-1 !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementLotQuantity(item, 'externalDefectQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number v-model="item.externalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementLotQuantity(item, 'externalDefectQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+              <el-form-item class="col-span-2 !mb-0">
+                <div class="flex w-full gap-1.5">
+                  <el-input v-model="item.lotNo" size="default" class="min-w-0 flex-1" :placeholder="t('productionEntry.enterLotNo')" />
+                  <el-button type="danger" plain size="default" class="action-icon-button" @click="removeLotRow(index)">
+                    <Trash2 class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+            </div>
           </div>
 
           <div class="mt-2.5 grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -384,7 +388,7 @@
                       :min="0"
                       :max="1440"
                       size="default"
-                      class="min-w-0 flex-1 downtime-minutes-input"
+                      class="min-w-0 flex-1 downtime-minutes-input !mb-0"
                       data-no-global-keyboard="true"
                       :controls="false"
                       @focus="handleDowntimeFocus(index, $event)"
@@ -439,7 +443,7 @@
             </el-button>
           </div>
 
-          <div v-if="isOperator" class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h3 class="text-sm font-black text-slate-900">{{ t('productionEntry.myReportsTitle') }}</h3>
@@ -1213,14 +1217,7 @@ const dailyTargetDayPreview = computed(() => {
   return (shiftMinutes * 60) / cycleTime
 })
 
-const isOperator = computed(() => currentUser.value?.role === 'ROLE_OPERATOR')
-
 async function loadMyReports(params = {}) {
-  if (!isOperator.value) {
-    myReports.value = []
-    return
-  }
-
   myReportsLoading.value = true
   try {
     myReports.value = await productionApi.myReports(params)
