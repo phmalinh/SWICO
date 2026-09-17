@@ -261,81 +261,6 @@
               </el-form-item>
             </div>
           </div>
-          <div v-for="(item, index) in form.lotRows" :key="index" class="grid grid-cols-2 md:grid-cols-2 gap-2.5">
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
-              <el-form-item class=" !mb-0">
-                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                  <el-button
-                    size="default"
-                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                    @click="decrementLotQuantity(item, 'inputQuantity')"
-                  >
-                    <Minus class="h-4 w-4" />
-                  </el-button>
-                  <el-input-number v-model="item.inputQuantity" :min="0" :max="999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
-                  <el-button
-                    size="default"
-                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                    @click="incrementLotQuantity(item, 'inputQuantity')"
-                  >
-                    <Plus class="h-4 w-4" />
-                  </el-button>
-                </div>
-              </el-form-item>
-              <el-form-item class=" !mb-0">
-                <el-input :model-value="formatNumber(lotRowGoodQuantity(item), 0)" size="default" readonly class="font-bold text-emerald-700" />
-              </el-form-item>
-              <el-form-item class=" !mb-0">
-                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                  <el-button
-                    size="default"
-                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                    @click="decrementLotQuantity(item, 'internalDefectQuantity')"
-                  >
-                    <Minus class="h-4 w-4" />
-                  </el-button>
-                  <el-input-number v-model="item.internalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
-                  <el-button
-                    size="default"
-                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                    @click="incrementLotQuantity(item, 'internalDefectQuantity')"
-                  >
-                    <Plus class="h-4 w-4" />
-                  </el-button>
-                </div>
-              </el-form-item>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
-              <el-form-item class="col-span-1 !mb-0">
-                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
-                  <el-button
-                    size="default"
-                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
-                    @click="decrementLotQuantity(item, 'externalDefectQuantity')"
-                  >
-                    <Minus class="h-4 w-4" />
-                  </el-button>
-                  <el-input-number v-model="item.externalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
-                  <el-button
-                    size="default"
-                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
-                    @click="incrementLotQuantity(item, 'externalDefectQuantity')"
-                  >
-                    <Plus class="h-4 w-4" />
-                  </el-button>
-                </div>
-              </el-form-item>
-              <el-form-item class="col-span-2 !mb-0">
-                <div class="flex w-full gap-1.5">
-                  <el-input v-model="item.lotNo" size="default" class="min-w-0 flex-1" :placeholder="t('productionEntry.enterLotNo')" />
-                  <el-button type="danger" plain size="default" class="action-icon-button" @click="removeLotRow(index)">
-                    <Trash2 class="h-4 w-4" />
-                  </el-button>
-                </div>
-              </el-form-item>
-            </div>
-          </div>
-
           <div class="mt-2.5 grid grid-cols-1 md:grid-cols-3 gap-2.5">
             <template v-for="(item, index) in form.downtimeItems" :key="index">
               <el-form-item :label="index === 0 ? t('productionEntry.downtimeCategory') : ''" class="!mb-0">
@@ -426,6 +351,170 @@
               </el-form-item>
             </template>
           </div>
+          <div v-for="(item, index) in form.lotRows" :key="index" class="grid grid-cols-2 md:grid-cols-2 gap-2.5">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
+              <el-form-item class=" !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementLotQuantity(item, 'inputQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number v-model="item.inputQuantity" :min="0" :max="999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementLotQuantity(item, 'inputQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+              <el-form-item class=" !mb-0">
+                <el-input :model-value="formatNumber(lotRowGoodQuantity(item), 0)" size="default" readonly class="font-bold text-emerald-700" />
+              </el-form-item>
+              <el-form-item class=" !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementLotQuantity(item, 'internalDefectQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number v-model="item.internalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementLotQuantity(item, 'internalDefectQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
+              <el-form-item class="col-span-1 !mb-0">
+                <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                    @click="decrementLotQuantity(item, 'externalDefectQuantity')"
+                  >
+                    <Minus class="h-4 w-4" />
+                  </el-button>
+                  <el-input-number v-model="item.externalDefectQuantity" :min="0" :max="item.inputQuantity || 999999" size="default" class="min-w-0 flex-1 quantity-stepper-input" :controls="false" />
+                  <el-button
+                    size="default"
+                    class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                    @click="incrementLotQuantity(item, 'externalDefectQuantity')"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+              <el-form-item class="col-span-2 !mb-0">
+                <div class="flex w-full gap-1.5">
+                  <el-input v-model="item.lotNo" size="default" class="min-w-0 flex-1" :placeholder="t('productionEntry.enterLotNo')" />
+                  <el-button type="danger" plain size="default" class="action-icon-button" @click="removeLotRow(index)">
+                    <Trash2 class="h-4 w-4" />
+                  </el-button>
+                </div>
+              </el-form-item>
+            </div>
+            <template v-for="(downtime, downtimeIndex) in item.downtimeItems" :key="downtimeIndex">
+              <div class="col-span-2 grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                <el-form-item class="!mb-0">
+                  <el-select
+                    :ref="el => setDowntimeCategorySelectRef(el, lotDowntimeKey(index, downtimeIndex))"
+                    v-model="downtime.reasonCategoryCode"
+                    size="default"
+                    class="w-full"
+                    data-no-global-keyboard="true"
+                    :placeholder="selectKeypadPlaceholder('downtimeCategory', lotDowntimeKey(index, downtimeIndex), t('productionEntry.downtimeCategory'))"
+                    clearable
+                    filterable
+                    :filter-method="noopSelectFilter"
+                    @change="onDowntimeCategorySelectChange(lotDowntimeKey(index, downtimeIndex))"
+                    @focus="openTextKeypad('downtimeCategory', lotDowntimeKey(index, downtimeIndex))"
+                    @click="openTextKeypad('downtimeCategory', lotDowntimeKey(index, downtimeIndex))"
+                  >
+                    <el-option v-for="category in filteredDowntimeCategoryOptions(lotDowntimeKey(index, downtimeIndex))" :key="category.reasonCategoryCode" :label="category.label" :value="category.reasonCategoryCode" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item class="!mb-0">
+                  <el-select
+                    :ref="el => setDowntimeReasonSelectRef(el, lotDowntimeKey(index, downtimeIndex))"
+                    v-model="downtime.reason"
+                    size="default"
+                    class="w-full"
+                    data-no-global-keyboard="true"
+                    :placeholder="selectKeypadPlaceholder('downtimeReason', lotDowntimeKey(index, downtimeIndex), t('productionEntry.downtimeReason'))"
+                    filterable
+                    :filter-method="noopSelectFilter"
+                    @change="onDowntimeReasonSelectChange(lotDowntimeKey(index, downtimeIndex))"
+                    @focus="openTextKeypad('downtimeReason', lotDowntimeKey(index, downtimeIndex))"
+                    @click="openTextKeypad('downtimeReason', lotDowntimeKey(index, downtimeIndex))"
+                  >
+                    <el-option v-for="r in filteredDowntimeReasonOptions(lotDowntimeKey(index, downtimeIndex))" :key="r.value" :label="r.label" :value="r.value" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item class="!mb-0">
+                  <div class="flex gap-1.5">
+                    <div class="flex min-w-0 flex-1 overflow-hidden rounded border border-slate-300 bg-white">
+                      <el-button
+                        size="default"
+                        class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-r !border-slate-300 !bg-slate-50 !p-0"
+                        @click="decrementDowntimeMinutes(lotDowntimeKey(index, downtimeIndex))"
+                      >
+                        <Minus class="h-4 w-4" />
+                      </el-button>
+                      <el-input-number
+                        v-model="downtime.minutes"
+                        :min="0"
+                        :max="1440"
+                        size="default"
+                        class="min-w-0 flex-1 downtime-minutes-input !mb-0"
+                        data-no-global-keyboard="true"
+                        :controls="false"
+                        @focus="handleDowntimeFocus(lotDowntimeKey(index, downtimeIndex), $event)"
+                        @click="openDowntimeKeypad(lotDowntimeKey(index, downtimeIndex))"
+                        @update:model-value="syncDowntimeKeypad(lotDowntimeKey(index, downtimeIndex), $event)"
+                      />
+                      <el-button
+                        size="default"
+                        class="!h-[2.125rem] !w-10 !rounded-none !border-0 !border-l !border-slate-300 !bg-slate-50 !p-0"
+                        @click="incrementDowntimeMinutes(lotDowntimeKey(index, downtimeIndex))"
+                      >
+                        <Plus class="h-4 w-4" />
+                      </el-button>
+                    </div>
+                    <el-button
+                      v-if="downtimeIndex === 0"
+                      type="primary"
+                      size="default"
+                      class="action-icon-button"
+                      @click="addDowntimeItem(lotDowntimeKey(index, downtimeIndex))"
+                    >
+                      <Plus class="h-4 w-4" />
+                    </el-button>
+                    <el-button
+                      v-if="downtimeIndex > 0"
+                      type="danger"
+                      plain
+                      size="default"
+                      class="action-icon-button"
+                      @click="removeDowntimeItem(lotDowntimeKey(index, downtimeIndex))"
+                    >
+                      <Trash2 class="h-4 w-4" />
+                    </el-button>
+                  </div>
+                </el-form-item>
+              </div>
+            </template>
+          </div>
             <div class="pt-2 flex flex-wrap items-center gap-3">
               <el-button type="primary" size="large" class="flex-1 !h-10 text-base font-bold" :loading="saving" @click="saveReport">
                 <Save class="mr-2 h-4 w-4" />
@@ -450,111 +539,91 @@
               </div>
               <el-button link type="primary" size="small" @click="loadMyReports">{{ t('productionEntry.refresh') }}</el-button>
             </div>
-            <el-table
-              @selection-change="handleSelectionChange"
-              @row-click="handleRowClick"
-              :data="paginatedReports"
-              stripe
-              highlight-current-row
-              row-key="id"
-              style="width: 100%"
-              size="small"
-              v-loading="myReportsLoading"
-            >
-              <el-table-column type="selection" width="20" />
-              <el-table-column prop="reportDate" :label="t('productionEntry.table.reportDate')" width="90" align="center" />
-              <el-table-column prop="lineCode" :label="t('productionEntry.table.lineCode')" width="100" align="center" />
-              <el-table-column prop="shiftName" :label="t('productionEntry.table.shiftName')" width="90" align="center" />
-              <el-table-column prop="machineCode" :label="t('productionEntry.table.machineCode')" width="70" align="center" />
-              <el-table-column prop="partNumber" :label="t('productionEntry.table.partNumber')" width="80" />
-              <el-table-column prop="partName" :label="t('productionEntry.table.partName')" min-width="120" show-overflow-tooltip />
-              <el-table-column :label="t('productionEntry.table.processIds')" min-width="80" show-overflow-tooltip>
-                <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
-              </el-table-column>
-              <el-table-column prop="company" :label="t('productionEntry.table.company')" min-width="80" show-overflow-tooltip />
-              <el-table-column :label="t('productionEntry.table.operatorName')" width="140" align="center" show-overflow-tooltip>
-                <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.responsibleLeader')" width="150" align="center" show-overflow-tooltip>
-                <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.downtimeReason')" min-width="180" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <div class="report-lot-multiline-cell">
-                    <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.reason }}</div>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.downtimeTime')" width="80" align="center">
-                <template #default="{ row }">
-                  <div class="report-lot-multiline-cell">
-                    <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.minutes }}</div>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.responsibility')" min-width="100" align="center">
-                <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.deductionPercent')" width="90" align="center">
-                <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
-              </el-table-column>
-              <el-table-column prop="totalOperatingMinutes" :label="t('productionEntry.table.totalOperatingMinutes')" width="70" align="center" />
-              <el-table-column prop="downtimeMinutes" :label="t('productionEntry.table.downtimeMinutes')" width="70" align="center" />
-              <el-table-column :label="t('productionEntry.table.inputGoodDefect')" width="100" align="center">
-                <template #default="{ row }">
-                  <div class="report-lot-multiline-cell">
-                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.inputGoodDefect }}</div>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.internalDefectQuantity')" width="100" align="center">
-                <template #default="{ row }">
-                  <div class="report-lot-multiline-cell">
-                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.internalDefectQuantity }}</div>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.externalDefectQuantity')" width="100" align="center">
-                <template #default="{ row }">
-                  <div class="report-lot-multiline-cell">
-                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.externalDefectQuantity }}</div>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.lotNo')" width="70" align="center">
-                <template #default="{ row }">
-                  <div class="report-lot-multiline-cell">
-                    <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="report-lot-multiline-row">{{ line.lotNo }}</div>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column prop="shiftStandardTimeMinutes" :label="t('productionEntry.table.shiftStandardTimeMinutes')" width="70" align="center" />
-              <el-table-column :label="t('productionEntry.table.dailyTargetDayQuantity')" width="84" align="center">
-                <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity, 0) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.dailyTargetQuantity')" width="76" align="center">
-                <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity, 0) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.productionEfficiency')" width="86" align="center">
-                <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.dailyTargetEfficiency')" width="98" align="center">
-                <template #default="{ row }">{{ formatPercent(row.dailyTargetEfficiency) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.availabilityRate')" width="86" align="center">
-                <template #default="{ row }">{{ formatPercent(row.availabilityRate) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.performanceRate')" width="86" align="center">
-                <template #default="{ row }">{{ formatPercent(row.performanceRate) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.qualityRate')" width="86" align="center">
-                <template #default="{ row }">{{ formatPercent(row.qualityRate) }}</template>
-              </el-table-column>
-              <el-table-column :label="t('productionEntry.table.oee')" width="90" align="center">
-                <template #default="{ row }">{{ formatPercent(row.oee) }}</template>
-              </el-table-column>
-              <el-table-column prop="evaluationLabel" :label="t('productionEntry.table.evaluationLabel')" width="70" align="center" />
-            </el-table>
+            <div class="my-reports-excel-wrap" v-loading="myReportsLoading">
+              <table class="my-reports-excel-table">
+                <thead>
+                  <tr>
+                    <th class="select-col"></th>
+                    <th>{{ t('productionEntry.table.reportDate') }}</th>
+                    <th>{{ t('productionEntry.table.lineCode') }}</th>
+                    <th>{{ t('productionEntry.table.shiftName') }}</th>
+                    <th>{{ t('productionEntry.table.machineCode') }}</th>
+                    <th>{{ t('productionEntry.table.partNumber') }}</th>
+                    <th>{{ t('productionEntry.table.partName') }}</th>
+                    <th>{{ t('productionEntry.table.processIds') }}</th>
+                    <th>{{ t('productionEntry.table.company') }}</th>
+                    <th>{{ t('productionEntry.table.operatorName') }}</th>
+                    <th>{{ t('productionEntry.table.responsibleLeader') }}</th>
+                    <th class="reason-col">{{ t('productionEntry.table.downtimeReason') }}</th>
+                    <th>{{ t('productionEntry.table.downtimeTime') }}</th>
+                    <th>{{ t('productionEntry.table.responsibility') }}</th>
+                    <th>{{ t('productionEntry.table.deductionPercent') }}</th>
+                    <th>{{ t('productionEntry.table.totalOperatingMinutes') }}</th>
+                    <th>{{ t('productionEntry.table.downtimeMinutes') }}</th>
+                    <th>{{ t('productionEntry.table.inputGoodDefect') }}</th>
+                    <th>{{ t('productionEntry.table.internalDefectQuantity') }}</th>
+                    <th>{{ t('productionEntry.table.externalDefectQuantity') }}</th>
+                    <th>{{ t('productionEntry.table.lotNo') }}</th>
+                    <th>{{ t('productionEntry.table.shiftStandardTimeMinutes') }}</th>
+                    <th>{{ t('productionEntry.table.dailyTargetDayQuantity') }}</th>
+                    <th>{{ t('productionEntry.table.dailyTargetQuantity') }}</th>
+                    <th>{{ t('productionEntry.table.productionEfficiency') }}</th>
+                    <th>{{ t('productionEntry.table.dailyTargetEfficiency') }}</th>
+                    <th>{{ t('productionEntry.table.availabilityRate') }}</th>
+                    <th>{{ t('productionEntry.table.performanceRate') }}</th>
+                    <th>{{ t('productionEntry.table.qualityRate') }}</th>
+                    <th>{{ t('productionEntry.table.oee') }}</th>
+                    <th>{{ t('productionEntry.table.evaluationLabel') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="!myReportRows.length">
+                    <td class="empty-cell" colspan="31">-</td>
+                  </tr>
+                  <template v-for="line in myReportRows" :key="line.key">
+                    <tr :class="{ 'selected-row': isReportSelectedForTable(line.report.id) }" @click="handleRowClick(line.report)">
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">
+                        <input type="checkbox" :checked="isReportSelectedForTable(line.report.id)" @click.stop @change="toggleMyReportSelection(line.report, $event.target.checked)" />
+                      </td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.reportDate }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.lineCode }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.shiftName }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.machineCode }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.partNumber }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ line.report.partName }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ formatProcessIds(line.report.processIds) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.company }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.operatorName || line.report.createdBy || '-' }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.responsibleLeader || '-' }}</td>
+                      <td class="text-cell reason-col">{{ line.downtime.reason }}</td>
+                      <td class="number-cell">{{ line.downtime.minutes }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.responsibility) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.deductionPercent) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.totalOperatingMinutes }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.downtimeMinutes }}</td>
+                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.inputGoodDefect }}</td>
+                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.internalDefectQuantity }}</td>
+                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.externalDefectQuantity }}</td>
+                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.lotNo }}</td>
+                      <td v-if="!line.lot" class="center-cell">-</td>
+                      <td v-if="!line.lot" class="number-cell">-</td>
+                      <td v-if="!line.lot" class="number-cell">-</td>
+                      <td v-if="!line.lot" class="center-cell">-</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.shiftStandardTimeMinutes }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetDayQuantity, 0) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetQuantity, 0) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.productionEfficiency) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.dailyTargetEfficiency) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.availabilityRate) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.performanceRate) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.qualityRate) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.oee) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.evaluationLabel }}</td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
             <div class="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
               <span class="text-sm font-semibold text-slate-500">{{ t('productionEntry.total') }}: {{ myReports.length }}</span>
               <div class="flex items-center gap-3">
@@ -667,6 +736,8 @@ const paginatedReports = computed(() => {
   const end = start + pageSize.value
   return myReports.value.slice(start, end)
 })
+
+const myReportRows = computed(() => paginatedReports.value.flatMap(buildReportTableRows))
 
 const textKeypadPlaceholder = computed(() => {
   const labels = {
@@ -807,6 +878,10 @@ function splitLotNos(value) {
     .filter(Boolean)
 }
 
+function sameLotNo(a, b) {
+  return String(a || '').trim() === String(b || '').trim()
+}
+
 function distributeQuantity(total, count, index) {
   const safeTotal = Number(total || 0)
   if (count <= 1) return safeTotal
@@ -827,6 +902,9 @@ function lotDisplayRows(row) {
       return {
         lotNo: lot.lotNo || '-',
         inputGoodDefect: `${inputQuantity} / ${goodQuantity} / ${defectQuantity}`,
+        inputQuantity,
+        goodQuantity,
+        defectQuantity,
         internalDefectQuantity,
         externalDefectQuantity,
       }
@@ -845,6 +923,9 @@ function lotDisplayRows(row) {
     return {
       lotNo: lotNos[index] || '-',
       inputGoodDefect: `${inputQuantity} / ${goodQuantity} / ${defectQuantity}`,
+      inputQuantity,
+      goodQuantity,
+      defectQuantity,
       internalDefectQuantity,
       externalDefectQuantity,
     }
@@ -871,18 +952,77 @@ function normalizeDowntimeItems(reasonValue, minutesValue = null) {
   })
 }
 
+function createDowntimeItem() {
+  return { reasonCategoryCode: '', reason: '', minutes: 0 }
+}
+
+function lotDowntimeKey(lotIndex, downtimeIndex) {
+  return `lot:${lotIndex}:${downtimeIndex}`
+}
+
+function parseLotDowntimeKey(index) {
+  if (typeof index !== 'string' || !index.startsWith('lot:')) return null
+  const [, lotIndex, downtimeIndex] = index.split(':')
+  return {
+    lotIndex: Number(lotIndex),
+    downtimeIndex: Number(downtimeIndex),
+  }
+}
+
 function addDowntimeItem(index = form.value.downtimeItems.length - 1) {
-  form.value.downtimeItems.splice(index + 1, 0, { reasonCategoryCode: '', reason: '', minutes: 0 })
+  const key = parseLotDowntimeKey(index)
+  if (key) {
+    const lot = form.value.lotRows[key.lotIndex]
+    if (!lot) return
+    if (!Array.isArray(lot.downtimeItems)) lot.downtimeItems = [createDowntimeItem()]
+    lot.downtimeItems.splice(key.downtimeIndex + 1, 0, createDowntimeItem())
+    return
+  }
+  form.value.downtimeItems.splice(Number(index) + 1, 0, createDowntimeItem())
+}
+
+function getDowntimeItem(index = 0) {
+  const key = parseLotDowntimeKey(index)
+  if (key) {
+    const lot = form.value.lotRows[key.lotIndex]
+    if (!lot) return null
+    if (!Array.isArray(lot.downtimeItems)) lot.downtimeItems = [createDowntimeItem()]
+    if (!lot.downtimeItems[key.downtimeIndex]) lot.downtimeItems[key.downtimeIndex] = createDowntimeItem()
+    return lot.downtimeItems[key.downtimeIndex]
+  }
+  if (index === 0) {
+    if (!form.value.downtimeItems[0]) form.value.downtimeItems = [createDowntimeItem()]
+    return form.value.downtimeItems[0]
+  }
+  return form.value.downtimeItems[index] || null
+}
+
+function pairedDowntimeItems() {
+  return [
+    ...form.value.downtimeItems,
+    ...form.value.lotRows.flatMap(item => Array.isArray(item.downtimeItems) ? item.downtimeItems : []),
+  ].filter(Boolean)
+}
+
+function downtimeRowsWithLotNos() {
+  return [
+    ...form.value.downtimeItems.map(item => ({ ...item, lotNo: form.value.lotNo })),
+    ...form.value.lotRows.flatMap(lot => (
+      Array.isArray(lot.downtimeItems)
+        ? lot.downtimeItems.map(item => ({ ...item, lotNo: lot.lotNo }))
+        : []
+    )),
+  ]
 }
 
 function decrementDowntimeMinutes(index) {
-  const item = form.value.downtimeItems[index]
+  const item = getDowntimeItem(index)
   if (!item) return
   item.minutes = Math.max(Number(item.minutes || 0) - 1, 0)
 }
 
 function incrementDowntimeMinutes(index) {
-  const item = form.value.downtimeItems[index]
+  const item = getDowntimeItem(index)
   if (!item) return
   item.minutes = Math.min(Number(item.minutes || 0) + 1, 1440)
 }
@@ -916,7 +1056,7 @@ function incrementLotQuantity(item, field) {
 }
 
 function createLotRow() {
-  return { inputQuantity: 0, internalDefectQuantity: 0, externalDefectQuantity: 0, lotNo: '' }
+  return { inputQuantity: 0, internalDefectQuantity: 0, externalDefectQuantity: 0, lotNo: '', downtimeItems: [createDowntimeItem()] }
 }
 
 function addLotRow(index = form.value.lotRows.length - 1) {
@@ -951,7 +1091,7 @@ function openQuantityKeypad(field) {
 }
 
 function openDowntimeKeypad(index) {
-  const item = form.value.downtimeItems[index]
+  const item = getDowntimeItem(index)
   textKeypad.value.visible = false
   numberKeypad.value = {
     visible: true,
@@ -1031,7 +1171,7 @@ function applyNumberKeypadValue(buffer) {
     return
   }
   if (numberKeypad.value.type === 'downtime') {
-    const item = form.value.downtimeItems[numberKeypad.value.index]
+    const item = getDowntimeItem(numberKeypad.value.index)
     if (item) item.minutes = value
   }
 }
@@ -1053,15 +1193,26 @@ function closeNumberKeypad() {
 }
 
 function removeDowntimeItem(index) {
+  const key = parseLotDowntimeKey(index)
+  if (key) {
+    const lot = form.value.lotRows[key.lotIndex]
+    if (!lot) return
+    if (!Array.isArray(lot.downtimeItems) || lot.downtimeItems.length === 1) {
+      lot.downtimeItems = [createDowntimeItem()]
+      return
+    }
+    lot.downtimeItems.splice(key.downtimeIndex, 1)
+    return
+  }
   if (form.value.downtimeItems.length === 1) {
-    form.value.downtimeItems = [{ reasonCategoryCode: '', reason: '', minutes: 0 }]
+    form.value.downtimeItems = [createDowntimeItem()]
     return
   }
   form.value.downtimeItems.splice(index, 1)
 }
 
 function formatDowntimeReasonsForSave() {
-  return form.value.downtimeItems
+  return downtimeRowsWithLotNos()
     .map(item => {
       const reason = String(item.reason || '').trim()
       if (!reason) return ''
@@ -1072,11 +1223,12 @@ function formatDowntimeReasonsForSave() {
 }
 
 function downtimeRowsForSave() {
-  return form.value.downtimeItems
+  return downtimeRowsWithLotNos()
     .map(item => ({
       reasonCategoryCode: item.reasonCategoryCode || '',
       reason: String(item.reason || '').trim(),
       minutes: Number(item.minutes || 0),
+      lotNo: String(item.lotNo || '').trim(),
     }))
     .filter(item => item.reason || item.minutes > 0 || item.reasonCategoryCode)
 }
@@ -1089,6 +1241,18 @@ function downtimeDisplayRows(row) {
   }
   const reasons = normalizeDowntimeReasons(row.downtimeReason)
   return reasons.length ? reasons.map(parseDowntimeDisplay) : [{ reason: '-', minutes: '-' }]
+}
+
+function downtimeRowsForTable(row) {
+  if (Array.isArray(row.downtimes) && row.downtimes.length) {
+    return row.downtimes
+      .map(item => ({
+        ...formatDowntimeDisplay(item.reason, item.minutes),
+        lotNo: String(item.lotNo || '').trim(),
+      }))
+      .filter(item => item.reason || item.minutes)
+  }
+  return downtimeDisplayRows(row).map(item => ({ ...item, lotNo: '' }))
 }
 
 function formatDowntimeDisplay(reason, minutes) {
@@ -1107,6 +1271,77 @@ function parseDowntimeDisplay(value) {
     reason: match?.[1]?.trim() || '-',
     minutes: match?.[2] ? formatNumber(match[2], 0) : '-',
   }
+}
+
+function buildReportTableRows(report) {
+  const detailLines = detailLinesForReport(report)
+  const rows = detailLines.map((line, index) => ({
+    key: `${report.id || 'report'}-${index}`,
+    report,
+    reportRowspan: detailLines.length,
+    showReport: index === 0,
+    showLot: false,
+    lotRowspan: 1,
+    lot: line.lot,
+    downtime: line.downtime,
+  }))
+
+  let index = 0
+  while (index < rows.length) {
+    const lot = rows[index].lot
+    if (!lot) {
+      index++
+      continue
+    }
+    let groupEnd = index
+    while (groupEnd + 1 < rows.length && sameLot(lot, rows[groupEnd + 1].lot)) {
+      groupEnd++
+    }
+    rows[index].showLot = true
+    rows[index].lotRowspan = groupEnd - index + 1
+    index = groupEnd + 1
+  }
+
+  return rows
+}
+
+function detailLinesForReport(report) {
+  const lots = lotDisplayRows(report)
+  const downtimes = downtimeRowsForTable(report)
+  const hasDowntimeLotNo = downtimes.some(item => item.lotNo)
+
+  if (!hasDowntimeLotNo) {
+    const lineCount = Math.max(lots.length, downtimes.length, 1)
+    return Array.from({ length: lineCount }, (_, index) => ({
+      lot: lots[index] || null,
+      downtime: downtimes[index] || { reason: '-', minutes: '-', lotNo: '' },
+    }))
+  }
+
+  const lines = []
+  lots.forEach(lot => {
+    const lotDowntimes = downtimes.filter(downtime => sameLotNo(downtime.lotNo, lot.lotNo))
+    if (!lotDowntimes.length) {
+      lines.push({ lot, downtime: { reason: '-', minutes: '-', lotNo: lot.lotNo } })
+      return
+    }
+    lotDowntimes.forEach(downtime => lines.push({ lot, downtime }))
+  })
+  downtimes
+    .filter(downtime => !lots.some(lot => sameLotNo(downtime.lotNo, lot.lotNo)))
+    .forEach(downtime => lines.push({ lot: null, downtime }))
+
+  return lines.length ? lines : [{ lot: null, downtime: { reason: '-', minutes: '-', lotNo: '' } }]
+}
+
+function sameLot(left, right) {
+  if (!left || !right) return false
+  return sameLotNo(left.lotNo, right.lotNo)
+    && Number(left.inputQuantity || 0) === Number(right.inputQuantity || 0)
+    && Number(left.goodQuantity || 0) === Number(right.goodQuantity || 0)
+    && Number(left.defectQuantity || 0) === Number(right.defectQuantity || 0)
+    && Number(left.internalDefectQuantity || 0) === Number(right.internalDefectQuantity || 0)
+    && Number(left.externalDefectQuantity || 0) === Number(right.externalDefectQuantity || 0)
 }
 
 function formatLotNosForSave() {
@@ -1147,7 +1382,7 @@ function lotRowsForSave() {
   })
 }
 
-const totalDowntimeMinutes = computed(() => form.value.downtimeItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0))
+const totalDowntimeMinutes = computed(() => pairedDowntimeItems().reduce((sum, item) => sum + Number(item.minutes || 0), 0))
 
 function resolveDowntimeCategoryCode(reasonValue) {
   const reason = downtimeReasons.value.find(item => item.value === reasonValue)
@@ -1233,6 +1468,19 @@ function handleSelectionChange(selection) {
   selectedReports.value = selection || []
 }
 
+function isReportSelectedForTable(id) {
+  return selectedReports.value.some(item => item.id === id)
+}
+
+function toggleMyReportSelection(report, checked) {
+  if (!report?.id) return
+  if (checked) {
+    if (!isReportSelectedForTable(report.id)) selectedReports.value = [...selectedReports.value, report]
+    return
+  }
+  selectedReports.value = selectedReports.value.filter(item => item.id !== report.id)
+}
+
 function handleRowClick(report) {
   if (!report) return
   selectedReports.value = [report]
@@ -1264,19 +1512,32 @@ function populateFormForEdit(report) {
   form.value.responsibleLeader = report.responsibleLeader || ''
   form.value.downtimeReason = report.downtimeReason || ''
   form.value.downtimeReasons = normalizeDowntimeReasons(report.downtimeReason)
-  form.value.downtimeItems = downtimes.length
+  const normalizedDowntimes = downtimes.length
     ? downtimes.map(item => ({
         reasonCategoryCode: item.reasonCategoryCode || resolveDowntimeCategoryCode(item.reason),
         reason: item.reason || '',
         minutes: item.minutes ?? 0,
+        lotNo: item.lotNo || '',
       }))
     : normalizeDowntimeItems(report.downtimeReason, report.downtimeMinutes)
-  form.value.lotRows = lots.slice(1).map(item => ({
-    inputQuantity: item.inputQuantity ?? 0,
-    internalDefectQuantity: item.internalDefectQuantity ?? 0,
-    externalDefectQuantity: item.externalDefectQuantity ?? 0,
-    lotNo: item.lotNo || '',
-  }))
+  const firstDowntimes = normalizedDowntimes.filter(item => sameLotNo(item.lotNo, form.value.lotNo))
+  form.value.downtimeItems = firstDowntimes.length ? firstDowntimes : [createDowntimeItem()]
+  const unassignedDowntimes = normalizedDowntimes.filter(item => !String(item.lotNo || '').trim())
+  const extraCount = Math.max(lots.length - 1, 0)
+  form.value.lotRows = Array.from({ length: extraCount }, (_, index) => {
+    const lot = lots[index + 1] || {}
+    const lotDowntimes = normalizedDowntimes.filter(item => sameLotNo(item.lotNo, lot.lotNo))
+    const fallbackDowntime = unassignedDowntimes[index + 1]
+    return {
+      inputQuantity: lot.inputQuantity ?? 0,
+      internalDefectQuantity: lot.internalDefectQuantity ?? 0,
+      externalDefectQuantity: lot.externalDefectQuantity ?? 0,
+      lotNo: lot.lotNo || '',
+      downtimeItems: lotDowntimes.length
+        ? lotDowntimes
+        : [fallbackDowntime || createDowntimeItem()],
+    }
+  })
 
   const product = products.value.find(p => p.partNumber === form.value.partNumber)
   if (product) {
@@ -1406,7 +1667,7 @@ function currentTextKeypadValue(target, index = null) {
   if (target === 'product') return form.value.partNumber || ''
   if (target === 'process') return selectedProcessText() || ''
   if (target === 'downtimeCategory') return selectedDowntimeCategoryText(index) || ''
-  if (target === 'downtimeReason') return form.value.downtimeItems[index]?.reason || ''
+  if (target === 'downtimeReason') return getDowntimeItem(index)?.reason || ''
   return ''
 }
 
@@ -1448,14 +1709,14 @@ function commitTextKeypadSelection(value = textKeypad.value.buffer) {
     }
   } else if (target === 'downtimeCategory') {
     const option = firstMatchingTextKeypadOption(filteredDowntimeCategoryOptions(index), category => `${category.reasonCategoryCode} ${category.label}`)
-    const item = form.value.downtimeItems[index]
+    const item = getDowntimeItem(index)
     if (option && item) {
       item.reasonCategoryCode = option.reasonCategoryCode
       item.reason = ''
     }
   } else if (target === 'downtimeReason') {
     const option = firstMatchingTextKeypadOption(filteredDowntimeReasonOptions(index), reason => `${reason.label} ${reason.value}`)
-    const item = form.value.downtimeItems[index]
+    const item = getDowntimeItem(index)
     if (option && item) item.reason = option.value
   }
   activeTextSelectRef()?.blur?.()
@@ -1491,7 +1752,7 @@ function filteredDowntimeCategoryOptions(index) {
 }
 
 function filteredDowntimeReasonOptions(index) {
-  const categoryCode = form.value.downtimeItems[index]?.reasonCategoryCode || ''
+  const categoryCode = getDowntimeItem(index)?.reasonCategoryCode || ''
   return filterTextKeypadOptions('downtimeReason', filteredDowntimeReasons(categoryCode), reason => `${reason.label} ${reason.value}`, index)
 }
 
@@ -1507,7 +1768,7 @@ function selectedProcessText() {
 }
 
 function selectedDowntimeCategoryText(index) {
-  const code = form.value.downtimeItems[index]?.reasonCategoryCode
+  const code = getDowntimeItem(index)?.reasonCategoryCode
   if (!code) return ''
   return downtimeCategories.value.find(category => category.reasonCategoryCode === code)?.label || code
 }
@@ -1552,7 +1813,7 @@ function onProcessSelectChange(processId = null) {
 }
 
 function onDowntimeCategorySelectChange(index) {
-  const item = form.value.downtimeItems[index]
+  const item = getDowntimeItem(index)
   if (item) item.reason = ''
   closeTextKeypadAfterSelect('downtimeCategory', index)
 }
@@ -1951,16 +2212,74 @@ onMounted(loadInitialData)
   border-radius: 0 !important;
 }
 
-.report-lot-multiline-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-weight: 700;
-  line-height: 1.4;
+.my-reports-excel-wrap {
+  min-height: 180px;
+  overflow: auto;
 }
 
-.report-lot-multiline-row {
-  min-height: 22px;
+.my-reports-excel-table {
+  min-width: 2400px;
+  /* width: 100%; */
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.my-reports-excel-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #1f4e79;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.my-reports-excel-table th,
+.my-reports-excel-table td {
+  border: 1px solid #111827;
+  padding: 7px 6px;
+  vertical-align: middle;
+}
+
+.my-reports-excel-table td {
+  background: #fff;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.my-reports-excel-table tr.selected-row td {
+  background: #e0f2fe;
+}
+
+.select-col {
+  width: 42px;
+}
+
+.reason-col {
+  width: 260px;
+}
+
+.center-cell {
+  text-align: center;
+}
+
+.number-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-cell {
+  height: 80px;
+  text-align: center;
+  color: #94a3b8;
 }
 
 .production-lot-grid {

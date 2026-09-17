@@ -53,8 +53,8 @@ class ProductionFormulaServiceTest {
                         360,
                         "chuyển mã - 340； hỏng máy - 20",
                         List.of(
-                                new ProductionReportDowntimeDto(null, null, "chuyển mã hàng gia công cùng máy", 340),
-                                new ProductionReportDowntimeDto(null, null, "hỏng máy", 20)
+                                new ProductionReportDowntimeDto(null, null, "chuyển mã hàng gia công cùng máy", 340, null),
+                                new ProductionReportDowntimeDto(null, null, "hỏng máy", 20, null)
                         )
                 ),
                 660
@@ -75,7 +75,7 @@ class ProductionFormulaServiceTest {
                         40,
                         "chuyển máy",
                         List.of(
-                                new ProductionReportDowntimeDto(null, null, "chuyển máy", 40)
+                                new ProductionReportDowntimeDto(null, null, "chuyển máy", 40, null)
                         )
                 ),
                 660
@@ -97,9 +97,9 @@ class ProductionFormulaServiceTest {
                         600,
                         "chuyển mã - 260； ve sinh may cuoi ca/cuoi tuan - 220； xon hang di tham nhot - 120",
                         List.of(
-                                new ProductionReportDowntimeDto(null, null, "Chuyển mã hàng gia công cùng máy", 260),
-                                new ProductionReportDowntimeDto(null, null, "Ve sinh may cuoi ca/cuoi tuan", 220),
-                                new ProductionReportDowntimeDto(null, null, "Xon hang di tham nhot", 120)
+                                new ProductionReportDowntimeDto(null, null, "Chuyển mã hàng gia công cùng máy", 260, null),
+                                new ProductionReportDowntimeDto(null, null, "Ve sinh may cuoi ca/cuoi tuan", 220, null),
+                                new ProductionReportDowntimeDto(null, null, "Xon hang di tham nhot", 120, null)
                         )
                 ),
                 null

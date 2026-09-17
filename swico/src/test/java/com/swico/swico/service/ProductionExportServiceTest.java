@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -86,6 +87,36 @@ class ProductionExportServiceTest {
         }
     }
 
+    @Test
+    void exportV9ShouldMergeLotColumnsForTheSameLotNoDowntimeGroup() throws Exception {
+        when(productProcessRepository.findAllById(List.of(1L, 1L))).thenReturn(List.of());
+        ProductionExportService service = new ProductionExportService(productProcessRepository, formulaService);
+
+        byte[] bytes = service.exportV9(List.of(report(
+                List.of(
+                        new ProductionReportLotDto(null, "A", 56, 56, 0, 0, 0),
+                        new ProductionReportLotDto(null, "B", 90, 86, 4, 4, 0)
+                ),
+                List.of(
+                        new ProductionReportDowntimeDto(null, null, "2-2. Ngung may cho phoi", 56, "A"),
+                        new ProductionReportDowntimeDto(null, null, "6-1. Ve sinh may cuoi ca/cuoi tuan", 47, "A"),
+                        new ProductionReportDowntimeDto(null, null, "1-3. Cho can bo chinh may", 15, "B")
+                )
+        )));
+
+        try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            assertEquals(56.0, sheet.getRow(1).getCell(18).getNumericCellValue());
+            assertEquals("A", sheet.getRow(1).getCell(23).getStringCellValue());
+            assertEquals(90.0, sheet.getRow(3).getCell(18).getNumericCellValue());
+            assertEquals("B", sheet.getRow(3).getCell(23).getStringCellValue());
+            for (int column = 18; column <= 23; column++) {
+                assertTrue(hasMergedRegion(sheet, 1, 2, column));
+            }
+        }
+    }
+
     private void assertMergedRegionBlackBorders(Sheet sheet, int column) {
         CellStyle top = sheet.getRow(1).getCell(column).getCellStyle();
         CellStyle middle = sheet.getRow(2).getCell(column).getCellStyle();
@@ -100,7 +131,30 @@ class ProductionExportServiceTest {
         assertEquals(IndexedColors.BLACK.getIndex(), bottom.getBottomBorderColor());
     }
 
+    private boolean hasMergedRegion(Sheet sheet, int firstRow, int lastRow, int column) {
+        return sheet.getMergedRegions().stream()
+                .anyMatch(region -> region.getFirstRow() == firstRow
+                        && region.getLastRow() == lastRow
+                        && region.getFirstColumn() == column
+                        && region.getLastColumn() == column);
+    }
+
     private ProductionReportResponse report() {
+        return report(
+                List.of(
+                        new ProductionReportLotDto(null, "A", 45, 44, 1, 1, 0),
+                        new ProductionReportLotDto(null, "B", 23, 21, 2, 2, 0),
+                        new ProductionReportLotDto(null, "C", 30, 28, 2, 0, 2)
+                ),
+                List.of(
+                        new ProductionReportDowntimeDto(null, null, "6-1. Chuyển mã hàng gia công cùng máy", 260, null),
+                        new ProductionReportDowntimeDto(null, null, "1-2. Hết đá, thay đá", 20, null),
+                        new ProductionReportDowntimeDto(null, null, "3-4. Không có lệnh sản xuất", 60, null)
+                )
+        );
+    }
+
+    private ProductionReportResponse report(List<ProductionReportLotDto> lots, List<ProductionReportDowntimeDto> downtimes) {
         return new ProductionReportResponse(
                 1L,
                 "2026-09-10",
@@ -138,16 +192,8 @@ class ProductionExportServiceTest {
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 "operator",
-                List.of(
-                        new ProductionReportLotDto(null, "A", 45, 44, 1, 1, 0),
-                        new ProductionReportLotDto(null, "B", 23, 21, 2, 2, 0),
-                        new ProductionReportLotDto(null, "C", 30, 28, 2, 0, 2)
-                ),
-                List.of(
-                        new ProductionReportDowntimeDto(null, null, "6-1. Chuyển mã hàng gia công cùng máy", 260),
-                        new ProductionReportDowntimeDto(null, null, "1-2. Hết đá, thay đá", 20),
-                        new ProductionReportDowntimeDto(null, null, "3-4. Không có lệnh sản xuất", 60)
-                )
+                lots,
+                downtimes
         );
     }
 }

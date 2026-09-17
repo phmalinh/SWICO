@@ -34,104 +34,81 @@
           <el-button class="!m-0 !w-full" @click="resetFilters">{{ t('productionHistory.filters.reset') }}</el-button>
         </div>
       </div>
-      <el-table :data="paginatedReports" :empty-text="t('productionHistory.noData')" stripe style="width: 100%" size="large" v-loading="loading">
-        <el-table-column prop="createdAt" :label="t('productionHistory.table.time')" width="90">
-          <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
-        </el-table-column>
-        <el-table-column prop="lineCode" :label="t('productionHistory.table.line')" width="80" align="center" />
-        <el-table-column prop="machineCode" :label="t('productionHistory.table.machine')" width="90" align="center" />
-        <el-table-column :label="t('productionHistory.table.operatorName')" width="160" align="center" show-overflow-tooltip>
-          <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.responsibleLeader')" width="160" align="center" show-overflow-tooltip>
-          <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="partNumber" :label="t('productionHistory.table.partNumber')" width="120" />
-        <el-table-column prop="partName" :label="t('productionHistory.table.partName')" min-width="170" show-overflow-tooltip />
-        <el-table-column :label="t('productionHistory.table.processIds')" min-width="110" show-overflow-tooltip>
-          <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.runDowntime')" width="110" align="center">
-          <template #default="{ row }">
-            <span class="font-bold text-emerald-600">{{ row.totalOperatingMinutes }}</span>
-            <span class="mx-1 text-slate-300">/</span>
-            <span class="font-bold text-rose-500">{{ row.downtimeMinutes }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.downtimeReason')" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }">
-            <div class="history-multiline-cell">
-              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.reason }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.downtimeMinutes')" width="110" align="center">
-          <template #default="{ row }">
-            <div class="history-multiline-cell">
-              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.minutes }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.dailyTargetDayQuantity')" width="140" align="center">
-          <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.dailyTargetQuantity')" width="100" align="center">
-          <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.inputGoodDefect')" width="130" align="center">
-          <template #default="{ row }">
-            <div class="history-multiline-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.inputGoodDefect }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.internalDefectQuantity')" width="120" align="center">
-          <template #default="{ row }">
-            <div class="history-multiline-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.internalDefectQuantity }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.externalDefectQuantity')" width="120" align="center">
-          <template #default="{ row }">
-            <div class="history-multiline-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.externalDefectQuantity }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.lotNo')" width="110" align="center">
-          <template #default="{ row }">
-            <div class="history-multiline-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index" class="history-multiline-row">{{ line.lotNo }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.responsibility')" width="110" align="center">
-          <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.deductionPercent')" width="90" align="center">
-          <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.productionEfficiency')" width="110" align="center">
-          <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.dailyTargetEfficiency')" width="160" align="center">
-          <template #default="{ row }">{{ formatPercent(row.dailyTargetEfficiency) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.rates')" width="160" align="center">
-          <template #default="{ row }">
-            <span class="text-xs font-bold">{{ rate(row.availabilityRate) }}/{{ rate(row.performanceRate) }}/{{ rate(row.qualityRate) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('productionHistory.table.oee')" width="110" align="center">
-          <template #default="{ row }">
-            <span class="rounded-full px-2.5 py-1 text-sm font-black" :class="oeeClass(row.oee)">
-              {{ formatPercent(row.oee) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="evaluationLabel" :label="t('productionHistory.table.evaluationLabel')" width="110" align="center" show-overflow-tooltip />
-      </el-table>
+      <div class="history-excel-wrap" v-loading="loading">
+        <table class="history-excel-table">
+          <thead>
+            <tr>
+              <th>{{ t('productionHistory.table.time') }}</th>
+              <th>{{ t('productionHistory.table.line') }}</th>
+              <th>{{ t('productionHistory.table.machine') }}</th>
+              <th>{{ t('productionHistory.table.operatorName') }}</th>
+              <th>{{ t('productionHistory.table.responsibleLeader') }}</th>
+              <th>{{ t('productionHistory.table.partNumber') }}</th>
+              <th>{{ t('productionHistory.table.partName') }}</th>
+              <th>{{ t('productionHistory.table.processIds') }}</th>
+              <th>{{ t('productionHistory.table.runDowntime') }}</th>
+              <th class="reason-col">{{ t('productionHistory.table.downtimeReason') }}</th>
+              <th>{{ t('productionHistory.table.downtimeMinutes') }}</th>
+              <th>{{ t('productionHistory.table.dailyTargetDayQuantity') }}</th>
+              <th>{{ t('productionHistory.table.dailyTargetQuantity') }}</th>
+              <th>{{ t('productionHistory.table.inputGoodDefect') }}</th>
+              <th>{{ t('productionHistory.table.internalDefectQuantity') }}</th>
+              <th>{{ t('productionHistory.table.externalDefectQuantity') }}</th>
+              <th>{{ t('productionHistory.table.lotNo') }}</th>
+              <th>{{ t('productionHistory.table.responsibility') }}</th>
+              <th>{{ t('productionHistory.table.deductionPercent') }}</th>
+              <th>{{ t('productionHistory.table.productionEfficiency') }}</th>
+              <th>{{ t('productionHistory.table.dailyTargetEfficiency') }}</th>
+              <th>{{ t('productionHistory.table.rates') }}</th>
+              <th>{{ t('productionHistory.table.oee') }}</th>
+              <th>{{ t('productionHistory.table.evaluationLabel') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!historyReportRows.length">
+              <td class="empty-cell" colspan="24">{{ t('productionHistory.noData') }}</td>
+            </tr>
+            <template v-for="line in historyReportRows" :key="line.key">
+              <tr>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ formatTime(line.report.createdAt) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.lineCode }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.machineCode }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.operatorName || line.report.createdBy || '-' }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.responsibleLeader || '-' }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.partNumber }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ line.report.partName }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ formatProcessIds(line.report.processIds) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">
+                  <span class="text-emerald-600">{{ line.report.totalOperatingMinutes }}</span>
+                  <span class="text-slate-300"> / </span>
+                  <span class="text-rose-500">{{ line.report.downtimeMinutes }}</span>
+                </td>
+                <td class="text-cell reason-col">{{ line.downtime.reason }}</td>
+                <td class="number-cell">{{ line.downtime.minutes }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetDayQuantity) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetQuantity) }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.inputGoodDefect }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.internalDefectQuantity }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.externalDefectQuantity }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.lotNo }}</td>
+                <td v-if="!line.lot" class="center-cell">-</td>
+                <td v-if="!line.lot" class="number-cell">-</td>
+                <td v-if="!line.lot" class="number-cell">-</td>
+                <td v-if="!line.lot" class="center-cell">-</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.responsibility) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.deductionPercent) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.productionEfficiency) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.dailyTargetEfficiency) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ rate(line.report.availabilityRate) }}/{{ rate(line.report.performanceRate) }}/{{ rate(line.report.qualityRate) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">
+                  <span class="rounded-full px-2.5 py-1 text-sm font-black" :class="oeeClass(line.report.oee)">{{ formatPercent(line.report.oee) }}</span>
+                </td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.evaluationLabel }}</td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
 
       <div class="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
         <span class="text-sm font-semibold text-slate-500">{{ t('productionHistory.total') }}: {{ todayReports.length }}</span>
@@ -215,6 +192,8 @@ const paginatedReports = computed(() => {
   return todayReports.value.slice(start, end)
 })
 
+const historyReportRows = computed(() => paginatedReports.value.flatMap(buildReportTableRows))
+
 const filteredMachineOptions = computed(() => {
   if (!filters.value.lineCode) return machines.value
   return machines.value.filter(machine => machine.lineCode === filters.value.lineCode)
@@ -262,6 +241,18 @@ function downtimeDisplayRows(row) {
   return reasons.length ? reasons.map(item => parseDowntimeDisplay(item)) : [{ reason: '-', minutes: '-' }]
 }
 
+function downtimeRowsForTable(row) {
+  if (Array.isArray(row.downtimes) && row.downtimes.length) {
+    return row.downtimes
+      .map(item => ({
+        ...formatDowntimeDisplay(item.reason, item.minutes),
+        lotNo: normalizeLotNo(item.lotNo),
+      }))
+      .filter(item => item.reason || item.minutes)
+  }
+  return downtimeDisplayRows(row).map(item => ({ ...item, lotNo: '' }))
+}
+
 function formatDowntimeDisplay(reason, minutes) {
   const reasonText = String(reason || '').trim() || '-'
   const minuteValue = Number(minutes || 0)
@@ -300,6 +291,9 @@ function lotDisplayRows(row) {
       return {
         lotNo: lot.lotNo || '-',
         inputGoodDefect: `${inputQuantity} / ${goodQuantity} / ${defectQuantity}`,
+        inputQuantity,
+        goodQuantity,
+        defectQuantity,
         internalDefectQuantity,
         externalDefectQuantity,
       }
@@ -318,10 +312,92 @@ function lotDisplayRows(row) {
     return {
       lotNo: lotNos[index] || '-',
       inputGoodDefect: `${inputQuantity} / ${goodQuantity} / ${defectQuantity}`,
+      inputQuantity,
+      goodQuantity,
+      defectQuantity,
       internalDefectQuantity,
       externalDefectQuantity,
     }
   })
+}
+
+function buildReportTableRows(report) {
+  const detailLines = detailLinesForReport(report)
+  const rows = detailLines.map((line, index) => ({
+    key: `${report.id || 'report'}-${index}`,
+    report,
+    reportRowspan: detailLines.length,
+    showReport: index === 0,
+    showLot: false,
+    lotRowspan: 1,
+    lot: line.lot,
+    downtime: line.downtime,
+  }))
+
+  let index = 0
+  while (index < rows.length) {
+    const lot = rows[index].lot
+    if (!lot) {
+      index++
+      continue
+    }
+    let groupEnd = index
+    while (groupEnd + 1 < rows.length && sameLot(lot, rows[groupEnd + 1].lot)) {
+      groupEnd++
+    }
+    rows[index].showLot = true
+    rows[index].lotRowspan = groupEnd - index + 1
+    index = groupEnd + 1
+  }
+
+  return rows
+}
+
+function detailLinesForReport(report) {
+  const lots = lotDisplayRows(report)
+  const downtimes = downtimeRowsForTable(report)
+  const hasDowntimeLotNo = downtimes.some(item => item.lotNo)
+
+  if (!hasDowntimeLotNo) {
+    const lineCount = Math.max(lots.length, downtimes.length, 1)
+    return Array.from({ length: lineCount }, (_, index) => ({
+      lot: lots[index] || null,
+      downtime: downtimes[index] || { reason: '-', minutes: '-', lotNo: '' },
+    }))
+  }
+
+  const lines = []
+  lots.forEach(lot => {
+    const lotDowntimes = downtimes.filter(downtime => sameLotNo(downtime.lotNo, lot.lotNo))
+    if (!lotDowntimes.length) {
+      lines.push({ lot, downtime: { reason: '-', minutes: '-', lotNo: lot.lotNo } })
+      return
+    }
+    lotDowntimes.forEach(downtime => lines.push({ lot, downtime }))
+  })
+  downtimes
+    .filter(downtime => !lots.some(lot => sameLotNo(downtime.lotNo, lot.lotNo)))
+    .forEach(downtime => lines.push({ lot: null, downtime }))
+
+  return lines.length ? lines : [{ lot: null, downtime: { reason: '-', minutes: '-', lotNo: '' } }]
+}
+
+function normalizeLotNo(value) {
+  return String(value || '').trim()
+}
+
+function sameLotNo(left, right) {
+  return normalizeLotNo(left) === normalizeLotNo(right)
+}
+
+function sameLot(left, right) {
+  if (!left || !right) return false
+  return sameLotNo(left.lotNo, right.lotNo)
+    && Number(left.inputQuantity || 0) === Number(right.inputQuantity || 0)
+    && Number(left.goodQuantity || 0) === Number(right.goodQuantity || 0)
+    && Number(left.defectQuantity || 0) === Number(right.defectQuantity || 0)
+    && Number(left.internalDefectQuantity || 0) === Number(right.internalDefectQuantity || 0)
+    && Number(left.externalDefectQuantity || 0) === Number(right.externalDefectQuantity || 0)
 }
 
 function oeeClass(oee) {
@@ -484,15 +560,65 @@ watch([todayReports, pageSize], () => {
 </script>
 
 <style scoped>
-.history-multiline-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-weight: 700;
-  line-height: 1.4;
+.history-excel-wrap {
+  min-height: 180px;
+  overflow: auto;
 }
 
-.history-multiline-row {
-  min-height: 22px;
+.history-excel-table {
+  min-width: 2100px;
+  /* width: 100%; */
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14px;
+}
+
+.history-excel-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #1f4e79;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.history-excel-table th,
+.history-excel-table td {
+  border: 1px solid #111827;
+  padding: 8px 6px;
+  vertical-align: middle;
+}
+
+.history-excel-table td {
+  background: #fff;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.reason-col {
+  width: 280px;
+}
+
+.center-cell {
+  text-align: center;
+}
+
+.number-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-cell {
+  height: 80px;
+  text-align: center;
+  color: #94a3b8;
 }
 </style>

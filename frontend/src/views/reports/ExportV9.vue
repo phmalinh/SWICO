@@ -66,114 +66,99 @@
     </div> -->
 
     <div class="page-card overflow-hidden">
-      <el-table :data="paginatedReports" stripe style="width: 100%" v-loading="loading" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="56" />
-        <el-table-column prop="reportDate" :label="t('reports.search.table.date')" width="100" />
-        <el-table-column prop="lineCode" :label="t('reports.search.table.line')" width="80" align="center" />
-        <el-table-column prop="shiftName" :label="t('reports.search.table.shift')" width="150" />
-        <el-table-column prop="machineCode" :label="t('reports.search.table.machine')" width="80" />
-        <el-table-column prop="company" :label="t('reports.search.table.company')" min-width="100" show-overflow-tooltip />
-        <el-table-column :label="t('reports.search.table.operatorName')" width="150" align="center" show-overflow-tooltip>
-          <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.responsibleLeader')" width="160" align="center" show-overflow-tooltip>
-          <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
-        </el-table-column>
-        <el-table-column prop="partNumber" :label="t('reports.search.table.partNumber')" width="120" />
-        <el-table-column prop="partName" :label="t('reports.search.table.partName')" min-width="100" show-overflow-tooltip />
-        <el-table-column :label="t('reports.search.table.processIds')" min-width="130" show-overflow-tooltip>
-          <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
-        </el-table-column>
-        <el-table-column prop="cycleTimeSeconds" :label="t('reports.search.table.cycleTime')" width="90" align="center" />
-        <el-table-column prop="totalOperatingMinutes" :label="t('reports.search.table.totalOperatingMinutes')" width="120" align="center" />
-        <el-table-column prop="downtimeMinutes" :label="t('reports.search.table.downtimeMinutes')" width="100" align="center" />
-        <el-table-column :label="t('reports.search.table.downtimeReason')" min-width="160" show-overflow-tooltip>
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index">{{ line.reason }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.downtimeTime')" width="100" align="center">
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in downtimeDisplayRows(row)" :key="index">{{ line.minutes }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.responsibility')" min-width="110" align="center">
-          <template #default="{ row }">{{ formatPercent(row.responsibility) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.deductionPercent')" width="90" align="center">
-          <template #default="{ row }">{{ formatPercent(row.deductionPercent) }}</template>
-        </el-table-column>
-        <el-table-column prop="shiftStandardTimeMinutes" :label="t('reports.search.table.shiftStandardTimeMinutes')" width="110" align="center" />
-        <el-table-column :label="t('reports.search.table.dailyTargetDayQuantity')" width="120" align="center">
-          <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.dailyTargetQuantity')" width="90" align="center">
-          <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.inputQuantity')" width="90" align="center">
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.inputQuantity }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.goodQuantity')" width="90" align="center">
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.goodQuantity }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.defectQuantity')" width="90" align="center">
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.defectQuantity }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.internalDefectQuantity')" width="130" align="center">
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.internalDefectQuantity }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.externalDefectQuantity')" width="130" align="center">
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.externalDefectQuantity }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.lotNo')" width="110" align="center" show-overflow-tooltip>
-          <template #default="{ row }">
-            <div class="export-lot-cell">
-              <div v-for="(line, index) in lotDisplayRows(row)" :key="index">{{ line.lotNo }}</div>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.productionEfficiency')" width="90" align="center">
-          <template #default="{ row }">{{ formatPercent(row.productionEfficiency) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.dailyTargetEfficiency')" width="120" align="center">
-          <template #default="{ row }">{{ formatPercent(row.dailyTargetEfficiency) }}</template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.rates')" width="170" align="center">
-          <template #default="{ row }">
-            <span class="text-xs font-bold">{{ rate(row.availabilityRate) }}/{{ rate(row.performanceRate) }}/{{ rate(row.qualityRate) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('reports.search.table.oee')" width="88" align="center">
-          <template #default="{ row }">
-            <span class="font-black" :class="oeeTextClass(row.oee)">{{ formatPercent(row.oee) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="evaluationLabel" :label="t('reports.search.table.evaluationLabel')" min-width="180" />
-      </el-table>
+      <div class="excel-table-wrap" v-loading="loading">
+        <table class="excel-like-table">
+          <thead>
+            <tr>
+              <th class="select-col">
+                <input type="checkbox" :checked="allPageReportsSelected" @change="togglePageReportSelection" />
+              </th>
+              <th>{{ t('reports.search.table.date') }}</th>
+              <th>{{ t('reports.search.table.line') }}</th>
+              <th>{{ t('reports.search.table.shift') }}</th>
+              <th>{{ t('reports.search.table.machine') }}</th>
+              <th>{{ t('reports.search.table.company') }}</th>
+              <th>{{ t('reports.search.table.operatorName') }}</th>
+              <th>{{ t('reports.search.table.responsibleLeader') }}</th>
+              <th>{{ t('reports.search.table.partNumber') }}</th>
+              <th>{{ t('reports.search.table.partName') }}</th>
+              <th>{{ t('reports.search.table.processIds') }}</th>
+              <th>{{ t('reports.search.table.cycleTime') }}</th>
+              <th>{{ t('reports.search.table.totalOperatingMinutes') }}</th>
+              <th>{{ t('reports.search.table.downtimeMinutes') }}</th>
+              <th class="reason-col">{{ t('reports.search.table.downtimeReason') }}</th>
+              <th>{{ t('reports.search.table.downtimeTime') }}</th>
+              <th>{{ t('reports.search.table.shiftStandardTimeMinutes') }}</th>
+              <th>{{ t('reports.search.table.dailyTargetDayQuantity') }}</th>
+              <th>{{ t('reports.search.table.dailyTargetQuantity') }}</th>
+              <th>{{ t('reports.search.table.inputQuantity') }}</th>
+              <th>{{ t('reports.search.table.goodQuantity') }}</th>
+              <th>{{ t('reports.search.table.defectQuantity') }}</th>
+              <th>{{ t('reports.search.table.internalDefectQuantity') }}</th>
+              <th>{{ t('reports.search.table.externalDefectQuantity') }}</th>
+              <th>{{ t('reports.search.table.lotNo') }}</th>
+              <th>{{ t('reports.search.table.responsibility') }}</th>
+              <th>{{ t('reports.search.table.deductionPercent') }}</th>
+              <th>{{ t('reports.search.table.productionEfficiency') }}</th>
+              <th>{{ t('reports.search.table.dailyTargetEfficiency') }}</th>
+              <th>{{ t('reports.search.table.rates') }}</th>
+              <th>{{ t('reports.search.table.oee') }}</th>
+              <th>{{ t('reports.search.table.evaluationLabel') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!paginatedReportRows.length">
+              <td class="empty-cell" colspan="32">-</td>
+            </tr>
+            <template v-for="line in paginatedReportRows" :key="line.key">
+              <tr>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">
+                  <input type="checkbox" :checked="isReportSelected(line.report.id)" @change="toggleReportSelection(line.report.id, $event.target.checked)" />
+                </td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.reportDate }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.lineCode }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.shiftName }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.machineCode }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.company }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.operatorName || line.report.createdBy || '-' }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.responsibleLeader || '-' }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.partNumber }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ line.report.partName }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ formatProcessIds(line.report.processIds) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.cycleTimeSeconds }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.totalOperatingMinutes }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.downtimeMinutes }}</td>
+                <td class="text-cell reason-col">{{ line.downtime.reason }}</td>
+                <td class="number-cell">{{ line.downtime.minutes }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.shiftStandardTimeMinutes }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetDayQuantity) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetQuantity) }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.inputQuantity }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.goodQuantity }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.defectQuantity }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.internalDefectQuantity }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.externalDefectQuantity }}</td>
+                <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.lotNo }}</td>
+                <td v-if="!line.lot" class="number-cell">-</td>
+                <td v-if="!line.lot" class="number-cell">-</td>
+                <td v-if="!line.lot" class="number-cell">-</td>
+                <td v-if="!line.lot" class="number-cell">-</td>
+                <td v-if="!line.lot" class="number-cell">-</td>
+                <td v-if="!line.lot" class="center-cell">-</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.responsibility) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.deductionPercent) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.productionEfficiency) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.dailyTargetEfficiency) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ rate(line.report.availabilityRate) }}/{{ rate(line.report.performanceRate) }}/{{ rate(line.report.qualityRate) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">
+                  <span class="font-black" :class="oeeTextClass(line.report.oee)">{{ formatPercent(line.report.oee) }}</span>
+                </td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.evaluationLabel }}</td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
       <div class="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-500 md:flex-row md:items-center md:justify-between">
         <span>{{ t('reports.search.results', { count: reports.length }) }}</span>
         <div class="flex items-center gap-3">
@@ -230,6 +215,14 @@ const paginatedReports = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return reports.value.slice(start, start + pageSize.value)
 })
+
+const paginatedReportRows = computed(() => paginatedReports.value.flatMap(buildReportTableRows))
+
+const pageReportIds = computed(() => paginatedReports.value.map(report => report.id).filter(id => id !== undefined && id !== null))
+
+const allPageReportsSelected = computed(() => (
+  pageReportIds.value.length > 0 && pageReportIds.value.every(id => selectedIds.value.includes(id))
+))
 
 const reportTotals = computed(() => reports.value.reduce((totals, report) => ({
   completedQuantity: totals.completedQuantity + Number(report.inputQuantity || 0),
@@ -445,6 +438,97 @@ function parseDowntimeDisplay(value) {
   }
 }
 
+function downtimeRowsForTable(row) {
+  if (Array.isArray(row.downtimes) && row.downtimes.length) {
+    return row.downtimes
+      .map(item => ({
+        ...formatDowntimeDisplay(item.reason, item.minutes),
+        lotNo: normalizeLotNo(item.lotNo),
+      }))
+      .filter(item => item.reason || item.minutes)
+  }
+  return downtimeDisplayRows(row).map(item => ({ ...item, lotNo: '' }))
+}
+
+function buildReportTableRows(report) {
+  const detailLines = detailLinesForReport(report)
+  const rows = detailLines.map((line, index) => ({
+    key: `${report.id || 'report'}-${index}`,
+    report,
+    reportRowspan: detailLines.length,
+    showReport: index === 0,
+    showLot: false,
+    lotRowspan: 1,
+    lot: line.lot,
+    downtime: line.downtime,
+  }))
+
+  let index = 0
+  while (index < rows.length) {
+    const lot = rows[index].lot
+    if (!lot) {
+      index++
+      continue
+    }
+    let groupEnd = index
+    while (groupEnd + 1 < rows.length && sameLot(lot, rows[groupEnd + 1].lot)) {
+      groupEnd++
+    }
+    rows[index].showLot = true
+    rows[index].lotRowspan = groupEnd - index + 1
+    index = groupEnd + 1
+  }
+
+  return rows
+}
+
+function detailLinesForReport(report) {
+  const lots = lotDisplayRows(report)
+  const downtimes = downtimeRowsForTable(report)
+  const hasDowntimeLotNo = downtimes.some(item => item.lotNo)
+
+  if (!hasDowntimeLotNo) {
+    const lineCount = Math.max(lots.length, downtimes.length, 1)
+    return Array.from({ length: lineCount }, (_, index) => ({
+      lot: lots[index] || null,
+      downtime: downtimes[index] || { reason: '-', minutes: '-', lotNo: '' },
+    }))
+  }
+
+  const lines = []
+  lots.forEach(lot => {
+    const lotDowntimes = downtimes.filter(downtime => sameLotNo(downtime.lotNo, lot.lotNo))
+    if (!lotDowntimes.length) {
+      lines.push({ lot, downtime: { reason: '-', minutes: '-', lotNo: lot.lotNo } })
+      return
+    }
+    lotDowntimes.forEach(downtime => lines.push({ lot, downtime }))
+  })
+  downtimes
+    .filter(downtime => !lots.some(lot => sameLotNo(downtime.lotNo, lot.lotNo)))
+    .forEach(downtime => lines.push({ lot: null, downtime }))
+
+  return lines.length ? lines : [{ lot: null, downtime: { reason: '-', minutes: '-', lotNo: '' } }]
+}
+
+function normalizeLotNo(value) {
+  return String(value || '').trim()
+}
+
+function sameLotNo(left, right) {
+  return normalizeLotNo(left) === normalizeLotNo(right)
+}
+
+function sameLot(left, right) {
+  if (!left || !right) return false
+  return sameLotNo(left.lotNo, right.lotNo)
+    && Number(left.inputQuantity || 0) === Number(right.inputQuantity || 0)
+    && Number(left.goodQuantity || 0) === Number(right.goodQuantity || 0)
+    && Number(left.defectQuantity || 0) === Number(right.defectQuantity || 0)
+    && Number(left.internalDefectQuantity || 0) === Number(right.internalDefectQuantity || 0)
+    && Number(left.externalDefectQuantity || 0) === Number(right.externalDefectQuantity || 0)
+}
+
 function rate(value) {
   return formatPercentNumber(value)
 }
@@ -492,6 +576,28 @@ function oeeTextClass(oee) {
 
 function handleSelectionChange(selection) {
   selectedIds.value = selection.map(item => item.id)
+}
+
+function isReportSelected(id) {
+  return selectedIds.value.includes(id)
+}
+
+function toggleReportSelection(id, checked) {
+  if (id === undefined || id === null) return
+  if (checked) {
+    if (!selectedIds.value.includes(id)) selectedIds.value = [...selectedIds.value, id]
+    return
+  }
+  selectedIds.value = selectedIds.value.filter(item => item !== id)
+}
+
+function togglePageReportSelection(event) {
+  const checked = event.target.checked
+  if (checked) {
+    selectedIds.value = Array.from(new Set([...selectedIds.value, ...pageReportIds.value]))
+    return
+  }
+  selectedIds.value = selectedIds.value.filter(id => !pageReportIds.value.includes(id))
 }
 
 async function search() {
@@ -559,11 +665,70 @@ watch([reports, pageSize], () => {
 </script>
 
 <style scoped>
-.export-lot-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-weight: 700;
-  line-height: 1.4;
+.excel-table-wrap {
+  min-height: 180px;
+  overflow: auto;
 }
+
+.excel-like-table {
+  min-width: 2500px;
+  /* width: 100%; */
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14px;
+}
+
+.excel-like-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #1f4e79;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.excel-like-table th,
+.excel-like-table td {
+  border: 1px solid #111827;
+  padding: 8px 6px;
+  vertical-align: middle;
+}
+
+.excel-like-table td {
+  background: #fff;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.select-col {
+  width: 42px;
+}
+
+.reason-col {
+  width: 280px;
+}
+
+.center-cell {
+  text-align: center;
+}
+
+.number-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-cell {
+  height: 80px;
+  text-align: center;
+  color: #94a3b8;
+}
+
 </style>

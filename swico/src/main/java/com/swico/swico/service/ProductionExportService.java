@@ -32,9 +32,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class ProductionExportService {
+
+    private record ExportDetailLine(ProductionReportLotDto lot, ProductionReportDowntimeDto downtime) {}
 
     private final ProductProcessRepository productProcessRepository;
     private final ProductionFormulaService formulaService;
@@ -80,7 +83,8 @@ public class ProductionExportService {
             for (ProductionReportResponse report : reports) {
                 List<ProductionReportDowntimeDto> downtimes = effectiveDowntimes(report);
                 List<ProductionReportLotDto> lots = effectiveLots(report);
-                int reportLineCount = Math.max(Math.max(downtimes.size(), lots.size()), 1);
+                List<ExportDetailLine> detailLines = exportDetailLines(lots, downtimes);
+                int reportLineCount = Math.max(detailLines.size(), 1);
                 int firstRowIndex = rowIndex;
                 Row row = sheet.createRow(rowIndex++);
                 row.setHeightInPoints(22);
@@ -102,11 +106,11 @@ public class ProductionExportService {
                 setValue(row.createCell(10), report.cycleTimeSeconds(), decimalStyle);
                 setValue(row.createCell(11), report.totalOperatingMinutes(), intStyle);
                 setValue(row.createCell(12), report.downtimeMinutes(), intStyle);
-                writeDowntimeRows(sheet, firstRowIndex, reportLineCount, downtimes, multilineStyle, intStyle);
+                writeDowntimeRows(sheet, firstRowIndex, reportLineCount, detailLines, multilineStyle, intStyle);
                 setValue(row.createCell(15), report.shiftStandardTimeMinutes(), intStyle);
                 setFormula(row.createCell(16), dailyTargetFormula(row), decimalStyle);
                 setValue(row.createCell(17), report.dailyTargetQuantity(), decimalStyle);
-                writeLotRows(sheet, firstRowIndex, reportLineCount, lots, intStyle, multilineStyle);
+                writeLotRows(sheet, firstRowIndex, reportLineCount, detailLines, intStyle, multilineStyle);
                 ProductionCalculationResponse fallback = null;
                 if (report.responsibility() == null
                         || report.deductionPercent() == null
@@ -146,24 +150,14 @@ public class ProductionExportService {
     private void writeDowntimeRows(
             Sheet sheet,
             int firstRowIndex,
-            List<ProductionReportDowntimeDto> downtimes,
-            CellStyle reasonStyle,
-            CellStyle minutesStyle
-    ) {
-        writeDowntimeRows(sheet, firstRowIndex, Math.max(downtimes.size(), 1), downtimes, reasonStyle, minutesStyle);
-    }
-
-    private void writeDowntimeRows(
-            Sheet sheet,
-            int firstRowIndex,
             int lineCount,
-            List<ProductionReportDowntimeDto> downtimes,
+            List<ExportDetailLine> detailLines,
             CellStyle reasonStyle,
             CellStyle minutesStyle
     ) {
         for (int i = 0; i < lineCount; i++) {
             Row row = sheet.getRow(firstRowIndex + i);
-            ProductionReportDowntimeDto downtime = i < downtimes.size() ? downtimes.get(i) : null;
+            ProductionReportDowntimeDto downtime = i < detailLines.size() ? detailLines.get(i).downtime() : null;
             setValue(row.createCell(13), downtimeReasonText(downtime), reasonStyle);
             setValue(row.createCell(14), downtimeMinutesValue(downtime), minutesStyle);
         }
@@ -173,20 +167,58 @@ public class ProductionExportService {
             Sheet sheet,
             int firstRowIndex,
             int lineCount,
-            List<ProductionReportLotDto> lots,
+            List<ExportDetailLine> detailLines,
             CellStyle intStyle,
             CellStyle textStyle
     ) {
-        for (int i = 0; i < lineCount; i++) {
-            Row row = sheet.getRow(firstRowIndex + i);
-            ProductionReportLotDto lot = i < lots.size() ? lots.get(i) : null;
-            setValue(row.createCell(18), lot != null ? lot.inputQuantity() : null, intStyle);
-            setValue(row.createCell(19), lot != null ? lot.goodQuantity() : null, intStyle);
-            setValue(row.createCell(20), lot != null ? lotDefectQuantity(lot) : null, intStyle);
-            setValue(row.createCell(21), lot != null ? lot.internalDefectQuantity() : null, intStyle);
-            setValue(row.createCell(22), lot != null ? lot.externalDefectQuantity() : null, intStyle);
-            setValue(row.createCell(23), lotNoText(lot), textStyle);
+        int index = 0;
+        while (index < lineCount) {
+            Row row = sheet.getRow(firstRowIndex + index);
+            ProductionReportLotDto lot = lotAt(detailLines, index);
+            writeLotCells(row, lot, intStyle, textStyle);
+
+            int groupEnd = index;
+            while (lot != null && groupEnd + 1 < lineCount && sameLot(lot, lotAt(detailLines, groupEnd + 1))) {
+                groupEnd++;
+            }
+            if (groupEnd > index) {
+                mergeLotRows(sheet, firstRowIndex + index, firstRowIndex + groupEnd);
+            }
+            index = groupEnd + 1;
         }
+    }
+
+    private ProductionReportLotDto lotAt(List<ExportDetailLine> detailLines, int index) {
+        return index < detailLines.size() ? detailLines.get(index).lot() : null;
+    }
+
+    private void writeLotCells(Row row, ProductionReportLotDto lot, CellStyle intStyle, CellStyle textStyle) {
+        setValue(row.createCell(18), lot != null ? lot.inputQuantity() : null, intStyle);
+        setValue(row.createCell(19), lot != null ? lot.goodQuantity() : null, intStyle);
+        setValue(row.createCell(20), lot != null ? lotDefectQuantity(lot) : null, intStyle);
+        setValue(row.createCell(21), lot != null ? lot.internalDefectQuantity() : null, intStyle);
+        setValue(row.createCell(22), lot != null ? lot.externalDefectQuantity() : null, intStyle);
+        setValue(row.createCell(23), lotNoText(lot), textStyle);
+    }
+
+    private void mergeLotRows(Sheet sheet, int firstRowIndex, int lastRowIndex) {
+        for (int col = 18; col <= 23; col++) {
+            CellRangeAddress region = new CellRangeAddress(firstRowIndex, lastRowIndex, col, col);
+            sheet.addMergedRegion(region);
+            applyBlackBorders(region, sheet);
+        }
+    }
+
+    private boolean sameLot(ProductionReportLotDto left, ProductionReportLotDto right) {
+        if (left == null || right == null) {
+            return false;
+        }
+        return sameLotNo(left.lotNo(), right.lotNo())
+                && Objects.equals(left.inputQuantity(), right.inputQuantity())
+                && Objects.equals(left.goodQuantity(), right.goodQuantity())
+                && Objects.equals(lotDefectQuantity(left), lotDefectQuantity(right))
+                && Objects.equals(left.internalDefectQuantity(), right.internalDefectQuantity())
+                && Objects.equals(left.externalDefectQuantity(), right.externalDefectQuantity());
     }
 
     private String downtimeReasonText(ProductionReportDowntimeDto downtime) {
@@ -233,6 +265,39 @@ public class ProductionExportService {
             return null;
         }
         return lot.lotNo() == null || lot.lotNo().isBlank() ? "-" : lot.lotNo();
+    }
+
+    private List<ExportDetailLine> exportDetailLines(List<ProductionReportLotDto> lots, List<ProductionReportDowntimeDto> downtimes) {
+        boolean hasDowntimeLotNo = downtimes.stream().anyMatch(item -> item.lotNo() != null && !item.lotNo().isBlank());
+        if (!hasDowntimeLotNo) {
+            int lineCount = Math.max(Math.max(lots.size(), downtimes.size()), 1);
+            return java.util.stream.IntStream.range(0, lineCount)
+                    .mapToObj(index -> new ExportDetailLine(
+                            index < lots.size() ? lots.get(index) : null,
+                            index < downtimes.size() ? downtimes.get(index) : null
+                    ))
+                    .toList();
+        }
+
+        List<ExportDetailLine> lines = new java.util.ArrayList<>();
+        for (ProductionReportLotDto lot : lots) {
+            List<ProductionReportDowntimeDto> lotDowntimes = downtimes.stream()
+                    .filter(downtime -> sameLotNo(downtime.lotNo(), lot.lotNo()))
+                    .toList();
+            if (lotDowntimes.isEmpty()) {
+                lines.add(new ExportDetailLine(lot, null));
+            } else {
+                lotDowntimes.forEach(downtime -> lines.add(new ExportDetailLine(lot, downtime)));
+            }
+        }
+        downtimes.stream()
+                .filter(downtime -> lots.stream().noneMatch(lot -> sameLotNo(downtime.lotNo(), lot.lotNo())))
+                .forEach(downtime -> lines.add(new ExportDetailLine(null, downtime)));
+        return lines.isEmpty() ? List.of(new ExportDetailLine(null, null)) : lines;
+    }
+
+    private boolean sameLotNo(String left, String right) {
+        return String.valueOf(left == null ? "" : left).trim().equals(String.valueOf(right == null ? "" : right).trim());
     }
 
     private String dailyTargetEfficiencyFormula(Row row) {
@@ -357,7 +422,8 @@ public class ProductionExportService {
                             null,
                             null,
                             stripDowntimeMinutes(reasonText),
-                            minutes != null ? minutes : (index == 0 ? report.downtimeMinutes() : 0)
+                            minutes != null ? minutes : (index == 0 ? report.downtimeMinutes() : 0),
+                            null
                     );
                 })
                 .toList();

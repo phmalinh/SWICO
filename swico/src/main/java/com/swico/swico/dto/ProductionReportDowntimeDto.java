@@ -4,5 +4,6 @@ public record ProductionReportDowntimeDto(
         Long id,
         String reasonCategoryCode,
         String reason,
-        Integer minutes
+        Integer minutes,
+        String lotNo
 ) {}

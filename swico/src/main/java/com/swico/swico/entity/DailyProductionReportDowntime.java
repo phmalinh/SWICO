@@ -23,6 +23,9 @@ public class DailyProductionReportDowntime {
     @Column(name = "minutes")
     private Integer minutes;
 
+    @Column(name = "lot_no", length = 100)
+    private String lotNo;
+
     public Long getId() {
         return id;
     }
@@ -61,5 +64,13 @@ public class DailyProductionReportDowntime {
 
     public void setMinutes(Integer minutes) {
         this.minutes = minutes;
+    }
+
+    public String getLotNo() {
+        return lotNo;
+    }
+
+    public void setLotNo(String lotNo) {
+        this.lotNo = lotNo;
     }
 }

@@ -219,7 +219,8 @@ public class ProductionReportService {
                             null,
                             null,
                             reason,
-                            minutes != null ? minutes : (index == 0 ? downtimeMinutes : 0)
+                            minutes != null ? minutes : (index == 0 ? downtimeMinutes : 0),
+                            null
                     );
                 })
                 .toList();
@@ -239,6 +240,7 @@ public class ProductionReportService {
         entity.setReasonCategoryCode(row.reasonCategoryCode());
         entity.setReason(row.reason());
         entity.setMinutes(number(row.minutes()));
+        entity.setLotNo(row.lotNo());
         return entity;
     }
 
@@ -981,7 +983,8 @@ public class ProductionReportService {
                     null,
                     null,
                     valueAt(reasons, index),
-                    valueAt(minutes, index)
+                    valueAt(minutes, index),
+                    null
             );
             if (hasDowntimeData(downtime)) {
                 downtimes.add(downtime);
@@ -1015,7 +1018,8 @@ public class ProductionReportService {
                     null,
                     null,
                     parseString(getCell(row, headerIndex.getOrDefault("downtimeReason", -1))),
-                    parseInteger(getCell(row, headerIndex.getOrDefault("downtimeRowMinutes", -1)))
+                    parseInteger(getCell(row, headerIndex.getOrDefault("downtimeRowMinutes", -1))),
+                    parseString(getMergedAwareCell(sheet, row, headerIndex.getOrDefault("lotNo", -1)))
             );
             if (hasDowntimeData(downtime)) {
                 downtimes.add(downtime);
@@ -1228,6 +1232,20 @@ public class ProductionReportService {
 
     private Cell getCell(Row row, int index) {
         if (index < 0) return null;
+        return row.getCell(index);
+    }
+
+    private Cell getMergedAwareCell(Sheet sheet, Row row, int index) {
+        if (row == null || index < 0) {
+            return null;
+        }
+        int rowIndex = row.getRowNum();
+        for (CellRangeAddress region : sheet.getMergedRegions()) {
+            if (region.isInRange(rowIndex, index)) {
+                Row firstRow = sheet.getRow(region.getFirstRow());
+                return firstRow == null ? null : firstRow.getCell(region.getFirstColumn());
+            }
+        }
         return row.getCell(index);
     }
 
@@ -1547,7 +1565,8 @@ public class ProductionReportService {
                 downtime.getId(),
                 downtime.getReasonCategoryCode(),
                 downtime.getReason(),
-                downtime.getMinutes()
+                downtime.getMinutes(),
+                downtime.getLotNo()
         );
     }
 

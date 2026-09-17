@@ -56,6 +56,7 @@ public class DatabaseSchemaUpdater {
                     report_id bigint NOT NULL,
                     reason_category_code varchar(20),
                     reason varchar(1000),
+                    lot_no varchar(100),
                     minutes integer,
                     CONSTRAINT fk_daily_report_downtimes_report
                         FOREIGN KEY (report_id)
@@ -63,6 +64,7 @@ public class DatabaseSchemaUpdater {
                         ON DELETE CASCADE
                 )
                 """);
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_report_downtimes ADD COLUMN IF NOT EXISTS lot_no varchar(100)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS team varchar(100)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS user_id bigint");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS employee_skills ADD COLUMN IF NOT EXISTS product_id bigint");
