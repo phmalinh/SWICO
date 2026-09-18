@@ -63,8 +63,8 @@ public class ProductionReportController {
 
     @PutMapping("/{id}")
     public ProductionReportResponse update(@PathVariable Long id, @Valid @RequestBody ProductionCalculationRequest request, Authentication authentication) {
-        ProductionReportResponse response = reportService.updateReport(id, request);
         String username = authentication != null ? authentication.getName() : "SYSTEM";
+        ProductionReportResponse response = reportService.updateReport(id, request, username);
         auditLogService.record(
                 "UPDATE",
                 "DailyProductionReport",
@@ -178,13 +178,14 @@ public class ProductionReportController {
 
     @DeleteMapping
     public void deleteReports(@RequestBody java.util.List<Long> ids, Authentication authentication) {
-        reportService.deleteReportsByIds(ids);
+        String username = authentication != null ? authentication.getName() : "SYSTEM";
+        reportService.deleteReportsByIds(ids, username);
         if (ids != null) {
             ids.forEach(id -> auditLogService.record(
                     "DELETE",
                     "DailyProductionReport",
                     id,
-                    authentication.getName(),
+                    username,
                     String.format("Xóa báo cáo OEE #%d", id)
             ));
         }

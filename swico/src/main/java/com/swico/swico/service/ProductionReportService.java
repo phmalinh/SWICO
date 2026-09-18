@@ -8,7 +8,9 @@ import com.swico.swico.entity.DailyProductionReportLot;
 import com.swico.swico.entity.Line;
 import com.swico.swico.entity.Product;
 import com.swico.swico.entity.ProductProcess;
+import com.swico.swico.entity.Role;
 import com.swico.swico.entity.Shift;
+import com.swico.swico.entity.User;
 import com.swico.swico.repository.DailyProductionReportLotRepository;
 import com.swico.swico.repository.DailyProductionReportDowntimeRepository;
 import com.swico.swico.repository.DailyProductionReportRepository;
@@ -27,6 +29,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -420,10 +423,11 @@ public class ProductionReportService {
     }
 
     @Transactional
-    public ProductionReportResponse updateReport(Long id, ProductionCalculationRequest request) {
+    public ProductionReportResponse updateReport(Long id, ProductionCalculationRequest request, String username) {
         ProductionCalculationRequest effectiveRequest = withEffectiveCycleTime(request);
         DailyProductionReport entity = reportRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Report not found: " + id));
+        assertCanModifyReport(entity, username);
 
         Shift shift = getOrCreateShift(effectiveRequest);
         final Integer effectiveShiftMinutes = shift.getStandardTimeMinutes();
@@ -462,8 +466,13 @@ public class ProductionReportService {
     }
 
     @Transactional
-    public void deleteReportsByIds(java.util.List<Long> ids) {
+    public void deleteReportsByIds(java.util.List<Long> ids, String username) {
         if (ids == null || ids.isEmpty()) return;
+        List<DailyProductionReport> reports = reportRepository.findAllById(ids);
+        if (reports.size() != ids.size()) {
+            throw new IllegalArgumentException("Some reports were not found.");
+        }
+        reports.forEach(report -> assertCanModifyReport(report, username));
         ids.forEach(id -> {
             reportDowntimeRepository.deleteByReportId(id);
             reportLotRepository.deleteByReportId(id);
@@ -1336,26 +1345,31 @@ public class ProductionReportService {
 
     @Transactional(readOnly = true)
     public List<ProductionReportResponse> getMyReports(String createdBy, LocalDate reportDate, String lineCode, String shiftName, String partNumber) {
+        User currentUser = userRepository.findByUsername(createdBy).orElse(null);
         List<DailyProductionReport> reports;
-        boolean hasLineFilter = lineCode != null && !lineCode.isBlank();
-
-        if (reportDate == null) {
-            if (hasLineFilter) {
-                reports = reportRepository.findByCreatedByAndLine_LineCodeOrderByCreatedAtDesc(createdBy, lineCode);
+        if (currentUser == null || currentUser.getRole() == Role.ROLE_OPERATOR) {
+            boolean hasLineFilter = lineCode != null && !lineCode.isBlank();
+            if (reportDate == null) {
+                reports = hasLineFilter
+                        ? reportRepository.findByCreatedByAndLine_LineCodeOrderByCreatedAtDesc(createdBy, lineCode)
+                        : reportRepository.findByCreatedByOrderByCreatedAtDesc(createdBy);
             } else {
-                reports = reportRepository.findByCreatedByOrderByCreatedAtDesc(createdBy);
+                reports = hasLineFilter
+                        ? reportRepository.findByCreatedByAndLine_LineCodeAndReportDateOrderByCreatedAtDesc(createdBy, lineCode, reportDate)
+                        : reportRepository.findByCreatedByAndReportDateOrderByCreatedAtDesc(createdBy, reportDate);
             }
         } else {
-            if (hasLineFilter) {
-                reports = reportRepository.findByCreatedByAndLine_LineCodeAndReportDateOrderByCreatedAtDesc(createdBy, lineCode, reportDate);
-            } else {
-                reports = reportRepository.findByCreatedByAndReportDateOrderByCreatedAtDesc(createdBy, reportDate);
-            }
+            reports = reportDate == null
+                    ? reportRepository.findAll()
+                    : reportRepository.findByReportDateOrderByCreatedAtDesc(reportDate);
         }
 
         return reports.stream()
+                .filter(r -> canAppearInMyReports(r, currentUser, createdBy))
+                .filter(r -> lineCode == null || lineCode.isBlank() || (r.getLine() != null && lineCode.equals(r.getLine().getLineCode())))
                 .filter(r -> shiftName == null || shiftName.isBlank() || (r.getShift() != null && shiftName.equals(r.getShift().getShiftName())))
                 .filter(r -> partNumber == null || partNumber.isBlank() || (r.getProduct() != null && r.getProduct().getPartNumber().contains(partNumber)))
+                .sorted(Comparator.comparing(DailyProductionReport::getCreatedAt).reversed())
                 .map(r -> toResponse(r, null))
                 .toList();
     }
@@ -1589,6 +1603,80 @@ public class ProductionReportService {
         }
         String displayName = operatorDisplayName(username);
         return displayName != null && displayName.toLowerCase(Locale.ROOT).contains(operatorTerm);
+    }
+
+    private void assertCanModifyReport(DailyProductionReport report, String username) {
+        User currentUser = username == null ? null : userRepository.findByUsername(username).orElse(null);
+        if (!canModifyReport(report, currentUser, username)) {
+            throw new AccessDeniedException("Bạn không có quyền sửa hoặc xóa báo cáo này.");
+        }
+    }
+
+    private boolean canAppearInMyReports(DailyProductionReport report, User currentUser, String username) {
+        if (currentUser == null) {
+            return sameText(report.getCreatedBy(), username);
+        }
+        if (currentUser.getRole() == Role.ROLE_ADMIN) {
+            return true;
+        }
+        if (currentUser.getRole() == Role.ROLE_LEADER || currentUser.getRole() == Role.ROLE_MANAGER) {
+            return isOwnReport(report, currentUser.getUsername()) || leaderMatchesReport(report, currentUser);
+        }
+        return isOwnReport(report, currentUser.getUsername());
+    }
+
+    private boolean canModifyReport(DailyProductionReport report, User currentUser, String username) {
+        if (currentUser == null) {
+            return false;
+        }
+        if (currentUser.getRole() == Role.ROLE_ADMIN) {
+            return true;
+        }
+        if (currentUser.getRole() == Role.ROLE_LEADER || currentUser.getRole() == Role.ROLE_MANAGER) {
+            return (isOwnReport(report, currentUser.getUsername()) || leaderMatchesReport(report, currentUser))
+                    && withinCreatedDays(report, 3);
+        }
+        return isOwnReport(report, currentUser.getUsername()) && withinCreatedDays(report, 1);
+    }
+
+    private boolean isOwnReport(DailyProductionReport report, String username) {
+        return sameText(report.getCreatedBy(), username);
+    }
+
+    private boolean leaderMatchesReport(DailyProductionReport report, User leader) {
+        String responsibleLeader = normalizePersonText(report.getResponsibleLeader());
+        if (responsibleLeader.isBlank()) {
+            return false;
+        }
+        String username = normalizePersonText(leader.getUsername());
+        String fullName = normalizePersonText(leader.getFullName());
+        return responsibleLeader.equals(username)
+                || responsibleLeader.equals(fullName)
+                || (!username.isBlank() && responsibleLeader.contains(username))
+                || (!fullName.isBlank() && responsibleLeader.contains(fullName));
+    }
+
+    private boolean withinCreatedDays(DailyProductionReport report, long days) {
+        if (report.getCreatedAt() != null) {
+            return !report.getCreatedAt().isBefore(AppClock.now().minusDays(days));
+        }
+        if (report.getReportDate() != null) {
+            return !report.getReportDate().isBefore(AppClock.today().minusDays(days));
+        }
+        return false;
+    }
+
+    private boolean sameText(String left, String right) {
+        return normalizePersonText(left).equals(normalizePersonText(right));
+    }
+
+    private String normalizePersonText(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("\\s+", " ");
     }
 
     private BigDecimal average(List<BigDecimal> values) {

@@ -581,9 +581,15 @@
                     <td class="empty-cell" colspan="31">-</td>
                   </tr>
                   <template v-for="line in myReportRows" :key="line.key">
-                    <tr :class="{ 'selected-row': isReportSelectedForTable(line.report.id) }" @click="handleRowClick(line.report)">
+                    <tr :class="{ 'selected-row': isReportSelectedForTable(line.report.id), 'locked-row': !canModifyReport(line.report) }" @click="handleRowClick(line.report)">
                       <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">
-                        <input type="checkbox" :checked="isReportSelectedForTable(line.report.id)" @click.stop @change="toggleMyReportSelection(line.report, $event.target.checked)" />
+                        <input
+                          type="checkbox"
+                          :checked="isReportSelectedForTable(line.report.id)"
+                          :disabled="!canModifyReport(line.report)"
+                          @click.stop
+                          @change="toggleMyReportSelection(line.report, $event.target.checked)"
+                        />
                       </td>
                       <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.reportDate }}</td>
                       <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.lineCode }}</td>
@@ -707,6 +713,7 @@ const editedReportId = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 20, 50, 100]
+const session = computed(() => getSession())
 const formRef = ref(null)
 const leaderSelectRef = ref(null)
 const productSelectRef = ref(null)
@@ -1473,6 +1480,7 @@ function isReportSelectedForTable(id) {
 }
 
 function toggleMyReportSelection(report, checked) {
+  if (!canModifyReport(report)) return
   if (!report?.id) return
   if (checked) {
     if (!isReportSelectedForTable(report.id)) selectedReports.value = [...selectedReports.value, report]
@@ -1483,10 +1491,62 @@ function toggleMyReportSelection(report, checked) {
 
 function handleRowClick(report) {
   if (!report) return
+  if (!canModifyReport(report)) {
+    ElMessage.warning('Báo cáo này đã hết thời hạn hoặc ngoài phạm vi quyền sửa/xóa.')
+    return
+  }
   selectedReports.value = [report]
   populateFormForEdit(report)
   editedReportId.value = report.id
   ElMessage.info(t('productionEntry.messages.selectedForEdit'))
+}
+
+function canModifyReport(report) {
+  const role = session.value.role
+  const username = session.value.username
+  const fullName = session.value.fullName
+  if (role === 'ROLE_ADMIN') return true
+  if (!report || !username) return false
+  if (role === 'ROLE_LEADER' || role === 'ROLE_MANAGER') {
+    return (samePerson(report.createdBy, username) || leaderMatchesReport(report, username, fullName)) && withinCreatedDays(report, 3)
+  }
+  return samePerson(report.createdBy, username) && withinCreatedDays(report, 1)
+}
+
+function leaderMatchesReport(report, username, fullName) {
+  const responsibleLeader = normalizePersonText(report.responsibleLeader)
+  const normalizedUsername = normalizePersonText(username)
+  const normalizedFullName = normalizePersonText(fullName)
+  return responsibleLeader
+    && (responsibleLeader === normalizedUsername
+      || responsibleLeader === normalizedFullName
+      || (normalizedUsername && responsibleLeader.includes(normalizedUsername))
+      || (normalizedFullName && responsibleLeader.includes(normalizedFullName)))
+}
+
+function withinCreatedDays(report, days) {
+  const createdAt = report?.createdAt ? new Date(report.createdAt).getTime() : null
+  if (createdAt && !Number.isNaN(createdAt)) {
+    return createdAt >= Date.now() - days * 24 * 60 * 60 * 1000
+  }
+  const reportDate = report?.reportDate ? new Date(`${report.reportDate}T00:00:00`).getTime() : null
+  if (!reportDate || Number.isNaN(reportDate)) return false
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  return reportDate >= todayStart.getTime() - days * 24 * 60 * 60 * 1000
+}
+
+function samePerson(left, right) {
+  return normalizePersonText(left) === normalizePersonText(right)
+}
+
+function normalizePersonText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
 }
 
 function populateFormForEdit(report) {
@@ -2251,6 +2311,12 @@ onMounted(loadInitialData)
 
 .my-reports-excel-table tr.selected-row td {
   background: #e0f2fe;
+}
+
+.my-reports-excel-table tr.locked-row td {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .select-col {
