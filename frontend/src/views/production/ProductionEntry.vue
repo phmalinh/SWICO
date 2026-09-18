@@ -15,21 +15,21 @@
         <el-form ref="formRef" :model="form" :rules="formRules" label-position="top" class="p-3 space-y-2.5">
 
           <div class="grid grid-cols-2 md:grid-cols-3 gap-2.5 " >
-            <el-form-item prop="reportDate" :label="t('productionEntry.reportDate')" class="!mb-0 ">
+            <el-form-item prop="reportDate" :label="t('productionEntry.reportDate')":show-message="false" class="!mb-0 ">
               <el-date-picker v-model="form.reportDate" type="date" value-format="YYYY-MM-DD" class="w-full el-form-item__content" size="default"/>
             </el-form-item>
-            <el-form-item prop="lineCode" :label="t('productionEntry.line')" class="!mb-0">
+            <el-form-item prop="lineCode" :label="t('productionEntry.line')":show-message="false" class="!mb-0">
               <el-select v-model="form.lineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectLine')" @change="onLineChange">
                 <el-option v-for="l in lines" :key="l.lineCode" :label="`${l.lineCode}`" :value="l.lineCode" />
               </el-select>
             </el-form-item>
-            <el-form-item prop="machineCode" :label="t('productionEntry.machine')" class="!mb-0">
+            <el-form-item prop="machineCode" :label="t('productionEntry.machine')":show-message="false" class="!mb-0">
               <el-select v-model="form.machineCode" size="default" class="w-full" :placeholder="t('productionEntry.selectMachine')">
                 <el-option v-for="m in filteredMachines" :key="m.machineCode" :label="`${m.machineCode} - ${m.description}`" :value="m.machineCode" />
               </el-select>
             </el-form-item>
 
-            <el-form-item prop="shiftName" :label="t('productionEntry.shift')" class="!mb-0">
+            <el-form-item prop="shiftName" :label="t('productionEntry.shift')":show-message="false" class="!mb-0">
               <el-select v-model="form.shiftName" size="default" class="w-full" :placeholder="t('productionEntry.selectShift')">
                 <el-option v-for="s in shifts" :key="s.shiftName" :label="s.shiftName" :value="s.shiftName" />
               </el-select>
@@ -37,7 +37,7 @@
              <el-form-item :label="t('productionEntry.company')" class="!mb-0">
               <el-input v-model="form.company" size="default" readonly :placeholder="t('productionEntry.enterCompany')" />
             </el-form-item>
-            <el-form-item prop="responsibleLeader" :label="t('productionEntry.responsibleLeader')" class="!mb-0">
+            <el-form-item prop="responsibleLeader" :label="t('productionEntry.responsibleLeader')":show-message="false" class="!mb-0">
               <el-select
                 ref="leaderSelectRef"
                 v-model="form.responsibleLeader"
@@ -100,7 +100,7 @@
           </div>   
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
-              <el-form-item prop="partNumber" :label="t('productionEntry.partNumber')" class="!mb-0 md:col-span-6">
+              <el-form-item prop="partNumber" :label="t('productionEntry.partNumber')" :show-message="false" class="!mb-0 md:col-span-6">
                 <el-select
                   ref="productSelectRef"
                   v-model="form.partNumber"
@@ -123,7 +123,7 @@
               <el-form-item :label="t('productionEntry.partName')" class="!mb-0 md:col-span-6">
                 <el-input v-model="form.partName" size="default" readonly placeholder="-" />
               </el-form-item>
-              <el-form-item prop="processId" :label="t('productionEntry.processes')" class="!mb-0 md:col-span-6">
+              <el-form-item prop="processId" :label="t('productionEntry.processes')":show-message="false" class="!mb-0 md:col-span-6">
                 <el-select
                   ref="processSelectRef"
                   v-model="form.processId"
@@ -151,10 +151,10 @@
               </el-form-item>
             </div>
           </div>    
-          <!-- nhập số lượng -->
+          <!-- nháº­p sá»‘ lÆ°á»£ng -->
           <div class="grid grid-cols-2 md:grid-cols-2 gap-2.5">
             <div class="mt-2.5 grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
-              <el-form-item prop="inputQuantity" :label="t('productionEntry.inputQuantity')" class=" !mb-0">
+              <el-form-item prop="inputQuantity" :label="t('productionEntry.inputQuantity')":show-message="false" :v-slot="{ error }" class=" !mb-0" required>
                 <div class="el-form-item__content flex min-w-0 overflow-hidden rounded border border-slate-300 bg-white">
                   <el-button
                     size="default"
@@ -263,7 +263,7 @@
           </div>
           <div class="mt-2.5 grid grid-cols-1 md:grid-cols-3 gap-2.5">
             <template v-for="(item, index) in form.downtimeItems" :key="index">
-              <el-form-item :label="index === 0 ? t('productionEntry.downtimeCategory') : ''" class="!mb-0">
+              <el-form-item class="!mb-0">
                 <el-select
                   :ref="el => setDowntimeCategorySelectRef(el, index)"
                   v-model="item.reasonCategoryCode"
@@ -281,7 +281,7 @@
                   <el-option v-for="category in filteredDowntimeCategoryOptions(index)" :key="category.reasonCategoryCode" :label="category.label" :value="category.reasonCategoryCode" />
                 </el-select>
               </el-form-item>
-              <el-form-item :label="index === 0 ? t('productionEntry.downtimeReason') : ''" class="!mb-0">
+              <el-form-item class="!mb-0">
                 <el-select
                   :ref="el => setDowntimeReasonSelectRef(el, index)"
                   v-model="item.reason"
@@ -298,8 +298,8 @@
                   <el-option v-for="r in filteredDowntimeReasonOptions(index)" :key="r.value" :label="r.label" :value="r.value" />
                 </el-select>
               </el-form-item>
-              <el-form-item :label="index === 0 ? t('productionEntry.downtimeMinutes') : ''" class="!mb-0">
-                <div class="flex gap-1.5">
+              <el-form-item class="!mb-0">
+                <div class="el-form-item__content flex gap-1.5">
                   <div class="flex min-w-0 flex-1 overflow-hidden rounded border border-slate-300 bg-white">
                     <el-button
                       size="default"
@@ -462,7 +462,7 @@
                   </el-select>
                 </el-form-item>
                 <el-form-item class="!mb-0">
-                  <div class="flex gap-1.5">
+                  <div class="el-form-item__content flex gap-1.5">
                     <div class="flex min-w-0 flex-1 overflow-hidden rounded border border-slate-300 bg-white">
                       <el-button
                         size="default"
@@ -705,7 +705,7 @@ const shifts = ref([])
 const saving = ref(false)
 const showResult = ref(false)
 const result = ref(null)
-const currentUser = inject('currentUser', computed(() => ({ name: 'Người đăng nhập', fullName: 'Người dùng' })))
+const currentUser = inject('currentUser', computed(() => ({ name: 'NgÆ°á»i Ä‘Äƒng nháº­p', fullName: 'NgÆ°á»i dÃ¹ng' })))
 const myReports = ref([])
 const myReportsLoading = ref(false)
 const selectedReports = ref([])
@@ -838,14 +838,14 @@ function validatePositiveInputQuantity(_rule, value, callback) {
 }
 
 const defaultDowntimeReasons = [
-  'A. 換刀（粗／精面銑刀、內孔鏜刀、鑽頭等） / Thay dao (dao phay mặt thô + tinh, dao móc lỗ, mũi khoan, ...)',
-  'B. 砂輪用盡、更換砂輪（針對磨床組） / Hết đá, thay đá (đối với tổ Mài)',
-  'C. 停機等料（等待毛坯） / Ngưng máy chờ phôi',
-  'D. 等待前工序來料（針對前工序 C/T 長於後工序） / Chờ hàng công đoạn trước (đối với công đoạn đầu C/T lâu hơn công đoạn sau)',
-  'E. 等待調機人員（技術員）調機 / Chờ cán bộ chỉnh máy',
-  'F. 等待品檢（QC）首件確認／調機品確認 / Chờ QC xác nhận hàng chỉnh máy',
-  'G. 操作人員請假（無替代人員時） / Nhân viên thao tác nghỉ phép (khi không có người thay thế)',
-  'H. 其他 / Khác',
+  'A. æ›åˆ€ï¼ˆç²—ï¼ç²¾é¢éŠ‘åˆ€ã€å…§å­”éœåˆ€ã€é‘½é ­ç­‰ï¼‰ / Thay dao (dao phay máº·t thÃ´ + tinh, dao mÃ³c lá»—, mÅ©i khoan, ...)',
+  'B. ç ‚è¼ªç”¨ç›¡ã€æ›´æ›ç ‚è¼ªï¼ˆé‡å°ç£¨åºŠçµ„ï¼‰ / Háº¿t Ä‘Ã¡, thay Ä‘Ã¡ (Ä‘á»‘i vá»›i tá»• MÃ i)',
+  'C. åœæ©Ÿç­‰æ–™ï¼ˆç­‰å¾…æ¯›å¯ï¼‰ / NgÆ°ng mÃ¡y chá» phÃ´i',
+  'D. ç­‰å¾…å‰å·¥åºä¾†æ–™ï¼ˆé‡å°å‰å·¥åº C/T é•·æ–¼å¾Œå·¥åºï¼‰ / Chá» hÃ ng cÃ´ng Ä‘oáº¡n trÆ°á»›c (Ä‘á»‘i vá»›i cÃ´ng Ä‘oáº¡n Ä‘áº§u C/T lÃ¢u hÆ¡n cÃ´ng Ä‘oáº¡n sau)',
+  'E. ç­‰å¾…èª¿æ©Ÿäººå“¡ï¼ˆæŠ€è¡“å“¡ï¼‰èª¿æ©Ÿ / Chá» cÃ¡n bá»™ chá»‰nh mÃ¡y',
+  'F. ç­‰å¾…å“æª¢ï¼ˆQCï¼‰é¦–ä»¶ç¢ºèªï¼èª¿æ©Ÿå“ç¢ºèª / Chá» QC xÃ¡c nháº­n hÃ ng chá»‰nh mÃ¡y',
+  'G. æ“ä½œäººå“¡è«‹å‡ï¼ˆç„¡æ›¿ä»£äººå“¡æ™‚ï¼‰ / NhÃ¢n viÃªn thao tÃ¡c nghá»‰ phÃ©p (khi khÃ´ng cÃ³ ngÆ°á»i thay tháº¿)',
+  'H. å…¶ä»– / KhÃ¡c',
 ]
 const downtimeCategories = ref([])
 const downtimeReasons = ref(defaultDowntimeReasons.map(value => ({ categoryCode: '', label: value, value })))
@@ -872,7 +872,7 @@ function normalizeDowntimeReasons(value) {
     return reasons.length ? reasons : ['']
   }
   const reasons = String(value || '')
-    .split(/\s*[;；]\s*/)
+    .split(/\s*[;ï¼›]\s*/)
     .map(item => item.trim())
     .filter(Boolean)
   return reasons.length ? reasons : ['']
@@ -880,7 +880,7 @@ function normalizeDowntimeReasons(value) {
 
 function splitLotNos(value) {
   return String(value || '')
-    .split(/\s*[;；]\s*/)
+    .split(/\s*[;ï¼›]\s*/)
     .map(item => item.trim())
     .filter(Boolean)
 }
@@ -1226,7 +1226,7 @@ function formatDowntimeReasonsForSave() {
       return `${reason} - ${Number(item.minutes || 0)}`
     })
     .filter(Boolean)
-    .join('； ')
+    .join('ï¼› ')
 }
 
 function downtimeRowsForSave() {
@@ -1358,7 +1358,7 @@ function formatLotNosForSave() {
   ]
     .map(value => String(value || '').trim())
     .filter(Boolean)
-    .join('； ')
+    .join('ï¼› ')
 }
 
 function lotRowsForSave() {
@@ -1492,7 +1492,7 @@ function toggleMyReportSelection(report, checked) {
 function handleRowClick(report) {
   if (!report) return
   if (!canModifyReport(report)) {
-    ElMessage.warning('Báo cáo này đã hết thời hạn hoặc ngoài phạm vi quyền sửa/xóa.')
+    ElMessage.warning(t('productionEntry.messages.selectedForReport'))
     return
   }
   selectedReports.value = [report]
@@ -1929,7 +1929,7 @@ async function loadProductProcesses(productId) {
     processOptions.value = productProcesses.filter(process => process.active !== false)
   } catch (error) {
     processOptions.value = []
-    console.warn('Không tải được danh sách công đoạn', error)
+    console.warn('KhÃ´ng táº£i Ä‘Æ°á»£c danh sÃ¡ch cÃ´ng Ä‘oáº¡n', error)
   }
 }
 
@@ -2239,11 +2239,11 @@ onMounted(loadInitialData)
   padding-right: 0.5rem !important;
 }
 
-/* tô xám toàn bộ các ô readonly (kể cả ô input wrapper và khung bên trong) */
+/* tÃ´ xÃ¡m toÃ n bá»™ cÃ¡c Ã´ readonly (ká»ƒ cáº£ Ã´ input wrapper vÃ  khung bÃªn trong) */
 :deep(.el-input.is-disabled .el-input__wrapper),
 :deep(.el-input .el-input__inner[readonly]),
 :deep(.el-input__wrapper:has(input[readonly])) {
-  background-color: #e2e8f0 !important; /* Màu xám slate-200 rõ ràng */
+  background-color: #e2e8f0 !important; /* MÃ u xÃ¡m slate-200 rÃµ rÃ ng */
   border-color: #cbd5e1 !important;
   cursor: not-allowed;
 }
@@ -2253,9 +2253,9 @@ onMounted(loadInitialData)
   font-weight: 700 !important;
 }
 
-/* Đảm bảo chữ trong ô readonly vẫn đậm và dễ nhìn */
+/* Äáº£m báº£o chá»¯ trong Ã´ readonly váº«n Ä‘áº­m vÃ  dá»… nhÃ¬n */
 :deep(.el-input__inner[readonly]) {
-  color: #334155 !important; /* Màu chữ xám đậm slate-700 */
+  color: #334155 !important; /* MÃ u chá»¯ xÃ¡m Ä‘áº­m slate-700 */
 }
 
 :deep(.el-input-number) {
@@ -2376,6 +2376,9 @@ onMounted(loadInitialData)
   padding: 0 !important;
   margin-left: 0 !important;
   flex: 0 0 2.125rem !important;
+}
+.el-form-item.is-error .el-form-item__content {
+  border-color: var(--el-color-danger, #f56c6c) !important;
 }
 
 </style>
