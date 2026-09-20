@@ -25,6 +25,14 @@ class ProductionFormulaServiceTest {
     }
 
     @Test
+    void targetQuantitiesShouldRoundDownToWholePieces() {
+        ProductionCalculationResponse response = service.calculate(request(0, 0, 0, new BigDecimal("27"), 66), 66);
+
+        assertEquals(new BigDecimal("146"), response.dailyTargetQuantity());
+        assertEquals(new BigDecimal("146"), response.dailyTargetDayQuantity());
+    }
+
+    @Test
     void availabilityShouldUseShiftMinutesMinusDowntimeOverShiftMinutes() {
         ProductionCalculationResponse response = service.calculate(request(59, 52, 6, new BigDecimal("601"), 620, 40), 660);
 
@@ -106,7 +114,7 @@ class ProductionFormulaServiceTest {
         );
 
         assertEquals(660, response.shiftStandardTimeMinutes());
-        assertEquals(new BigDecimal("1800.0000"), response.dailyTargetDayQuantity());
+        assertEquals(new BigDecimal("1800"), response.dailyTargetDayQuantity());
         assertEquals(new BigDecimal("0.0811"), response.dailyTargetEfficiency());
         assertEquals(new BigDecimal("0.4848"), response.availabilityRate());
     }

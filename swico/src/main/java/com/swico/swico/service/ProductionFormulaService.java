@@ -41,15 +41,11 @@ public class ProductionFormulaService {
         BigDecimal dailyTargetDay = null;
         if (operatingMinutes != null && cycleTimeSeconds != null && cycleTimeSeconds.compareTo(BigDecimal.ZERO) > 0) {
             if (operatingMinutes > 0) {
-                dailyTarget = BigDecimal.valueOf(operatingMinutes)
-                        .multiply(BigDecimal.valueOf(60))
-                        .divide(cycleTimeSeconds, 4, RoundingMode.HALF_UP);
+                dailyTarget = targetQuantity(operatingMinutes, cycleTimeSeconds);
             }
         }
         if (shiftMinutes != null && shiftMinutes > 0 && cycleTimeSeconds != null && cycleTimeSeconds.compareTo(BigDecimal.ZERO) > 0) {
-            dailyTargetDay = BigDecimal.valueOf(shiftMinutes)
-                    .multiply(BigDecimal.valueOf(60))
-                    .divide(cycleTimeSeconds, 4, RoundingMode.HALF_UP);
+            dailyTargetDay = targetQuantity(shiftMinutes, cycleTimeSeconds);
         }
 
         BigDecimal productionEfficiency = null;
@@ -140,6 +136,12 @@ public class ProductionFormulaService {
 
     public Integer resolveShiftMinutes(String shiftName) {
         return SHIFT_MINUTES.get(shiftName);
+    }
+
+    private BigDecimal targetQuantity(int minutes, BigDecimal cycleTimeSeconds) {
+        return BigDecimal.valueOf(minutes)
+                .multiply(BigDecimal.valueOf(60))
+                .divide(cycleTimeSeconds, 0, RoundingMode.DOWN);
     }
 
     private Integer availabilityDowntimeMinutes(ProductionCalculationRequest request) {

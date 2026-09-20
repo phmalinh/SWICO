@@ -55,7 +55,7 @@ class ProductionExportServiceTest {
             assertEquals(20.0, sheet.getRow(2).getCell(14).getNumericCellValue());
             assertEquals("3-4. Không có lệnh sản xuất", sheet.getRow(3).getCell(13).getStringCellValue());
             assertEquals(60.0, sheet.getRow(3).getCell(14).getNumericCellValue());
-            assertEquals("P2*60/K2", row.getCell(16).getCellFormula());
+            assertEquals("ROUNDDOWN(P2*60/K2,0)", row.getCell(16).getCellFormula());
             assertEquals("S2/Q2", row.getCell(27).getCellFormula());
             assertEquals(45.0, sheet.getRow(1).getCell(18).getNumericCellValue());
             assertEquals(44.0, sheet.getRow(1).getCell(19).getNumericCellValue());

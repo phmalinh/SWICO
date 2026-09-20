@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -108,8 +109,8 @@ public class ProductionExportService {
                 setValue(row.createCell(12), report.downtimeMinutes(), intStyle);
                 writeDowntimeRows(sheet, firstRowIndex, reportLineCount, detailLines, multilineStyle, intStyle);
                 setValue(row.createCell(15), report.shiftStandardTimeMinutes(), intStyle);
-                setFormula(row.createCell(16), dailyTargetFormula(row), decimalStyle);
-                setValue(row.createCell(17), report.dailyTargetQuantity(), decimalStyle);
+                setFormula(row.createCell(16), dailyTargetFormula(row), intStyle);
+                setValue(row.createCell(17), floorQuantity(report.dailyTargetQuantity()), intStyle);
                 writeLotRows(sheet, firstRowIndex, reportLineCount, detailLines, intStyle, multilineStyle);
                 ProductionCalculationResponse fallback = null;
                 if (report.responsibility() == null
@@ -144,7 +145,7 @@ public class ProductionExportService {
 
     private String dailyTargetFormula(Row row) {
         int rowNumber = row.getRowNum() + 1;
-        return cellRef(rowNumber, 15) + "*60/" + cellRef(rowNumber, 10);
+        return "ROUNDDOWN(" + cellRef(rowNumber, 15) + "*60/" + cellRef(rowNumber, 10) + ",0)";
     }
 
     private void writeDowntimeRows(
@@ -532,6 +533,10 @@ public class ProductionExportService {
 
     private BigDecimal firstNonNull(BigDecimal value, BigDecimal fallback) {
         return value != null ? value : fallback;
+    }
+
+    private BigDecimal floorQuantity(BigDecimal value) {
+        return value == null ? null : value.setScale(0, RoundingMode.DOWN);
     }
 
     private void setValue(Cell cell, String value, CellStyle style) {

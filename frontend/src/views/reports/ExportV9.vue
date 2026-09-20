@@ -131,8 +131,8 @@
                 <td class="text-cell reason-col">{{ line.downtime.reason }}</td>
                 <td class="number-cell">{{ line.downtime.minutes }}</td>
                 <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.shiftStandardTimeMinutes }}</td>
-                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetDayQuantity) }}</td>
-                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetQuantity) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetDayQuantity) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetQuantity) }}</td>
                 <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.inputQuantity }}</td>
                 <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.goodQuantity }}</td>
                 <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.defectQuantity }}</td>
@@ -401,6 +401,10 @@ function formatPercent(value) {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
+}
+
+function formatFloorNumber(value) {
+  return Math.floor(Number(value || 0)).toLocaleString()
 }
 
 function splitDowntimeReasons(value) {

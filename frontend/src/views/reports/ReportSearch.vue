@@ -61,10 +61,10 @@
           <template #default="{ row }">{{ formatProcessIds(row.processIds) }}</template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.dailyTargetDayQuantity')" width="112" align="center">
-          <template #default="{ row }">{{ formatNumber(row.dailyTargetDayQuantity) }}</template>
+          <template #default="{ row }">{{ formatFloorNumber(row.dailyTargetDayQuantity) }}</template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.dailyTargetQuantity')" width="92" align="center">
-          <template #default="{ row }">{{ formatNumber(row.dailyTargetQuantity) }}</template>
+          <template #default="{ row }">{{ formatFloorNumber(row.dailyTargetQuantity) }}</template>
         </el-table-column>
         <el-table-column :label="t('reports.search.table.oee')" width="88" align="center">
           <template #default="{ row }">
@@ -195,6 +195,10 @@ function formatPercentNumber(value) {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
+}
+
+function formatFloorNumber(value) {
+  return Math.floor(Number(value || 0)).toLocaleString()
 }
 
 function oeeTextClass(oee) {

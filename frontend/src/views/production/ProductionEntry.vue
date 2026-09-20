@@ -73,7 +73,7 @@
 
             <el-form-item :label="t('productionEntry.dailyTargetDay')" class="!mb-0">
               <el-input
-                :model-value="formatNumber(dailyTargetDayPreview, 0)"
+                :model-value="formatFloorNumber(dailyTargetDayPreview)"
                 size="default"
                 readonly
                 class="font-bold text-indigo-700"
@@ -82,7 +82,7 @@
 
             <el-form-item :label="t('productionEntry.actualTarget')" class="!mb-0">
               <el-input 
-                :model-value="formatNumber(dailyTargetPreview, 0)" 
+                :model-value="formatFloorNumber(dailyTargetPreview)" 
                 size="default" 
                 readonly 
                 class="font-bold text-indigo-700" 
@@ -616,8 +616,8 @@
                       <td v-if="!line.lot" class="number-cell">-</td>
                       <td v-if="!line.lot" class="center-cell">-</td>
                       <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.shiftStandardTimeMinutes }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetDayQuantity, 0) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetQuantity, 0) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetDayQuantity) }}</td>
+                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetQuantity) }}</td>
                       <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.productionEfficiency) }}</td>
                       <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.dailyTargetEfficiency) }}</td>
                       <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.availabilityRate) }}</td>
@@ -1449,14 +1449,14 @@ const dailyTargetPreview = computed(() => {
   const actualMinutes = Number(actualOperatingMinutes.value || 0)
   const cycleTime = Number(form.value.cycleTime || 0)
   if (actualMinutes <= 0 || cycleTime <= 0) return null
-  return (actualMinutes * 60) / cycleTime
+  return Math.floor((actualMinutes * 60) / cycleTime)
 })
 
 const dailyTargetDayPreview = computed(() => {
   const shiftMinutes = Number(selectedShiftMinutes.value || 0)
   const cycleTime = Number(form.value.cycleTime || 0)
   if (shiftMinutes <= 0 || cycleTime <= 0) return null
-  return (shiftMinutes * 60) / cycleTime
+  return Math.floor((shiftMinutes * 60) / cycleTime)
 })
 
 async function loadMyReports(params = {}) {
@@ -2192,6 +2192,11 @@ function formatNumber(value, fractionDigits = 0) {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   })
+}
+
+function formatFloorNumber(value) {
+  if (value === null || value === undefined || value === '') return '-'
+  return Math.floor(Number(value || 0)).toLocaleString('vi-VN')
 }
 
 const resultLabel = computed(() => (result.value ? result.value.evaluationLabel : ''))

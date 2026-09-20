@@ -85,8 +85,8 @@
                 </td>
                 <td class="text-cell reason-col">{{ line.downtime.reason }}</td>
                 <td class="number-cell">{{ line.downtime.minutes }}</td>
-                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetDayQuantity) }}</td>
-                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatNumber(line.report.dailyTargetQuantity) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetDayQuantity) }}</td>
+                <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetQuantity) }}</td>
                 <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.inputGoodDefect }}</td>
                 <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.internalDefectQuantity }}</td>
                 <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.externalDefectQuantity }}</td>
@@ -215,6 +215,10 @@ function rate(value) {
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString()
+}
+
+function formatFloorNumber(value) {
+  return Math.floor(Number(value || 0)).toLocaleString()
 }
 
 function splitLotNos(value) {
