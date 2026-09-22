@@ -37,6 +37,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -88,6 +90,10 @@ public class ProductionReportService {
 
     @Transactional
     public ProductionReportResponse createReport(ProductionCalculationRequest request, String createdBy) {
+        return createReport(request, createdBy, null);
+    }
+
+    private ProductionReportResponse createReport(ProductionCalculationRequest request, String createdBy, LocalDateTime importedCreatedAt) {
         ProductionCalculationRequest effectiveRequest = withEffectiveCycleTime(request);
         Shift shift = getOrCreateShift(effectiveRequest);
         final Integer effectiveShiftMinutes = shift.getStandardTimeMinutes();
@@ -115,6 +121,7 @@ public class ProductionReportService {
         entity.setLotNo(effectiveRequest.lotNo());
         entity.setResponsibleLeader(effectiveRequest.responsibleLeader());
         entity.setCreatedBy(createdBy);
+        entity.setCreatedAt(importedCreatedAt);
         entity.setDowntimeReason(effectiveRequest.downtimeReason());
 
         ProductionCalculationResponse calculated = formulaService.calculate(effectiveRequest, effectiveShiftMinutes);
@@ -571,7 +578,11 @@ public class ProductionReportService {
                     importedDowntimeRows
                 );
 
-                ProductionReportResponse imported = createReport(request, resolveImportedCreatedBy(importedOperatorName, createdBy));
+                ProductionReportResponse imported = createReport(
+                        request,
+                        resolveImportedCreatedBy(importedOperatorName, createdBy),
+                        parseImportedCreatedAt(row, headerIndex)
+                );
                 importedReports.add(imported);
                 rowIndex = blockLastRow;
             }
@@ -618,93 +629,98 @@ public class ProductionReportService {
         }
         DataFormatter formatter = new DataFormatter();
 
-        indexMap.put("reportDate", 0);
-        indexMap.put("lineCode", 1);
-        indexMap.put("shiftName", 2);
-        indexMap.put("machineCode", 3);
-        indexMap.put("company", 4);
-        String operatorHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(5)));
-        String leaderHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(6)));
+        int startOffset = "createdAt".equals(mapHeaderKey(normalizeHeader(formatter.formatCellValue(headerRow.getCell(0))))) ? 1 : 0;
+        if (startOffset > 0) {
+            indexMap.put("createdAt", 0);
+        }
+
+        indexMap.put("reportDate", startOffset);
+        indexMap.put("lineCode", startOffset + 1);
+        indexMap.put("shiftName", startOffset + 2);
+        indexMap.put("machineCode", startOffset + 3);
+        indexMap.put("company", startOffset + 4);
+        String operatorHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 5)));
+        String leaderHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 6)));
         int peopleOffset = "operatorName".equals(mapHeaderKey(operatorHeader)) || "responsibleLeader".equals(mapHeaderKey(leaderHeader)) ? 2 : 0;
         if (peopleOffset > 0) {
-            indexMap.put("operatorName", 5);
-            indexMap.put("responsibleLeader", 6);
+            indexMap.put("operatorName", startOffset + 5);
+            indexMap.put("responsibleLeader", startOffset + 6);
         }
-        indexMap.put("partNumber", 5 + peopleOffset);
-        indexMap.put("partName", 6 + peopleOffset);
+        indexMap.put("partNumber", startOffset + 5 + peopleOffset);
+        indexMap.put("partName", startOffset + 6 + peopleOffset);
 
-        String operationHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(7 + peopleOffset)));
+        String operationHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 7 + peopleOffset)));
         boolean hasOperationColumn = operationHeader.equals("op") || operationHeader.contains("工序");
         int offset = hasOperationColumn ? 1 : 0;
         int baseOffset = peopleOffset + offset;
         if (hasOperationColumn) {
-            indexMap.put("processIds", 7 + peopleOffset);
+            indexMap.put("processIds", startOffset + 7 + peopleOffset);
         }
-        indexMap.put("cycleTimeSeconds", 7 + baseOffset);
-        indexMap.put("totalOperatingMinutes", 8 + baseOffset);
-        indexMap.put("downtimeMinutes", 9 + baseOffset);
-        indexMap.put("downtimeReason", 10 + baseOffset);
-        String downtimeRowMinutesHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(11 + baseOffset)));
+        indexMap.put("cycleTimeSeconds", startOffset + 7 + baseOffset);
+        indexMap.put("totalOperatingMinutes", startOffset + 8 + baseOffset);
+        indexMap.put("downtimeMinutes", startOffset + 9 + baseOffset);
+        indexMap.put("downtimeReason", startOffset + 10 + baseOffset);
+        String downtimeRowMinutesHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 11 + baseOffset)));
         int downtimeOffset = "downtimeRowMinutes".equals(mapHeaderKey(downtimeRowMinutesHeader)) ? 1 : 0;
         if (downtimeOffset > 0) {
-            indexMap.put("downtimeRowMinutes", 11 + baseOffset);
+            indexMap.put("downtimeRowMinutes", startOffset + 11 + baseOffset);
         }
-        indexMap.put("shiftStandardTimeMinutes", 11 + baseOffset + downtimeOffset);
-        String dailyTargetDayHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(12 + baseOffset + downtimeOffset)));
+        indexMap.put("shiftStandardTimeMinutes", startOffset + 11 + baseOffset + downtimeOffset);
+        String dailyTargetDayHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 12 + baseOffset + downtimeOffset)));
         int dailyTargetDayOffset = isDailyTargetDayHeader(dailyTargetDayHeader) ? 1 : 0;
         if (dailyTargetDayOffset > 0) {
-            indexMap.put("dailyTargetDayQuantity", 12 + baseOffset + downtimeOffset);
+            indexMap.put("dailyTargetDayQuantity", startOffset + 12 + baseOffset + downtimeOffset);
         }
-        indexMap.put("dailyTargetQuantity", 12 + baseOffset + downtimeOffset + dailyTargetDayOffset);
-        indexMap.put("inputQuantity", 13 + baseOffset + downtimeOffset + dailyTargetDayOffset);
-        indexMap.put("goodQuantity", 14 + baseOffset + downtimeOffset + dailyTargetDayOffset);
+        indexMap.put("dailyTargetQuantity", startOffset + 12 + baseOffset + downtimeOffset + dailyTargetDayOffset);
+        indexMap.put("inputQuantity", startOffset + 13 + baseOffset + downtimeOffset + dailyTargetDayOffset);
+        indexMap.put("goodQuantity", startOffset + 14 + baseOffset + downtimeOffset + dailyTargetDayOffset);
 
         int metricOffset = baseOffset + downtimeOffset + dailyTargetDayOffset;
-        String defectOrInternalHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+        String defectOrInternalHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 15 + metricOffset)));
         boolean firstDefectColumnIsInternal = isInternalDefectHeader(defectOrInternalHeader);
         if (firstDefectColumnIsInternal) {
-            indexMap.put("internalDefectQuantity", 15 + metricOffset);
-            indexMap.put("externalDefectQuantity", 16 + metricOffset);
+            indexMap.put("internalDefectQuantity", startOffset + 15 + metricOffset);
+            indexMap.put("externalDefectQuantity", startOffset + 16 + metricOffset);
             metricOffset += 2;
         } else {
-            indexMap.put("defectQuantity", 15 + metricOffset);
+            indexMap.put("defectQuantity", startOffset + 15 + metricOffset);
             metricOffset += 1;
-            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+            String internalDefectHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 15 + metricOffset)));
             boolean hasDefectSplitColumns = isInternalDefectHeader(internalDefectHeader);
             if (hasDefectSplitColumns) {
-                indexMap.put("internalDefectQuantity", 15 + metricOffset);
-                indexMap.put("externalDefectQuantity", 16 + metricOffset);
+                indexMap.put("internalDefectQuantity", startOffset + 15 + metricOffset);
+                indexMap.put("externalDefectQuantity", startOffset + 16 + metricOffset);
                 metricOffset += 2;
             }
         }
 
-        String lotNoHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+        String lotNoHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 15 + metricOffset)));
         if ("lotNo".equals(mapHeaderKey(lotNoHeader))) {
-            indexMap.put("lotNo", 15 + metricOffset);
+            indexMap.put("lotNo", startOffset + 15 + metricOffset);
             metricOffset++;
         }
 
-        String responsibilityHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+        String responsibilityHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 15 + metricOffset)));
         if ("responsibility".equals(mapHeaderKey(responsibilityHeader))) {
-            indexMap.put("responsibility", 15 + metricOffset);
+            indexMap.put("responsibility", startOffset + 15 + metricOffset);
             metricOffset++;
         }
-        String deductionHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(15 + metricOffset)));
+        String deductionHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 15 + metricOffset)));
         if ("deductionPercent".equals(mapHeaderKey(deductionHeader))) {
-            indexMap.put("deductionPercent", 15 + metricOffset);
+            indexMap.put("deductionPercent", startOffset + 15 + metricOffset);
             metricOffset++;
         }
-        indexMap.put("productionEfficiency", 15 + metricOffset);
-        String dailyTargetEfficiencyHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(16 + metricOffset)));
+        indexMap.put("productionEfficiency", startOffset + 15 + metricOffset);
+        String dailyTargetEfficiencyHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 16 + metricOffset)));
         int dailyTargetEfficiencyOffset = isDailyTargetEfficiencyHeader(dailyTargetEfficiencyHeader) ? 1 : 0;
         if (dailyTargetEfficiencyOffset > 0) {
-            indexMap.put("dailyTargetEfficiency", 16 + metricOffset);
+            indexMap.put("dailyTargetEfficiency", startOffset + 16 + metricOffset);
         }
-        indexMap.put("availabilityRate", 16 + metricOffset + dailyTargetEfficiencyOffset);
-        indexMap.put("performanceRate", 17 + metricOffset + dailyTargetEfficiencyOffset);
-        indexMap.put("qualityRate", 18 + metricOffset + dailyTargetEfficiencyOffset);
-        indexMap.put("oee", 19 + metricOffset + dailyTargetEfficiencyOffset);
-        indexMap.put("evaluationLabel", 20 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("availabilityRate", startOffset + 16 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("performanceRate", startOffset + 17 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("qualityRate", startOffset + 18 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("oee", startOffset + 19 + metricOffset + dailyTargetEfficiencyOffset);
+        indexMap.put("evaluationLabel", startOffset + 20 + metricOffset + dailyTargetEfficiencyOffset);
     }
 
     private boolean isDailyTargetDayHeader(String header) {
@@ -750,6 +766,11 @@ public class ProductionReportService {
     }
 
     private String mapHeaderKey(String header) {
+        if (header.contains("gio nhap") || header.contains("thoi gian nhap") || header.contains("輸入時間")
+                || header.contains("输入时间") || header.contains("entry time") || header.contains("input time")
+                || header.contains("created at") || header.contains("created time")) {
+            return "createdAt";
+        }
         if (header.contains("工序") || header.contains("cong doan") || header.equals("op") || header.equals("process")) {
             return "processIds";
         }
@@ -1193,6 +1214,79 @@ public class ProductionReportService {
         try {
             return LocalDate.parse(text, DateTimeFormatter.ofPattern("M/d/yyyy"));
         } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private LocalDateTime parseLocalDateTime(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue();
+        }
+        String text = parseString(cell);
+        if (text == null) return null;
+
+        for (DateTimeFormatter formatter : List.of(
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+                DateTimeFormatter.ofPattern("M/d/yyyy H:mm:ss"),
+                DateTimeFormatter.ofPattern("M/d/yyyy H:mm")
+        )) {
+            try {
+                return LocalDateTime.parse(text, formatter);
+            } catch (Exception ignored) {
+            }
+        }
+
+        LocalDate date = parseLocalDate(cell);
+        return date != null ? date.atStartOfDay() : null;
+    }
+
+    private LocalDateTime parseImportedCreatedAt(Row row, Map<String, Integer> headerIndex) {
+        Cell createdAtCell = getCell(row, headerIndex.getOrDefault("createdAt", -1));
+        LocalDate reportDate = parseLocalDate(getCell(row, headerIndex.getOrDefault("reportDate", -1)));
+        if (createdAtCell != null
+                && createdAtCell.getCellType() == CellType.NUMERIC
+                && createdAtCell.getNumericCellValue() >= 0
+                && createdAtCell.getNumericCellValue() < 1) {
+            LocalTime time = parseLocalTime(createdAtCell);
+            return time == null ? null : (reportDate != null ? reportDate : AppClock.today()).atTime(time);
+        }
+
+        LocalDateTime createdAt = parseLocalDateTime(createdAtCell);
+        if (createdAt != null) {
+            return createdAt;
+        }
+
+        LocalTime time = parseLocalTime(createdAtCell);
+        if (time == null) {
+            return null;
+        }
+
+        return (reportDate != null ? reportDate : AppClock.today()).atTime(time);
+    }
+
+    private LocalTime parseLocalTime(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue().toLocalTime().withSecond(0).withNano(0);
+        }
+        String text = parseString(cell);
+        if (text == null) return null;
+
+        for (DateTimeFormatter formatter : List.of(
+                DateTimeFormatter.ofPattern("HH:mm"),
+                DateTimeFormatter.ofPattern("H:mm"),
+                DateTimeFormatter.ofPattern("HH:mm:ss"),
+                DateTimeFormatter.ofPattern("H:mm:ss")
+        )) {
+            try {
+                return LocalTime.parse(text, formatter).withSecond(0).withNano(0);
+            } catch (Exception ignored) {
+            }
         }
         return null;
     }

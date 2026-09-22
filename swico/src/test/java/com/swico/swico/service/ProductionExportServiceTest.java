@@ -45,45 +45,46 @@ class ProductionExportServiceTest {
             Sheet sheet = workbook.getSheetAt(0);
             Row row = sheet.getRow(1);
 
-            assertEquals("\u505c\u6a5f\u6642\u9593\nThời Gian", sheet.getRow(0).getCell(14).getStringCellValue());
-            assertEquals("\u6bcf\u65e5\u76ee\u6a19\nMục tiêu ngày", sheet.getRow(0).getCell(16).getStringCellValue());
-            assertEquals("\u5be6\u969b\u76ee\u6a19\nMục Tiêu", sheet.getRow(0).getCell(17).getStringCellValue());
-            assertEquals("\u6bcf\u65e5\u76ee\u6a19\u6548\u7387\nHiệu suất mục tiêu ngày", sheet.getRow(0).getCell(27).getStringCellValue());
-            assertEquals("6-1. Chuyển mã hàng gia công cùng máy", sheet.getRow(1).getCell(13).getStringCellValue());
-            assertEquals(260.0, sheet.getRow(1).getCell(14).getNumericCellValue());
-            assertEquals("1-2. Hết đá, thay đá", sheet.getRow(2).getCell(13).getStringCellValue());
-            assertEquals(20.0, sheet.getRow(2).getCell(14).getNumericCellValue());
-            assertEquals("3-4. Không có lệnh sản xuất", sheet.getRow(3).getCell(13).getStringCellValue());
-            assertEquals(60.0, sheet.getRow(3).getCell(14).getNumericCellValue());
-            assertEquals("ROUNDDOWN(P2*60/K2,0)", row.getCell(16).getCellFormula());
-            assertEquals("S2/Q2", row.getCell(27).getCellFormula());
-            assertEquals(45.0, sheet.getRow(1).getCell(18).getNumericCellValue());
-            assertEquals(44.0, sheet.getRow(1).getCell(19).getNumericCellValue());
-            assertEquals(1.0, sheet.getRow(1).getCell(20).getNumericCellValue());
+            assertEquals("\u8f38\u5165\u6642\u9593\nGiờ nhập", sheet.getRow(0).getCell(0).getStringCellValue());
+            assertEquals("\u505c\u6a5f\u6642\u9593\nThời Gian", sheet.getRow(0).getCell(15).getStringCellValue());
+            assertEquals("\u6bcf\u65e5\u76ee\u6a19\nMục tiêu ngày", sheet.getRow(0).getCell(17).getStringCellValue());
+            assertEquals("\u5be6\u969b\u76ee\u6a19\nMục Tiêu", sheet.getRow(0).getCell(18).getStringCellValue());
+            assertEquals("\u6bcf\u65e5\u76ee\u6a19\u6548\u7387\nHiệu suất mục tiêu ngày", sheet.getRow(0).getCell(28).getStringCellValue());
+            assertEquals("6-1. Chuyển mã hàng gia công cùng máy", sheet.getRow(1).getCell(14).getStringCellValue());
+            assertEquals(260.0, sheet.getRow(1).getCell(15).getNumericCellValue());
+            assertEquals("1-2. Hết đá, thay đá", sheet.getRow(2).getCell(14).getStringCellValue());
+            assertEquals(20.0, sheet.getRow(2).getCell(15).getNumericCellValue());
+            assertEquals("3-4. Không có lệnh sản xuất", sheet.getRow(3).getCell(14).getStringCellValue());
+            assertEquals(60.0, sheet.getRow(3).getCell(15).getNumericCellValue());
+            assertEquals("ROUNDDOWN(Q2*60/L2,0)", row.getCell(17).getCellFormula());
+            assertEquals("T2/R2", row.getCell(28).getCellFormula());
+            assertEquals(45.0, sheet.getRow(1).getCell(19).getNumericCellValue());
+            assertEquals(44.0, sheet.getRow(1).getCell(20).getNumericCellValue());
             assertEquals(1.0, sheet.getRow(1).getCell(21).getNumericCellValue());
-            assertEquals(0.0, sheet.getRow(1).getCell(22).getNumericCellValue());
-            assertEquals("A", sheet.getRow(1).getCell(23).getStringCellValue());
-            assertEquals(23.0, sheet.getRow(2).getCell(18).getNumericCellValue());
-            assertEquals(21.0, sheet.getRow(2).getCell(19).getNumericCellValue());
-            assertEquals(2.0, sheet.getRow(2).getCell(20).getNumericCellValue());
+            assertEquals(1.0, sheet.getRow(1).getCell(22).getNumericCellValue());
+            assertEquals(0.0, sheet.getRow(1).getCell(23).getNumericCellValue());
+            assertEquals("A", sheet.getRow(1).getCell(24).getStringCellValue());
+            assertEquals(23.0, sheet.getRow(2).getCell(19).getNumericCellValue());
+            assertEquals(21.0, sheet.getRow(2).getCell(20).getNumericCellValue());
             assertEquals(2.0, sheet.getRow(2).getCell(21).getNumericCellValue());
-            assertEquals(0.0, sheet.getRow(2).getCell(22).getNumericCellValue());
-            assertEquals("B", sheet.getRow(2).getCell(23).getStringCellValue());
-            assertEquals(30.0, sheet.getRow(3).getCell(18).getNumericCellValue());
-            assertEquals(28.0, sheet.getRow(3).getCell(19).getNumericCellValue());
-            assertEquals(2.0, sheet.getRow(3).getCell(20).getNumericCellValue());
-            assertEquals(0.0, sheet.getRow(3).getCell(21).getNumericCellValue());
-            assertEquals(2.0, sheet.getRow(3).getCell(22).getNumericCellValue());
-            assertEquals("C", sheet.getRow(3).getCell(23).getStringCellValue());
+            assertEquals(2.0, sheet.getRow(2).getCell(22).getNumericCellValue());
+            assertEquals(0.0, sheet.getRow(2).getCell(23).getNumericCellValue());
+            assertEquals("B", sheet.getRow(2).getCell(24).getStringCellValue());
+            assertEquals(30.0, sheet.getRow(3).getCell(19).getNumericCellValue());
+            assertEquals(28.0, sheet.getRow(3).getCell(20).getNumericCellValue());
+            assertEquals(2.0, sheet.getRow(3).getCell(21).getNumericCellValue());
+            assertEquals(0.0, sheet.getRow(3).getCell(22).getNumericCellValue());
+            assertEquals(2.0, sheet.getRow(3).getCell(23).getNumericCellValue());
+            assertEquals("C", sheet.getRow(3).getCell(24).getStringCellValue());
             assertEquals(22.0, row.getHeightInPoints());
-            assertEquals(26L, sheet.getMergedRegions().stream()
+            assertEquals(27L, sheet.getMergedRegions().stream()
                     .filter(region -> region.getFirstRow() == 1 && region.getLastRow() == 3)
                     .filter(region -> region.getFirstColumn() == region.getLastColumn())
-                    .filter(region -> region.getFirstColumn() != 13 && region.getFirstColumn() != 14)
-                    .filter(region -> region.getFirstColumn() < 18 || region.getFirstColumn() > 23)
+                    .filter(region -> region.getFirstColumn() != 14 && region.getFirstColumn() != 15)
+                    .filter(region -> region.getFirstColumn() < 19 || region.getFirstColumn() > 24)
                     .count());
             assertMergedRegionBlackBorders(sheet, 0);
-            assertMergedRegionBlackBorders(sheet, 33);
+            assertMergedRegionBlackBorders(sheet, 34);
         }
     }
 
@@ -107,11 +108,11 @@ class ProductionExportServiceTest {
         try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
             Sheet sheet = workbook.getSheetAt(0);
 
-            assertEquals(56.0, sheet.getRow(1).getCell(18).getNumericCellValue());
-            assertEquals("A", sheet.getRow(1).getCell(23).getStringCellValue());
-            assertEquals(90.0, sheet.getRow(3).getCell(18).getNumericCellValue());
-            assertEquals("B", sheet.getRow(3).getCell(23).getStringCellValue());
-            for (int column = 18; column <= 23; column++) {
+            assertEquals(56.0, sheet.getRow(1).getCell(19).getNumericCellValue());
+            assertEquals("A", sheet.getRow(1).getCell(24).getStringCellValue());
+            assertEquals(90.0, sheet.getRow(3).getCell(19).getNumericCellValue());
+            assertEquals("B", sheet.getRow(3).getCell(24).getStringCellValue());
+            for (int column = 19; column <= 24; column++) {
                 assertTrue(hasMergedRegion(sheet, 1, 2, column));
             }
         }

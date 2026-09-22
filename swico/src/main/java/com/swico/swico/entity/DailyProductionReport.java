@@ -112,7 +112,9 @@ public class DailyProductionReport {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = AppClock.now();
+        if (this.createdAt == null) {
+            this.createdAt = AppClock.now();
+        }
         this.updatedAt = AppClock.now();
     }
 

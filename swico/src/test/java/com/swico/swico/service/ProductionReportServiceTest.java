@@ -91,7 +91,7 @@ class ProductionReportServiceTest {
         Sheet sheet = workbook.createSheet("test");
         Row row = sheet.createRow(0);
         String[] headers = {
-                "\u65e5\u671f\nNgày", "\u7dda\u5225\nChuyền", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMã Máy", "\u5ba2\u6236\nKhách hàng",
+                "\u8f38\u5165\u6642\u9593\nGiờ nhập", "\u65e5\u671f\nNgày", "\u7dda\u5225\nChuyền", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMã Máy", "\u5ba2\u6236\nKhách hàng",
                 "\u4f5c\u54e1\nNhân Viên Thao Tác", "\u8ca0\u8cac\u5e79\u90e8\nCán Bộ Phụ Trách", "\u6599\u865f\nMã Hàng",
                 "\u54c1\u540d\nTên Hàng", "\u5de5\u5e8f\nCông Đoạn", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTổng TG", "\u505c\u6a5f(\u5206)\nTG Dừng",
                 "\u505c\u6a5f\u539f\u56e0\nLý Do Dừng", "\u505c\u6a5f\u6642\u9593\nThời Gian", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMục tiêu ngày", "\u5be6\u969b\u76ee\u6a19\nMục Tiêu", "\u6295\u5165\u6578\nSL Nhập",
@@ -107,24 +107,25 @@ class ProductionReportServiceTest {
 
         Map<String, Integer> result = (Map<String, Integer>) method.invoke(service, row);
 
-        assertEquals(4, result.get("company"));
-        assertEquals(16, result.get("dailyTargetDayQuantity"));
-        assertEquals(17, result.get("dailyTargetQuantity"));
-        assertEquals(18, result.get("inputQuantity"));
-        assertEquals(19, result.get("goodQuantity"));
-        assertEquals(20, result.get("defectQuantity"));
-        assertEquals(21, result.get("internalDefectQuantity"));
-        assertEquals(22, result.get("externalDefectQuantity"));
-        assertEquals(23, result.get("lotNo"));
-        assertEquals(24, result.get("responsibility"));
-        assertEquals(25, result.get("deductionPercent"));
-        assertEquals(26, result.get("productionEfficiency"));
-        assertEquals(27, result.get("dailyTargetEfficiency"));
-        assertEquals(28, result.get("availabilityRate"));
-        assertEquals(29, result.get("performanceRate"));
-        assertEquals(30, result.get("qualityRate"));
-        assertEquals(31, result.get("oee"));
-        assertEquals(32, result.get("evaluationLabel"));
+        assertEquals(0, result.get("createdAt"));
+        assertEquals(5, result.get("company"));
+        assertEquals(17, result.get("dailyTargetDayQuantity"));
+        assertEquals(18, result.get("dailyTargetQuantity"));
+        assertEquals(19, result.get("inputQuantity"));
+        assertEquals(20, result.get("goodQuantity"));
+        assertEquals(21, result.get("defectQuantity"));
+        assertEquals(22, result.get("internalDefectQuantity"));
+        assertEquals(23, result.get("externalDefectQuantity"));
+        assertEquals(24, result.get("lotNo"));
+        assertEquals(25, result.get("responsibility"));
+        assertEquals(26, result.get("deductionPercent"));
+        assertEquals(27, result.get("productionEfficiency"));
+        assertEquals(28, result.get("dailyTargetEfficiency"));
+        assertEquals(29, result.get("availabilityRate"));
+        assertEquals(30, result.get("performanceRate"));
+        assertEquals(31, result.get("qualityRate"));
+        assertEquals(32, result.get("oee"));
+        assertEquals(33, result.get("evaluationLabel"));
     }
 
     @Test
