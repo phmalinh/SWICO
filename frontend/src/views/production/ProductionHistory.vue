@@ -17,7 +17,7 @@
       <div class="grid grid-cols-1 gap-2.5 border-b border-slate-200 bg-slate-50 p-3 md:grid-cols-12 md:items-center">
         <el-date-picker v-model="reportDate" type="date" value-format="YYYY-MM-DD" class="!w-full md:col-span-2" @change="loadReports" />
         <el-select v-model="filters.lineCode" clearable filterable class="md:col-span-2" :placeholder="t('productionHistory.filters.line')" @change="onLineFilterChange">
-          <el-option v-for="line in lines" :key="line.lineCode" :label="`${line.lineCode} - ${line.description}`" :value="line.lineCode" />
+          <el-option v-for="line in lines" :key="line.lineCode" :label="`${line.lineCode}`" :value="line.lineCode" />
         </el-select>
         <el-select v-model="filters.machineCode" clearable filterable class="md:col-span-2" :placeholder="t('productionHistory.filters.machine')" @change="loadReports">
           <el-option v-for="machine in filteredMachineOptions" :key="machine.machineCode" :label="`${machine.machineCode} - ${machine.description}`" :value="machine.machineCode" />
