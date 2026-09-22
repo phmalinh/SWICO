@@ -274,6 +274,7 @@ const messages = {
       noData: 'Không có dữ liệu',
       total: 'Tổng',
       rowsPerPage: 'Dòng/trang',
+      selectColumns: 'Chọn cột hiển thị',
       filters: {
         line: 'Lọc chuyền',
         machine: 'Lọc máy',
@@ -330,6 +331,7 @@ const messages = {
       },
     },
     reports: {
+      selectColumns: 'Chọn cột hiển thị',
       dashboard: {
         eyebrow: '2.1 Giám sát thời gian thực',
         pageTitle: 'Bảng điều khiển OEE / Hiệu suất thời gian thực',
@@ -1261,6 +1263,7 @@ const messages = {
       noData: '沒有資料',
       total: '總筆數',
       rowsPerPage: '每頁筆數',
+      selectColumns: '選擇顯示欄位',
       filters: {
         line: '篩選產線',
         machine: '篩選機台',
@@ -1317,11 +1320,13 @@ const messages = {
       },
     },
     reports: {
+      selectColumns: '選擇顯示欄位',
       dashboard: {
         eyebrow: '2.1 即時監控',
         pageTitle: 'OEE 儀表板 / 即時效率',
         pageSubtitle: '監控全廠與各產線 OEE，並在 OEE 或 Q 低於目標時提醒。',
         live: '即時',
+        selectColumns: '選擇顯示欄位',
         stats: {
           avgOee: '平均 OEE',
           avgQuality: '品質 Q',
