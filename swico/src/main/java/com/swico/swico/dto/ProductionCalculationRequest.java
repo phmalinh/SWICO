@@ -1,5 +1,6 @@
 package com.swico.swico.dto;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,7 +16,7 @@ public record ProductionCalculationRequest(
         @NotBlank String machineCode,
         @NotBlank String partNumber,
         @NotBlank String partName,
-        @Min(1) BigDecimal cycleTimeSeconds,
+        @DecimalMin(value = "0.0001") BigDecimal cycleTimeSeconds,
         List<Long> processIds,
         @NotNull @Min(0) Integer totalOperatingMinutes,
         @NotNull @Min(0) Integer downtimeMinutes,
