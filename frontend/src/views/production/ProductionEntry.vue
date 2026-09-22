@@ -537,44 +537,74 @@
               <div>
                 <h3 class="text-sm font-black text-slate-900">{{ t('productionEntry.myReportsTitle') }}</h3>
               </div>
+              <div class="flex items-center gap-2 md:col-span-2">
               <el-button link type="primary" size="small" @click="loadMyReports">{{ t('productionEntry.refresh') }}</el-button>
+                <el-popover placement="bottom-end" :width="240" trigger="click">
+                  <template #reference>
+                    <el-button class="!m-0 px-2.5" title="Tùy chỉnh cột">
+                      <el-icon class="mr-1"><Operation /></el-icon>
+                    </el-button>
+                  </template>
+                  <div class="column-setting-popover">
+                    <div class="font-bold border-b pb-1.5 mb-2 flex justify-between items-center text-sm text-slate-700">
+                      <span>{{ t('reports.selectColumns') }}</span>
+                      <el-checkbox
+                        v-model="checkAll"
+                        :indeterminate="isIndeterminate"
+                        @change="handleCheckAllChange"
+                      >
+                        {{ 'ALL' }}
+                      </el-checkbox>
+                    </div>
+                    <div class="max-h-60 overflow-y-auto flex flex-col gap-1.5">
+                      <el-checkbox
+                        v-for="col in allColumns"
+                        :key="col.key"
+                        v-model="columnVisibility[col.key]"
+                        @change="handleColumnChange"
+                      >
+                        {{ col.label }}
+                      </el-checkbox>
+                    </div>
+                  </div>
+                </el-popover>
+              </div>
             </div>
             <div class="my-reports-excel-wrap" v-loading="myReportsLoading">
               <table class="my-reports-excel-table">
                 <thead>
                   <tr>
                     <th class="select-col"></th>
-                    <th>{{ t('productionEntry.table.reportDate') }}</th>
-                    <th>{{ t('productionEntry.table.lineCode') }}</th>
-                    <th>{{ t('productionEntry.table.shiftName') }}</th>
-                    <th>{{ t('productionEntry.table.machineCode') }}</th>
-                    <th>{{ t('productionEntry.table.partNumber') }}</th>
-                    <th>{{ t('productionEntry.table.partName') }}</th>
-                    <th>{{ t('productionEntry.table.processIds') }}</th>
-                    <th>{{ t('productionEntry.table.company') }}</th>
-                    <th>{{ t('productionEntry.table.operatorName') }}</th>
-                    <th>{{ t('productionEntry.table.responsibleLeader') }}</th>
-                    <th class="reason-col">{{ t('productionEntry.table.downtimeReason') }}</th>
-                    <th>{{ t('productionEntry.table.downtimeTime') }}</th>
-                    <th>{{ t('productionEntry.table.responsibility') }}</th>
-                    <th>{{ t('productionEntry.table.deductionPercent') }}</th>
-                    <th>{{ t('productionEntry.table.totalOperatingMinutes') }}</th>
-                    <th>{{ t('productionEntry.table.downtimeMinutes') }}</th>
-                    <th>{{ t('productionEntry.table.inputGoodDefect') }}</th>
-                    <th>{{ t('productionEntry.table.internalDefectQuantity') }}</th>
-                    <th>{{ t('productionEntry.table.externalDefectQuantity') }}</th>
-                    <th>{{ t('productionEntry.table.lotNo') }}</th>
-                    <th>{{ t('productionEntry.table.shiftStandardTimeMinutes') }}</th>
-                    <th>{{ t('productionEntry.table.dailyTargetDayQuantity') }}</th>
-                    <th>{{ t('productionEntry.table.dailyTargetQuantity') }}</th>
-                    <th>{{ t('productionEntry.table.productionEfficiency') }}</th>
-                    <th>{{ t('productionEntry.table.dailyTargetEfficiency') }}</th>
-                    <th>{{ t('productionEntry.table.availabilityRate') }}</th>
-                    <th>{{ t('productionEntry.table.performanceRate') }}</th>
-                    <th>{{ t('productionEntry.table.qualityRate') }}</th>
-                    <th>{{ t('productionEntry.table.oee') }}</th>
-                    <th>{{ t('productionEntry.table.evaluationLabel') }}</th>
-                  </tr>
+                    <th v-if="isColVisible('reportDate')">{{ t('productionEntry.table.reportDate') }}</th>
+                    <th v-if="isColVisible('lineCode')">{{ t('productionEntry.table.lineCode') }}</th>
+                    <th v-if="isColVisible('shiftName')" class="reason-col2">{{ t('productionEntry.table.shiftName') }}</th>
+                    <th v-if="isColVisible('machineCode')">{{ t('productionEntry.table.machineCode') }}</th>
+                    <th v-if="isColVisible('partNumber')">{{ t('productionEntry.table.partNumber') }}</th>
+                    <th v-if="isColVisible('partName')">{{ t('productionEntry.table.partName') }}</th>
+                    <th v-if="isColVisible('processIds')">{{ t('productionEntry.table.processIds') }}</th>
+                    <th v-if="isColVisible('company')">{{ t('productionEntry.table.company') }}</th>
+                    <th v-if="isColVisible('operatorName')">{{ t('productionEntry.table.operatorName') }}</th>
+                    <th v-if="isColVisible('responsibleLeader')">{{ t('productionEntry.table.responsibleLeader') }}</th>
+                    <th v-if="isColVisible('downtimeReason')" class="reason-col">{{ t('productionEntry.table.downtimeReason') }}</th>
+                    <th v-if="isColVisible('downtimeTime')">{{ t('productionEntry.table.downtimeTime') }}</th>
+                    <th v-if="isColVisible('responsibility')">{{ t('productionEntry.table.responsibility') }}</th>
+                    <th v-if="isColVisible('deductionPercent')">{{ t('productionEntry.table.deductionPercent') }}</th>
+                    <th v-if="isColVisible('totalOperatingMinutes')">{{ t('productionEntry.table.totalOperatingMinutes') }}</th>
+                    <th v-if="isColVisible('downtimeMinutes')">{{ t('productionEntry.table.downtimeMinutes') }}</th>
+                    <th v-if="isColVisible('inputGoodDefect')">{{ t('productionEntry.table.inputGoodDefect') }}</th>
+                    <th v-if="isColVisible('internalDefectQuantity')">{{ t('productionEntry.table.internalDefectQuantity') }}</th>
+                    <th v-if="isColVisible('externalDefectQuantity')">{{ t('productionEntry.table.externalDefectQuantity') }}</th>
+                    <th v-if="isColVisible('lotNo')">{{ t('productionEntry.table.lotNo') }}</th>
+                    <th v-if="isColVisible('shiftStandardTimeMinutes')">{{ t('productionEntry.table.shiftStandardTimeMinutes') }}</th>
+                    <th v-if="isColVisible('dailyTargetDayQuantity')">{{ t('productionEntry.table.dailyTargetDayQuantity') }}</th>
+                    <th v-if="isColVisible('dailyTargetQuantity')">{{ t('productionEntry.table.dailyTargetQuantity') }}</th>
+                    <th v-if="isColVisible('productionEfficiency')">{{ t('productionEntry.table.productionEfficiency') }}</th>
+                    <th v-if="isColVisible('dailyTargetEfficiency')">{{ t('productionEntry.table.dailyTargetEfficiency') }}</th>
+                    <th v-if="isColVisible('availabilityRate')">{{ t('productionEntry.table.availabilityRate') }}</th>
+                    <th v-if="isColVisible('performanceRate')">{{ t('productionEntry.table.performanceRate') }}</th>
+                    <th v-if="isColVisible('qualityRate')" class="reason-col1">{{ t('productionEntry.table.qualityRate') }}</th>
+                    <th v-if="isColVisible('oee')">{{ t('productionEntry.table.oee') }}</th>
+                    <th v-if="isColVisible('evaluationLabel')" class="reason-col2">{{ t('productionEntry.table.evaluationLabel') }}</th>                  </tr>
                 </thead>
                 <tbody>
                   <tr v-if="!myReportRows.length">
@@ -591,40 +621,50 @@
                           @change="toggleMyReportSelection(line.report, $event.target.checked)"
                         />
                       </td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.reportDate }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.lineCode }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.shiftName }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.machineCode }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.partNumber }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ line.report.partName }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ formatProcessIds(line.report.processIds) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.company }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.operatorName || line.report.createdBy || '-' }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan">{{ line.report.responsibleLeader || '-' }}</td>
-                      <td class="text-cell reason-col">{{ line.downtime.reason }}</td>
-                      <td class="number-cell">{{ line.downtime.minutes }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.responsibility) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.deductionPercent) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.totalOperatingMinutes }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.downtimeMinutes }}</td>
-                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.inputGoodDefect }}</td>
-                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.internalDefectQuantity }}</td>
-                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.externalDefectQuantity }}</td>
-                      <td v-if="line.showLot" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.lotNo }}</td>
-                      <td v-if="!line.lot" class="center-cell">-</td>
-                      <td v-if="!line.lot" class="number-cell">-</td>
-                      <td v-if="!line.lot" class="number-cell">-</td>
-                      <td v-if="!line.lot" class="center-cell">-</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.shiftStandardTimeMinutes }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetDayQuantity) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetQuantity) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.productionEfficiency) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.dailyTargetEfficiency) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.availabilityRate) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.performanceRate) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.qualityRate) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.oee) }}</td>
-                      <td v-if="line.showReport" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.evaluationLabel }}</td>
+                      <td v-if="line.showReport && isColVisible('reportDate')" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.reportDate }}</td>
+                      <td v-if="line.showReport && isColVisible('lineCode')" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.lineCode }}</td>
+                      <td v-if="line.showReport && isColVisible('shiftName')" :rowspan="line.reportRowspan">{{ line.report.shiftName }}</td>
+                      <td v-if="line.showReport && isColVisible('machineCode')" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.machineCode }}</td>
+                      <td v-if="line.showReport && isColVisible('partNumber')" :rowspan="line.reportRowspan">{{ line.report.partNumber }}</td>
+                      <td v-if="line.showReport && isColVisible('partName')" :rowspan="line.reportRowspan" class="text-cell">{{ line.report.partName }}</td>
+                      <td v-if="line.showReport && isColVisible('processIds')" :rowspan="line.reportRowspan" class="text-cell">{{ formatProcessIds(line.report.processIds) }}</td>
+                      <td v-if="line.showReport && isColVisible('company')" :rowspan="line.reportRowspan">{{ line.report.company }}</td>
+                      <td v-if="line.showReport && isColVisible('operatorName')" :rowspan="line.reportRowspan">{{ line.report.operatorName || line.report.createdBy || '-' }}</td>
+                      <td v-if="line.showReport && isColVisible('responsibleLeader')" :rowspan="line.reportRowspan">{{ line.report.responsibleLeader || '-' }}</td>
+                      
+                      <!-- Nhóm Thời gian dừng máy (Không có rowspan) -->
+                      <td v-if="isColVisible('downtimeReason')" class="text-cell reason-col">{{ line.downtime.reason }}</td>
+                      <td v-if="isColVisible('downtimeTime')" class="number-cell">{{ line.downtime.minutes }}</td>
+                      
+                      <!-- Nhóm Chỉ số thời gian bồi thường / Khấu trừ -->
+                      <td v-if="line.showReport && isColVisible('responsibility')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.responsibility) }}</td>
+                      <td v-if="line.showReport && isColVisible('deductionPercent')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.deductionPercent) }}</td>
+                      <td v-if="line.showReport && isColVisible('totalOperatingMinutes')" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.totalOperatingMinutes }}</td>
+                      <td v-if="line.showReport && isColVisible('downtimeMinutes')" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.downtimeMinutes }}</td>
+                      
+                      <!-- Nhóm Lô hàng (Trường hợp CÓ Lot) -->
+                      <td v-if="line.showLot && isColVisible('inputGoodDefect')" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.inputGoodDefect }}</td>
+                      <td v-if="line.showLot && isColVisible('internalDefectQuantity')" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.internalDefectQuantity }}</td>
+                      <td v-if="line.showLot && isColVisible('externalDefectQuantity')" :rowspan="line.lotRowspan" class="number-cell">{{ line.lot.externalDefectQuantity }}</td>
+                      <td v-if="line.showLot && isColVisible('lotNo')" :rowspan="line.lotRowspan" class="center-cell">{{ line.lot.lotNo }}</td>
+                      
+                      <!-- Nhóm Lô hàng (Trường hợp KHÔNG CÓ Lot) -->
+                      <td v-if="!line.lot && isColVisible('inputGoodDefect')" class="center-cell">-</td>
+                      <td v-if="!line.lot && isColVisible('internalDefectQuantity')" class="number-cell">-</td>
+                      <td v-if="!line.lot && isColVisible('externalDefectQuantity')" class="number-cell">-</td>
+                      <td v-if="!line.lot && isColVisible('lotNo')" class="center-cell">-</td>
+                      
+                      <!-- Nhóm Sản lượng & Hiệu suất OEE -->
+                      <td v-if="line.showReport && isColVisible('shiftStandardTimeMinutes')" :rowspan="line.reportRowspan" class="number-cell">{{ line.report.shiftStandardTimeMinutes }}</td>
+                      <td v-if="line.showReport && isColVisible('dailyTargetDayQuantity')" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetDayQuantity) }}</td>
+                      <td v-if="line.showReport && isColVisible('dailyTargetQuantity')" :rowspan="line.reportRowspan" class="number-cell">{{ formatFloorNumber(line.report.dailyTargetQuantity) }}</td>
+                      <td v-if="line.showReport && isColVisible('productionEfficiency')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.productionEfficiency) }}</td>
+                      <td v-if="line.showReport && isColVisible('dailyTargetEfficiency')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.dailyTargetEfficiency) }}</td>
+                      <td v-if="line.showReport && isColVisible('availabilityRate')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.availabilityRate) }}</td>
+                      <td v-if="line.showReport && isColVisible('performanceRate')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.performanceRate) }}</td>
+                      <td v-if="line.showReport && isColVisible('qualityRate')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.qualityRate) }}</td>
+                      <td v-if="line.showReport && isColVisible('oee')" :rowspan="line.reportRowspan" class="number-cell">{{ formatPercent(line.report.oee) }}</td>
+                      <td v-if="line.showReport && isColVisible('evaluationLabel')" :rowspan="line.reportRowspan" class="center-cell">{{ line.report.evaluationLabel }}</td>
                     </tr>
                   </template>
                 </tbody>
@@ -686,6 +726,7 @@
 
 <script setup>
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
+import { Operation } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { Minus, Plus, RotateCcw, Save, Trash2 } from 'lucide-vue-next'
 import { masterApi, productionApi } from '@/services/api'
@@ -711,8 +752,8 @@ const myReportsLoading = ref(false)
 const selectedReports = ref([])
 const editedReportId = ref(null)
 const currentPage = ref(1)
-const pageSize = ref(10)
-const pageSizeOptions = [10, 20, 50, 100]
+const pageSize = ref(5)
+const pageSizeOptions = [5, 20, 50, 100]
 const session = computed(() => getSession())
 const formRef = ref(null)
 const leaderSelectRef = ref(null)
@@ -836,16 +877,125 @@ function validatePositiveInputQuantity(_rule, value, callback) {
   }
   callback(new Error(t('productionEntry.messages.inputQuantityRequired')))
 }
+// --- Quản lý Trạng thái Ẩn/Hiện Cột ---
+const columnVisibility = ref({
+  reportDate: true,
+  lineCode: true,
+  shiftName: true,
+  machineCode: true,
+  partNumber: true,
+  partName: true,
+  processIds: true,
+  company: true,
+  operatorName: true,
+  responsibleLeader: true,
+  downtimeReason: true,
+  downtimeTime: true,
+  responsibility: true,
+  deductionPercent: true,
+  totalOperatingMinutes: true,
+  downtimeMinutes: true,
+  inputGoodDefect: true,
+  internalDefectQuantity: true,
+  externalDefectQuantity: true,
+  lotNo: true,
+  shiftStandardTimeMinutes: true,
+  dailyTargetDayQuantity: true,
+  dailyTargetQuantity: true,
+  productionEfficiency: true,
+  dailyTargetEfficiency: true,
+  availabilityRate: true,
+  performanceRate: true,
+  qualityRate: true,
+  oee: true,
+  evaluationLabel: true,
+})
 
+const checkAll = ref(true)
+const isIndeterminate = ref(false)
+
+// Cấu hình danh sách cột theo key chuẩn của Bảng
+const allColumns = computed(() => [
+  { key: 'reportDate', label: t('productionEntry.table.reportDate') },
+  { key: 'lineCode', label: t('productionEntry.table.lineCode') },
+  { key: 'shiftName', label: t('productionEntry.table.shiftName'), class: 'reason-col2' },
+  { key: 'machineCode', label: t('productionEntry.table.machineCode') },
+  { key: 'partNumber', label: t('productionEntry.table.partNumber') },
+  { key: 'partName', label: t('productionEntry.table.partName') },
+  { key: 'processIds', label: t('productionEntry.table.processIds') },
+  { key: 'company', label: t('productionEntry.table.company') },
+  { key: 'operatorName', label: t('productionEntry.table.operatorName') },
+  { key: 'responsibleLeader', label: t('productionEntry.table.responsibleLeader') },
+  { key: 'downtimeReason', label: t('productionEntry.table.downtimeReason'), class: 'reason-col' },
+  { key: 'downtimeTime', label: t('productionEntry.table.downtimeTime') },
+  { key: 'responsibility', label: t('productionEntry.table.responsibility') },
+  { key: 'deductionPercent', label: t('productionEntry.table.deductionPercent') },
+  { key: 'totalOperatingMinutes', label: t('productionEntry.table.totalOperatingMinutes') },
+  { key: 'downtimeMinutes', label: t('productionEntry.table.downtimeMinutes') },
+  { key: 'inputGoodDefect', label: t('productionEntry.table.inputGoodDefect') },
+  { key: 'internalDefectQuantity', label: t('productionEntry.table.internalDefectQuantity') },
+  { key: 'externalDefectQuantity', label: t('productionEntry.table.externalDefectQuantity') },
+  { key: 'lotNo', label: t('productionEntry.table.lotNo') },
+  { key: 'shiftStandardTimeMinutes', label: t('productionEntry.table.shiftStandardTimeMinutes') },
+  { key: 'dailyTargetDayQuantity', label: t('productionEntry.table.dailyTargetDayQuantity') },
+  { key: 'dailyTargetQuantity', label: t('productionEntry.table.dailyTargetQuantity') },
+  { key: 'productionEfficiency', label: t('productionEntry.table.productionEfficiency') },
+  { key: 'dailyTargetEfficiency', label: t('productionEntry.table.dailyTargetEfficiency') },
+  { key: 'availabilityRate', label: t('productionEntry.table.availabilityRate') },
+  { key: 'performanceRate', label: t('productionEntry.table.performanceRate') },
+  { key: 'qualityRate', label: t('productionEntry.table.qualityRate'), class: 'reason-col1' },
+  { key: 'oee', label: t('productionEntry.table.oee') },
+  { key: 'evaluationLabel', label: t('productionEntry.table.evaluationLabel'), class: 'reason-col2' },
+])
+
+const isColVisible = (key) => columnVisibility.value[key] !== false
+
+// Tự động tính colspan cho ô trống (1 cột checkbox + các cột đang visible)
+const currentVisibleColCount = computed(() => {
+  const visibleCount = Object.values(columnVisibility.value).filter(Boolean).length
+  return visibleCount + 1 // +1 cho cột checkbox chọn dòng
+})
+
+const handleCheckAllChange = (val) => {
+  Object.keys(columnVisibility.value).forEach(key => {
+    columnVisibility.value[key] = val
+  })
+  isIndeterminate.value = false
+  saveColumnVisibility()
+}
+
+const handleColumnChange = () => {
+  const values = Object.values(columnVisibility.value)
+  const checkedCount = values.filter(Boolean).length
+  checkAll.value = checkedCount === values.length
+  isIndeterminate.value = checkedCount > 0 && checkedCount < values.length
+  saveColumnVisibility()
+}
+
+const saveColumnVisibility = () => {
+  localStorage.setItem('reports_v9_cols', JSON.stringify(columnVisibility.value))
+}
+
+const loadColumnVisibility = () => {
+  const saved = localStorage.getItem('reports_v9_cols')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      Object.keys(parsed).forEach(key => {
+        if (columnVisibility.value[key] !== undefined) {
+          columnVisibility.value[key] = parsed[key]
+        }
+      })
+      const values = Object.values(columnVisibility.value)
+      const checkedCount = values.filter(Boolean).length
+      checkAll.value = checkedCount === values.length
+      isIndeterminate.value = checkedCount > 0 && checkedCount < values.length
+    } catch (e) {
+      console.error(e)
+    }
+  }
+}
 const defaultDowntimeReasons = [
-  'A. æ›åˆ€ï¼ˆç²—ï¼ç²¾é¢éŠ‘åˆ€ã€å…§å­”éœåˆ€ã€é‘½é ­ç­‰ï¼‰ / Thay dao (dao phay máº·t thÃ´ + tinh, dao mÃ³c lá»—, mÅ©i khoan, ...)',
-  'B. ç ‚è¼ªç”¨ç›¡ã€æ›´æ›ç ‚è¼ªï¼ˆé‡å°ç£¨åºŠçµ„ï¼‰ / Háº¿t Ä‘Ã¡, thay Ä‘Ã¡ (Ä‘á»‘i vá»›i tá»• MÃ i)',
-  'C. åœæ©Ÿç­‰æ–™ï¼ˆç­‰å¾…æ¯›å¯ï¼‰ / NgÆ°ng mÃ¡y chá» phÃ´i',
-  'D. ç­‰å¾…å‰å·¥åºä¾†æ–™ï¼ˆé‡å°å‰å·¥åº C/T é•·æ–¼å¾Œå·¥åºï¼‰ / Chá» hÃ ng cÃ´ng Ä‘oáº¡n trÆ°á»›c (Ä‘á»‘i vá»›i cÃ´ng Ä‘oáº¡n Ä‘áº§u C/T lÃ¢u hÆ¡n cÃ´ng Ä‘oáº¡n sau)',
-  'E. ç­‰å¾…èª¿æ©Ÿäººå“¡ï¼ˆæŠ€è¡“å“¡ï¼‰èª¿æ©Ÿ / Chá» cÃ¡n bá»™ chá»‰nh mÃ¡y',
-  'F. ç­‰å¾…å“æª¢ï¼ˆQCï¼‰é¦–ä»¶ç¢ºèªï¼èª¿æ©Ÿå“ç¢ºèª / Chá» QC xÃ¡c nháº­n hÃ ng chá»‰nh mÃ¡y',
-  'G. æ“ä½œäººå“¡è«‹å‡ï¼ˆç„¡æ›¿ä»£äººå“¡æ™‚ï¼‰ / NhÃ¢n viÃªn thao tÃ¡c nghá»‰ phÃ©p (khi khÃ´ng cÃ³ ngÆ°á»i thay tháº¿)',
-  'H. å…¶ä»– / KhÃ¡c',
 ]
 const downtimeCategories = ref([])
 const downtimeReasons = ref(defaultDowntimeReasons.map(value => ({ categoryCode: '', label: value, value })))
@@ -2225,6 +2375,9 @@ watch([() => form.value.partNumber, products], ([partNumber]) => {
 }, { immediate: true })
 
 onMounted(loadInitialData)
+onMounted(() => {
+  loadColumnVisibility()
+})
 </script>
 
 <style scoped>
@@ -2283,10 +2436,10 @@ onMounted(loadInitialData)
 }
 
 .my-reports-excel-table {
-  min-width: 2400px;
-  /* width: 100%; */
+  min-width: 100%;
+  width: max-content;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: fixed !important;
   font-size: 13px;
 }
 
@@ -2299,6 +2452,9 @@ onMounted(loadInitialData)
   font-weight: 800;
   line-height: 1.3;
   text-align: center;
+  resize: horizontal;
+  overflow: auto;
+  min-width: 90px;
 }
 
 .my-reports-excel-table th,
@@ -2330,6 +2486,12 @@ onMounted(loadInitialData)
 
 .reason-col {
   width: 260px;
+}
+.reason-col1 {
+  width: 130px;
+}
+.reason-col2 {
+  width: 200px;
 }
 
 .center-cell {
