@@ -39,7 +39,7 @@ class ProductionExportServiceTest {
         when(productProcessRepository.findAllById(List.of(1L, 1L))).thenReturn(List.of());
         ProductionExportService service = new ProductionExportService(productProcessRepository, formulaService);
 
-        byte[] bytes = service.exportV9(List.of(report()));
+        byte[] bytes = service.exportV9(List.of(report(), report()));
 
         try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -59,7 +59,12 @@ class ProductionExportServiceTest {
             assertEquals("3-4. Không có lệnh sản xuất", sheet.getRow(3).getCell(15).getStringCellValue());
             assertEquals(60.0, sheet.getRow(3).getCell(16).getNumericCellValue());
             assertEquals("ROUNDDOWN(R2*60/M2,0)", row.getCell(18).getCellFormula());
-            assertEquals("U2/S2", row.getCell(29).getCellFormula());
+            assertEquals("SUM(U2:U4)/S2", row.getCell(29).getCellFormula());
+            assertEquals("SUM(U5:U7)/S5", sheet.getRow(4).getCell(29).getCellFormula());
+            assertEquals(98.0 / 28800, workbook.getCreationHelper().createFormulaEvaluator()
+                    .evaluate(row.getCell(29)).getNumberValue(), 0.00000001);
+            assertEquals(98.0 / 28800, workbook.getCreationHelper().createFormulaEvaluator()
+                    .evaluate(sheet.getRow(4).getCell(29)).getNumberValue(), 0.00000001);
             assertEquals(45.0, sheet.getRow(1).getCell(20).getNumericCellValue());
             assertEquals(44.0, sheet.getRow(1).getCell(21).getNumericCellValue());
             assertEquals(1.0, sheet.getRow(1).getCell(22).getNumericCellValue());
@@ -114,6 +119,9 @@ class ProductionExportServiceTest {
             assertEquals("A", sheet.getRow(1).getCell(25).getStringCellValue());
             assertEquals(90.0, sheet.getRow(3).getCell(20).getNumericCellValue());
             assertEquals("B", sheet.getRow(3).getCell(25).getStringCellValue());
+            assertEquals("SUM(U2:U4)/S2", sheet.getRow(1).getCell(29).getCellFormula());
+            assertEquals(146.0 / 28800, workbook.getCreationHelper().createFormulaEvaluator()
+                    .evaluate(sheet.getRow(1).getCell(29)).getNumberValue(), 0.00000001);
             for (int column = 20; column <= 25; column++) {
                 assertTrue(hasMergedRegion(sheet, 1, 2, column));
             }
@@ -166,6 +174,9 @@ class ProductionExportServiceTest {
 
         try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
             assertEquals("Học việc", workbook.getSheetAt(0).getRow(1).getCell(7).getStringCellValue());
+            assertEquals("SUM(U2:U2)/S2", workbook.getSheetAt(0).getRow(1).getCell(29).getCellFormula());
+            assertEquals(98.0 / 28800, workbook.getCreationHelper().createFormulaEvaluator()
+                    .evaluate(workbook.getSheetAt(0).getRow(1).getCell(29)).getNumberValue(), 0.00000001);
         }
     }
 

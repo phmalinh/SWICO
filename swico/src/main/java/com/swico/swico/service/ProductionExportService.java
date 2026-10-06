@@ -127,7 +127,7 @@ public class ProductionExportService {
                 setValue(row.createCell(26), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
                 setValue(row.createCell(27), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
                 setValue(row.createCell(28), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
-                setFormula(row.createCell(29), dailyTargetEfficiencyFormula(row), percentStyle);
+                setFormula(row.createCell(29), dailyTargetEfficiencyFormula(row, rowIndex - 1), percentStyle);
                 setValue(row.createCell(30), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
                 setValue(row.createCell(31), report.performanceRate(), percentStyle);
                 setValue(row.createCell(32), report.qualityRate(), percentStyle);
@@ -306,9 +306,10 @@ public class ProductionExportService {
         return String.valueOf(left == null ? "" : left).trim().equals(String.valueOf(right == null ? "" : right).trim());
     }
 
-    private String dailyTargetEfficiencyFormula(Row row) {
+    private String dailyTargetEfficiencyFormula(Row row, int lastRowIndex) {
         int rowNumber = row.getRowNum() + 1;
-        return cellRef(rowNumber, 20) + "/" + cellRef(rowNumber, 18);
+        return "SUM(" + cellRef(rowNumber, 20) + ":" + cellRef(lastRowIndex + 1, 20)
+                + ")/" + cellRef(rowNumber, 18);
     }
 
     private String cellRef(int rowNumber, int columnIndex) {
