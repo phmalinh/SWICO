@@ -118,6 +118,7 @@
                 <td v-if="isColVisible('machine') && line.showReport" :rowspan="line.reportRowspan">{{ line.report.machineCode }}</td>
                 <td v-if="isColVisible('company') && line.showReport" :rowspan="line.reportRowspan">{{ line.report.company }}</td>
                 <td v-if="isColVisible('operatorName') && line.showReport" :rowspan="line.reportRowspan">{{ line.report.operatorName || line.report.createdBy || '-' }}</td>
+                <td v-if="isColVisible('employmentStatus') && line.showReport" :rowspan="line.reportRowspan">{{ employmentStatusLabel(line.report.employmentStatus) }}</td>
                 <td v-if="isColVisible('responsibleLeader') && line.showReport" :rowspan="line.reportRowspan">{{ line.report.responsibleLeader || '-' }}</td>
                 <td v-if="isColVisible('partNumber') && line.showReport" :rowspan="line.reportRowspan">{{ line.report.partNumber }}</td>
                 <td v-if="isColVisible('partName') && line.showReport" :rowspan="line.reportRowspan" class="text-cell">{{ line.report.partName }}</td>
@@ -193,6 +194,7 @@ const columnVisibility = ref({
   machine: true,
   company: true,
   operatorName: true,
+  employmentStatus: true,
   responsibleLeader: true,
   partNumber: true,
   partName: true,
@@ -231,6 +233,7 @@ const allColumns = computed(() => [
   { key: 'machine', label: t('reports.search.table.machine') },
   { key: 'company', label: t('reports.search.table.company') },
   { key: 'operatorName', label: t('reports.search.table.operatorName') },
+  { key: 'employmentStatus', label: t('reports.search.table.employmentStatus') },
   { key: 'responsibleLeader', label: t('reports.search.table.responsibleLeader') },
   { key: 'partNumber', label: t('reports.search.table.partNumber') },
   { key: 'partName', label: t('reports.search.table.partName') },
@@ -380,6 +383,12 @@ async function loadProcessNamesForProducts(products = []) {
 function formatProcessIds(processIds) {
   if (!Array.isArray(processIds) || processIds.length === 0) return '-'
   return processIds.map(id => processNameById.value[id]).filter(Boolean).join(' + ') || '-'
+}
+
+function employmentStatusLabel(value) {
+  return value === 'TRAINEE'
+    ? t('productionEntry.employmentStatuses.trainee')
+    : t('productionEntry.employmentStatuses.normal')
 }
 
 async function exportExcel(params = null) {

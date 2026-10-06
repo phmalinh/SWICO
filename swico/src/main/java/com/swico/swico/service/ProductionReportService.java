@@ -120,6 +120,7 @@ public class ProductionReportService {
         entity.setCompany(effectiveRequest.company());
         entity.setLotNo(effectiveRequest.lotNo());
         entity.setResponsibleLeader(effectiveRequest.responsibleLeader());
+        entity.setEmploymentStatus(normalizeEmploymentStatus(effectiveRequest.employmentStatus()));
         entity.setCreatedBy(createdBy);
         entity.setCreatedAt(importedCreatedAt);
         entity.setDowntimeReason(effectiveRequest.downtimeReason());
@@ -350,6 +351,7 @@ public class ProductionReportService {
                 request.company(),
                 request.lotNo(),
                 request.responsibleLeader(),
+                normalizeEmploymentStatus(request.employmentStatus()),
                 request.downtimeReason(),
                 request.responsibility(),
                 request.deductionPercent(),
@@ -460,6 +462,7 @@ public class ProductionReportService {
         entity.setCompany(effectiveRequest.company());
         entity.setLotNo(effectiveRequest.lotNo());
         entity.setResponsibleLeader(effectiveRequest.responsibleLeader());
+        entity.setEmploymentStatus(normalizeEmploymentStatus(effectiveRequest.employmentStatus()));
         entity.setDowntimeReason(effectiveRequest.downtimeReason());
 
         ProductionCalculationResponse calculated = formulaService.calculate(effectiveRequest, effectiveShiftMinutes);
@@ -559,6 +562,7 @@ public class ProductionReportService {
                     parseString(getCell(row, headerIndex.getOrDefault("company", -1))),
                     importedLotNo,
                     parseString(getCell(row, headerIndex.getOrDefault("responsibleLeader", -1))),
+                    normalizeEmploymentStatus(parseString(getCell(row, headerIndex.getOrDefault("employmentStatus", -1)))),
                     importedDowntimeReason,
                     parseString(getCell(row, headerIndex.getOrDefault("responsibility", -1))),
                     parsePercentPoints(getCell(row, headerIndex.getOrDefault("deductionPercent", -1))),
@@ -640,12 +644,18 @@ public class ProductionReportService {
         indexMap.put("machineCode", startOffset + 3);
         indexMap.put("company", startOffset + 4);
         String operatorHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 5)));
-        String leaderHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 6)));
+        String statusHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 6)));
+        int statusOffset = "employmentStatus".equals(mapHeaderKey(statusHeader)) ? 1 : 0;
+        if (statusOffset > 0) {
+            indexMap.put("employmentStatus", startOffset + 6);
+        }
+        String leaderHeader = normalizeHeader(formatter.formatCellValue(headerRow.getCell(startOffset + 6 + statusOffset)));
         int peopleOffset = "operatorName".equals(mapHeaderKey(operatorHeader)) || "responsibleLeader".equals(mapHeaderKey(leaderHeader)) ? 2 : 0;
         if (peopleOffset > 0) {
             indexMap.put("operatorName", startOffset + 5);
-            indexMap.put("responsibleLeader", startOffset + 6);
+            indexMap.put("responsibleLeader", startOffset + 6 + statusOffset);
         }
+        peopleOffset += statusOffset;
         indexMap.put("partNumber", startOffset + 5 + peopleOffset);
         indexMap.put("partName", startOffset + 6 + peopleOffset);
 
@@ -800,6 +810,9 @@ public class ProductionReportService {
         }
         if (header.contains("負責幹部") || header.contains("負責干部") || header.contains("can bo phu trach") || header.contains("leader") || header.contains("supervisor")) {
             return "responsibleLeader";
+        }
+        if (header.contains("工作狀態") || header.contains("工作状态") || header.contains("trang thai lam viec") || header.contains("employment status") || header.contains("work status")) {
+            return "employmentStatus";
         }
         if (header.contains("mã hàng") || header.contains("料號") || header.contains("part number") || header.contains("partnumber") || header.equals("part") || header.contains("pn")) {
             return "partNumber";
@@ -1614,6 +1627,7 @@ public class ProductionReportService {
                 report.getLotNo(),
                 operatorDisplayName(report.getCreatedBy()),
                 report.getResponsibleLeader(),
+                normalizeEmploymentStatus(report.getEmploymentStatus()),
                 calculated != null ? calculated.downtimeReason() : report.getDowntimeReason(),
                 calculated != null ? calculated.responsibility() : report.getResponsibility(),
                 calculated != null ? calculated.deductionPercent() : report.getDeductionPercent(),
@@ -1685,6 +1699,17 @@ public class ProductionReportService {
         return userRepository.findByUsername(username)
                 .map(user -> user.getFullName() != null && !user.getFullName().isBlank() ? user.getFullName() : user.getUsername())
                 .orElse(username);
+    }
+
+    private String normalizeEmploymentStatus(String value) {
+        if (value == null || value.isBlank()) {
+            return "NORMAL";
+        }
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        String folded = normalizePersonText(value);
+        return "TRAINEE".equals(normalized) || folded.contains("hoc viec") || value.contains("學徒") || value.contains("学徒")
+                ? "TRAINEE"
+                : "NORMAL";
     }
 
     private boolean operatorMatches(String username, String operatorTerm) {

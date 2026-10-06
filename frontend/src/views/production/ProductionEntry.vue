@@ -60,6 +60,12 @@
                 />
               </el-select>
             </el-form-item>
+            <el-form-item prop="employmentStatus" :label="t('productionEntry.employmentStatus')" :show-message="false" class="!mb-0">
+              <el-select v-model="form.employmentStatus" size="default" class="w-full">
+                <el-option :label="t('productionEntry.employmentStatuses.normal')" value="NORMAL" />
+                <el-option :label="t('productionEntry.employmentStatuses.trainee')" value="TRAINEE" />
+              </el-select>
+            </el-form-item>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             <el-form-item :label="t('productionEntry.shiftTime')" class="!mb-0">
@@ -584,6 +590,7 @@
                     <th v-if="isColVisible('processIds')">{{ t('productionEntry.table.processIds') }}</th>
                     <th v-if="isColVisible('company')">{{ t('productionEntry.table.company') }}</th>
                     <th v-if="isColVisible('operatorName')">{{ t('productionEntry.table.operatorName') }}</th>
+                    <th v-if="isColVisible('employmentStatus')">{{ t('productionEntry.table.employmentStatus') }}</th>
                     <th v-if="isColVisible('responsibleLeader')">{{ t('productionEntry.table.responsibleLeader') }}</th>
                     <th v-if="isColVisible('downtimeReason')" class="reason-col">{{ t('productionEntry.table.downtimeReason') }}</th>
                     <th v-if="isColVisible('downtimeTime')">{{ t('productionEntry.table.downtimeTime') }}</th>
@@ -630,6 +637,7 @@
                       <td v-if="line.showReport && isColVisible('processIds')" :rowspan="line.reportRowspan" class="text-cell">{{ formatProcessIds(line.report.processIds) }}</td>
                       <td v-if="line.showReport && isColVisible('company')" :rowspan="line.reportRowspan">{{ line.report.company }}</td>
                       <td v-if="line.showReport && isColVisible('operatorName')" :rowspan="line.reportRowspan">{{ line.report.operatorName || line.report.createdBy || '-' }}</td>
+                      <td v-if="line.showReport && isColVisible('employmentStatus')" :rowspan="line.reportRowspan">{{ employmentStatusLabel(line.report.employmentStatus) }}</td>
                       <td v-if="line.showReport && isColVisible('responsibleLeader')" :rowspan="line.reportRowspan">{{ line.report.responsibleLeader || '-' }}</td>
                       
                       <!-- Nhóm Thời gian dừng máy (Không có rowspan) -->
@@ -844,6 +852,7 @@ const form = ref({
   externalDefectQuantity: 0,
   company: '',
   responsibleLeader: '',
+  employmentStatus: 'NORMAL',
   downtimeReason: '',
   downtimeReasons: [''],
   downtimeItems: [{ reasonCategoryCode: '', reason: '', minutes: 0 }],
@@ -888,6 +897,7 @@ const columnVisibility = ref({
   processIds: true,
   company: true,
   operatorName: true,
+  employmentStatus: true,
   responsibleLeader: true,
   downtimeReason: true,
   downtimeTime: true,
@@ -925,6 +935,7 @@ const allColumns = computed(() => [
   { key: 'processIds', label: t('productionEntry.table.processIds') },
   { key: 'company', label: t('productionEntry.table.company') },
   { key: 'operatorName', label: t('productionEntry.table.operatorName') },
+  { key: 'employmentStatus', label: t('productionEntry.table.employmentStatus') },
   { key: 'responsibleLeader', label: t('productionEntry.table.responsibleLeader') },
   { key: 'downtimeReason', label: t('productionEntry.table.downtimeReason'), class: 'reason-col' },
   { key: 'downtimeTime', label: t('productionEntry.table.downtimeTime') },
@@ -1720,6 +1731,7 @@ function populateFormForEdit(report) {
   form.value.externalDefectQuantity = firstLot?.externalDefectQuantity ?? report.externalDefectQuantity ?? 0
   form.value.company = report.company || ''
   form.value.responsibleLeader = report.responsibleLeader || ''
+  form.value.employmentStatus = report.employmentStatus === 'TRAINEE' ? 'TRAINEE' : 'NORMAL'
   form.value.downtimeReason = report.downtimeReason || ''
   form.value.downtimeReasons = normalizeDowntimeReasons(report.downtimeReason)
   const normalizedDowntimes = downtimes.length
@@ -2107,6 +2119,12 @@ function formatProcessIds(processIds) {
   return processIds.map(id => processNameById.value[id]).filter(Boolean).join(' + ') || '-'
 }
 
+function employmentStatusLabel(value) {
+  return value === 'TRAINEE'
+    ? t('productionEntry.employmentStatuses.trainee')
+    : t('productionEntry.employmentStatuses.normal')
+}
+
 function resetForm() {
   form.value.reportDate = localTodayString()
   form.value.partNumber = ''
@@ -2126,6 +2144,7 @@ function resetForm() {
   form.value.internalDefectQuantity = 0
   form.value.externalDefectQuantity = 0
   form.value.responsibleLeader = ''
+  form.value.employmentStatus = 'NORMAL'
   editedReportId.value = null
   selectedReports.value = []
   showResult.value = false
@@ -2298,6 +2317,7 @@ async function saveReport() {
       downtimeRows: downtimeRowsForSave(),
       company: form.value.company,
       responsibleLeader: form.value.responsibleLeader,
+      employmentStatus: form.value.employmentStatus || 'NORMAL',
       downtimeReason: formatDowntimeReasonsForSave(),
     }
 
@@ -2332,6 +2352,7 @@ const oeeCards = computed(() => {
     { key: 'responsibility', label: t('productionEntry.responsibility'), value: formatPercent(Number(r.responsibility || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
     { key: 'deduction', label: t('productionEntry.deductionPercent'), value: formatPercent(Number(r.deductionPercent || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
     { key: 'operator', label: t('productionEntry.table.operatorName'), value: r.operatorName || currentUser.value?.fullName || currentUser.value?.name || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
+    { key: 'employment-status', label: t('productionEntry.table.employmentStatus'), value: employmentStatusLabel(r.employmentStatus), textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
     { key: 'leader', label: t('productionEntry.table.responsibleLeader'), value: r.responsibleLeader || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
   ]
 })

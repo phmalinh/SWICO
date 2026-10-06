@@ -24,6 +24,7 @@ public record ProductionReportResponse(
         String lotNo,
         String operatorName,
         String responsibleLeader,
+        String employmentStatus,
         String downtimeReason,
         BigDecimal responsibility,
         BigDecimal deductionPercent,

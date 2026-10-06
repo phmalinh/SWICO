@@ -68,6 +68,9 @@ public class DailyProductionReport {
     @Column(name = "responsible_leader", length = 100)
     private String responsibleLeader;
 
+    @Column(name = "employment_status", length = 20)
+    private String employmentStatus;
+
     @Column(name = "downtime_reason", length = 2000)
     private String downtimeReason;
 
@@ -337,6 +340,14 @@ public class DailyProductionReport {
 
     public void setResponsibleLeader(String responsibleLeader) {
         this.responsibleLeader = responsibleLeader;
+    }
+
+    public String getEmploymentStatus() {
+        return employmentStatus;
+    }
+
+    public void setEmploymentStatus(String employmentStatus) {
+        this.employmentStatus = employmentStatus;
     }
 
     public String getDowntimeReason() {

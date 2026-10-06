@@ -10,18 +10,43 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ProductionFormulaServiceTest {
 
     private final ProductionFormulaService service = new ProductionFormulaService();
 
     @Test
-    void productionEfficiencyShouldUseInputCycleTimeOperatingMinutesAndDeduction() {
+    void productionEfficiencyShouldUseRoundedDownTargetAndDeduction() {
         ProductionCalculationResponse withoutDeduction = service.calculate(request(40, 40, 0, new BigDecimal("46.67"), 395), 415);
         ProductionCalculationResponse withDeduction = service.calculate(request(59, 52, 6, new BigDecimal("601"), 620), 660);
 
-        assertEquals(new BigDecimal("0.0788"), withoutDeduction.productionEfficiency());
-        assertEquals(new BigDecimal("0.8542"), withDeduction.productionEfficiency());
+        assertEquals(new BigDecimal("0.0789"), withoutDeduction.productionEfficiency());
+        assertEquals(new BigDecimal("0.8682"), withDeduction.productionEfficiency());
+    }
+
+    @Test
+    void productionEfficiencyShouldReachOneHundredPercentAtRoundedDownTarget() {
+        ProductionCalculationResponse response = service.calculate(request(146, 146, 0, new BigDecimal("27"), 66), 66);
+
+        assertEquals(new BigDecimal("146"), response.dailyTargetQuantity());
+        assertEquals(new BigDecimal("1.0000"), response.productionEfficiency());
+    }
+
+    @Test
+    void productionEfficiencyShouldStillDeductInternalDefectsAtTarget() {
+        ProductionCalculationResponse response = service.calculate(request(146, 145, 1, new BigDecimal("27"), 66), 66);
+
+        assertEquals(new BigDecimal("0.0041"), response.deductionPercent());
+        assertEquals(new BigDecimal("0.9959"), response.productionEfficiency());
+    }
+
+    @Test
+    void productionEfficiencyShouldBeUndefinedWhenRoundedDownTargetIsZero() {
+        ProductionCalculationResponse response = service.calculate(request(0, 0, 0, new BigDecimal("120"), 1), 1);
+
+        assertEquals(BigDecimal.ZERO, response.dailyTargetQuantity());
+        assertNull(response.productionEfficiency());
     }
 
     @Test
@@ -154,6 +179,7 @@ class ProductionFormulaServiceTest {
                 internalDefect,
                 externalDefect,
                 "SWICO",
+                null,
                 null,
                 null,
                 downtimeReason,

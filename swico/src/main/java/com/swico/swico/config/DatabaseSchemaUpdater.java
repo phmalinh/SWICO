@@ -28,6 +28,8 @@ public class DatabaseSchemaUpdater {
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS deduction_percent numeric(6,4)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ALTER COLUMN deduction_percent TYPE numeric(6,4)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS responsible_leader varchar(100)");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS employment_status varchar(20) DEFAULT 'NORMAL'");
+        jdbcTemplate.execute("UPDATE daily_production_reports SET employment_status = 'NORMAL' WHERE employment_status IS NULL");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS lot_no varchar(100)");
         // jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS daily_target_quantity numeric(10,2)");
         // jdbcTemplate.execute("ALTER TABLE IF EXISTS daily_production_reports ADD COLUMN IF NOT EXISTS daily_target_efficiency numeric(5,4)");

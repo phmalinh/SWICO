@@ -52,6 +52,9 @@
         <el-table-column :label="t('reports.search.table.operatorName')" width="150" align="center" show-overflow-tooltip>
           <template #default="{ row }">{{ row.operatorName || row.createdBy || '-' }}</template>
         </el-table-column>
+        <el-table-column :label="t('reports.search.table.employmentStatus')" width="140" align="center" show-overflow-tooltip>
+          <template #default="{ row }">{{ employmentStatusLabel(row.employmentStatus) }}</template>
+        </el-table-column>
         <el-table-column :label="t('reports.search.table.responsibleLeader')" width="160" align="center" show-overflow-tooltip>
           <template #default="{ row }">{{ row.responsibleLeader || '-' }}</template>
         </el-table-column>
@@ -178,6 +181,12 @@ async function loadProcessNamesForProducts(products = []) {
 function formatProcessIds(processIds) {
   if (!Array.isArray(processIds) || processIds.length === 0) return '-'
   return processIds.map(id => processNameById.value[id]).filter(Boolean).join(' + ') || '-'
+}
+
+function employmentStatusLabel(value) {
+  return value === 'TRAINEE'
+    ? t('productionEntry.employmentStatuses.trainee')
+    : t('productionEntry.employmentStatuses.normal')
 }
 
 function formatPercent(value) {

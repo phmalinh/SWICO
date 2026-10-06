@@ -28,6 +28,7 @@ public record ProductionCalculationRequest(
         String company,
         String lotNo,
         String responsibleLeader,
+        String employmentStatus,
         String downtimeReason,
         String responsibility,
         BigDecimal deductionPercent,

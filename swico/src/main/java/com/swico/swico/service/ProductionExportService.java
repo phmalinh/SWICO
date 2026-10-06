@@ -67,7 +67,7 @@ public class ProductionExportService {
             String[] headers = {
                     "\u8f38\u5165\u6642\u9593\nGiờ nhập",
                     "\u65e5\u671f\nNgày", "\u7dda\u5225\nChuyền", "\u73ed\u5225\nCa (Dropdown)", "\u6a5f\u53f0\nMã Máy", "\u5ba2\u6236\nKhách hàng",
-                    "\u4f5c\u54e1\nNhân Viên Thao Tác", "\u8ca0\u8cac\u5e79\u90e8\nCán Bộ Phụ Trách", "\u6599\u865f\nMã Hàng",
+                    "\u4f5c\u54e1\nNhân Viên Thao Tác", "\u5de5\u4f5c\u72c0\u614b\nTrạng thái làm việc", "\u8ca0\u8cac\u5e79\u90e8\nCán Bộ Phụ Trách", "\u6599\u865f\nMã Hàng",
                     "\u54c1\u540d\nTên Hàng", "\u5de5\u5e8f\nCông Đoạn", "C/T (\u79d2)", "\u7e3d\u52d5\u6642\u9593(\u5206)\nTổng TG", "\u505c\u6a5f(\u5206)\nTG Dừng",
                     "\u505c\u6a5f\u539f\u56e0\nLý Do Dừng", "\u505c\u6a5f\u6642\u9593\nThời Gian", "\u6a19\u6e96\u5de5\u6642(\u5206)\nTG Ca", "\u6bcf\u65e5\u76ee\u6a19\nMục tiêu ngày", "\u5be6\u969b\u76ee\u6a19\nMục Tiêu", "\u6295\u5165\u6578\nSL Nhập",
                     "\u826f\u54c1\u6578\nSL Đạt", "\u4e0d\u826f\u6578\nSL Lỗi",
@@ -104,17 +104,18 @@ public class ProductionExportService {
                 setValue(row.createCell(4), report.machineCode(), textStyle);
                 setValue(row.createCell(5), report.company(), textStyle);
                 setValue(row.createCell(6), report.operatorName(), textStyle);
-                setValue(row.createCell(7), report.responsibleLeader(), textStyle);
-                setValue(row.createCell(8), report.partNumber(), textStyle);
-                setValue(row.createCell(9), report.partName(), textStyle);
-                setValue(row.createCell(10), formatProcesses(report.processIds()), wrappedTextStyle);
-                setValue(row.createCell(11), report.cycleTimeSeconds(), decimalStyle);
-                setValue(row.createCell(12), report.totalOperatingMinutes(), intStyle);
-                setValue(row.createCell(13), report.downtimeMinutes(), intStyle);
+                setValue(row.createCell(7), employmentStatusLabel(report.employmentStatus()), textStyle);
+                setValue(row.createCell(8), report.responsibleLeader(), textStyle);
+                setValue(row.createCell(9), report.partNumber(), textStyle);
+                setValue(row.createCell(10), report.partName(), textStyle);
+                setValue(row.createCell(11), formatProcesses(report.processIds()), wrappedTextStyle);
+                setValue(row.createCell(12), report.cycleTimeSeconds(), decimalStyle);
+                setValue(row.createCell(13), report.totalOperatingMinutes(), intStyle);
+                setValue(row.createCell(14), report.downtimeMinutes(), intStyle);
                 writeDowntimeRows(sheet, firstRowIndex, reportLineCount, detailLines, multilineStyle, intStyle);
-                setValue(row.createCell(16), report.shiftStandardTimeMinutes(), intStyle);
-                setFormula(row.createCell(17), dailyTargetFormula(row), intStyle);
-                setValue(row.createCell(18), floorQuantity(report.dailyTargetQuantity()), intStyle);
+                setValue(row.createCell(17), report.shiftStandardTimeMinutes(), intStyle);
+                setFormula(row.createCell(18), dailyTargetFormula(row), intStyle);
+                setValue(row.createCell(19), floorQuantity(report.dailyTargetQuantity()), intStyle);
                 writeLotRows(sheet, firstRowIndex, reportLineCount, detailLines, intStyle, multilineStyle);
                 ProductionCalculationResponse fallback = null;
                 if (report.responsibility() == null
@@ -123,16 +124,16 @@ public class ProductionExportService {
                         || report.availabilityRate() == null) {
                     fallback = calculateFallback(report);
                 }
-                setValue(row.createCell(25), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
-                setValue(row.createCell(26), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
-                setValue(row.createCell(27), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
-                setFormula(row.createCell(28), dailyTargetEfficiencyFormula(row), percentStyle);
-                setValue(row.createCell(29), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
-                setValue(row.createCell(30), report.performanceRate(), percentStyle);
-                setValue(row.createCell(31), report.qualityRate(), percentStyle);
-                setValue(row.createCell(32), report.oee(), percentStyle);
-                setValue(row.createCell(33), report.evaluationLabel(), textStyle);
-                setValue(row.createCell(34), "", textStyle);
+                setValue(row.createCell(26), firstNonNull(report.responsibility(), fallback != null ? fallback.responsibility() : null), percentStyle);
+                setValue(row.createCell(27), firstNonNull(report.deductionPercent(), fallback != null ? fallback.deductionPercent() : null), percentStyle);
+                setValue(row.createCell(28), firstNonNull(report.productionEfficiency(), fallback != null ? fallback.productionEfficiency() : null), percentStyle);
+                setFormula(row.createCell(29), dailyTargetEfficiencyFormula(row), percentStyle);
+                setValue(row.createCell(30), firstNonNull(report.availabilityRate(), fallback != null ? fallback.availabilityRate() : null), percentStyle);
+                setValue(row.createCell(31), report.performanceRate(), percentStyle);
+                setValue(row.createCell(32), report.qualityRate(), percentStyle);
+                setValue(row.createCell(33), report.oee(), percentStyle);
+                setValue(row.createCell(34), report.evaluationLabel(), textStyle);
+                setValue(row.createCell(35), "", textStyle);
                 mergeReportRows(sheet, firstRowIndex, rowIndex - 1, headers.length);
             }
 
@@ -149,7 +150,7 @@ public class ProductionExportService {
 
     private String dailyTargetFormula(Row row) {
         int rowNumber = row.getRowNum() + 1;
-        return "ROUNDDOWN(" + cellRef(rowNumber, 16) + "*60/" + cellRef(rowNumber, 11) + ",0)";
+        return "ROUNDDOWN(" + cellRef(rowNumber, 17) + "*60/" + cellRef(rowNumber, 12) + ",0)";
     }
 
     private void writeDowntimeRows(
@@ -163,8 +164,8 @@ public class ProductionExportService {
         for (int i = 0; i < lineCount; i++) {
             Row row = sheet.getRow(firstRowIndex + i);
             ProductionReportDowntimeDto downtime = i < detailLines.size() ? detailLines.get(i).downtime() : null;
-            setValue(row.createCell(14), downtimeReasonText(downtime), reasonStyle);
-            setValue(row.createCell(15), downtimeMinutesValue(downtime), minutesStyle);
+            setValue(row.createCell(15), downtimeReasonText(downtime), reasonStyle);
+            setValue(row.createCell(16), downtimeMinutesValue(downtime), minutesStyle);
         }
     }
 
@@ -198,16 +199,16 @@ public class ProductionExportService {
     }
 
     private void writeLotCells(Row row, ProductionReportLotDto lot, CellStyle intStyle, CellStyle textStyle) {
-        setValue(row.createCell(19), lot != null ? lot.inputQuantity() : null, intStyle);
-        setValue(row.createCell(20), lot != null ? lot.goodQuantity() : null, intStyle);
-        setValue(row.createCell(21), lot != null ? lotDefectQuantity(lot) : null, intStyle);
-        setValue(row.createCell(22), lot != null ? lot.internalDefectQuantity() : null, intStyle);
-        setValue(row.createCell(23), lot != null ? lot.externalDefectQuantity() : null, intStyle);
-        setValue(row.createCell(24), lotNoText(lot), textStyle);
+        setValue(row.createCell(20), lot != null ? lot.inputQuantity() : null, intStyle);
+        setValue(row.createCell(21), lot != null ? lot.goodQuantity() : null, intStyle);
+        setValue(row.createCell(22), lot != null ? lotDefectQuantity(lot) : null, intStyle);
+        setValue(row.createCell(23), lot != null ? lot.internalDefectQuantity() : null, intStyle);
+        setValue(row.createCell(24), lot != null ? lot.externalDefectQuantity() : null, intStyle);
+        setValue(row.createCell(25), lotNoText(lot), textStyle);
     }
 
     private void mergeLotRows(Sheet sheet, int firstRowIndex, int lastRowIndex) {
-        for (int col = 19; col <= 24; col++) {
+        for (int col = 20; col <= 25; col++) {
             CellRangeAddress region = new CellRangeAddress(firstRowIndex, lastRowIndex, col, col);
             sheet.addMergedRegion(region);
             applyBlackBorders(region, sheet);
@@ -245,7 +246,7 @@ public class ProductionExportService {
             return;
         }
         for (int col = 0; col < columnCount; col++) {
-            if (col == 14 || col == 15 || (col >= 19 && col <= 24)) {
+            if (col == 15 || col == 16 || (col >= 20 && col <= 25)) {
                 continue;
             }
             CellRangeAddress region = new CellRangeAddress(firstRowIndex, lastRowIndex, col, col);
@@ -307,11 +308,15 @@ public class ProductionExportService {
 
     private String dailyTargetEfficiencyFormula(Row row) {
         int rowNumber = row.getRowNum() + 1;
-        return cellRef(rowNumber, 19) + "/" + cellRef(rowNumber, 17);
+        return cellRef(rowNumber, 20) + "/" + cellRef(rowNumber, 18);
     }
 
     private String cellRef(int rowNumber, int columnIndex) {
         return CellReference.convertNumToColString(columnIndex) + rowNumber;
+    }
+
+    private String employmentStatusLabel(String value) {
+        return "TRAINEE".equals(value) ? "Học việc" : "Làm bình thường";
     }
 
     private String formatProcesses(List<Long> processIds) {
@@ -508,6 +513,7 @@ public class ProductionExportService {
                 report.company(),
                 report.lotNo(),
                 report.responsibleLeader(),
+                report.employmentStatus(),
                 report.downtimeReason(),
                 null,
                 report.deductionPercent(),
