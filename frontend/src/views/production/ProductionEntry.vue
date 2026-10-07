@@ -28,7 +28,8 @@
                 <el-option v-for="m in filteredMachines" :key="m.machineCode" :label="`${m.machineCode} - ${m.description}`" :value="m.machineCode" />
               </el-select>
             </el-form-item>
-
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             <el-form-item prop="shiftName" :label="t('productionEntry.shift')":show-message="false" class="!mb-0">
               <el-select v-model="form.shiftName" size="default" class="w-full" :placeholder="t('productionEntry.selectShift')">
                 <el-option v-for="s in shifts" :key="s.shiftName" :label="s.shiftName" :value="s.shiftName" />
@@ -157,7 +158,6 @@
               </el-form-item>
             </div>
           </div>    
-          <!-- nháº­p sá»‘ lÆ°á»£ng -->
           <div class="grid grid-cols-2 md:grid-cols-2 gap-2.5">
             <div class="mt-2.5 grid grid-cols-2 md:grid-cols-3 gap-2.5 ">
               <el-form-item prop="inputQuantity" :label="t('productionEntry.inputQuantity')":show-message="false" :v-slot="{ error }" class=" !mb-0" required>
@@ -611,7 +611,8 @@
                     <th v-if="isColVisible('performanceRate')">{{ t('productionEntry.table.performanceRate') }}</th>
                     <th v-if="isColVisible('qualityRate')" class="reason-col1">{{ t('productionEntry.table.qualityRate') }}</th>
                     <th v-if="isColVisible('oee')">{{ t('productionEntry.table.oee') }}</th>
-                    <th v-if="isColVisible('evaluationLabel')" class="reason-col2">{{ t('productionEntry.table.evaluationLabel') }}</th>                  </tr>
+                    <th v-if="isColVisible('evaluationLabel')" class="reason-col2">{{ t('productionEntry.table.evaluationLabel') }}</th>            
+                  </tr>
                 </thead>
                 <tbody>
                   <tr v-if="!myReportRows.length">
@@ -2352,7 +2353,7 @@ const oeeCards = computed(() => {
     { key: 'responsibility', label: t('productionEntry.responsibility'), value: formatPercent(Number(r.responsibility || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
     { key: 'deduction', label: t('productionEntry.deductionPercent'), value: formatPercent(Number(r.deductionPercent || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },
     { key: 'operator', label: t('productionEntry.table.operatorName'), value: r.operatorName || currentUser.value?.fullName || currentUser.value?.name || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
-    { key: 'employment-status', label: t('productionEntry.table.employmentStatus'), value: employmentStatusLabel(r.employmentStatus), textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
+    // { key: 'employment-status', label: t('productionEntry.table.employmentStatus'), value: employmentStatusLabel(r.employmentStatus), textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
     { key: 'leader', label: t('productionEntry.table.responsibleLeader'), value: r.responsibleLeader || '-', textClass: 'text-slate-700', cardClass: 'border-slate-200 bg-white' },
   ]
 })
@@ -2480,7 +2481,7 @@ onMounted(() => {
 
 .my-reports-excel-table th,
 .my-reports-excel-table td {
-  border: 1px solid #111827;
+  border: 1px solid #b2c5ee;
   padding: 7px 6px;
   vertical-align: middle;
 }

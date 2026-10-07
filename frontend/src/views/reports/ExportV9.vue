@@ -724,7 +724,7 @@ watch([reports, pageSize], () => {
 
 .excel-like-table th,
 .excel-like-table td {
-  border: 1px solid #111827;
+  border: 1px solid #b2c5ee;
   padding: 8px 6px;
   vertical-align: middle;
 }
