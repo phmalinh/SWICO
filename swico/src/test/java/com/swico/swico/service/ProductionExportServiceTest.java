@@ -3,6 +3,7 @@ package com.swico.swico.service;
 import com.swico.swico.dto.ProductionReportLotDto;
 import com.swico.swico.dto.ProductionReportDowntimeDto;
 import com.swico.swico.dto.ProductionReportResponse;
+import com.swico.swico.dto.PivotExportRequest;
 import com.swico.swico.repository.ProductProcessRepository;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -27,6 +28,39 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ProductionExportServiceTest {
+
+    @Test
+    void exportPivotShouldPreserveTotalsNumericRatesAndGrouping() throws Exception {
+        ProductionExportService service = new ProductionExportService(productProcessRepository, formulaService);
+        PivotExportRequest request = new PivotExportRequest(
+                new PivotExportRequest.PivotSheet("Quantity", List.of("Group", "Input", "Good", "Internal", "External"), List.of(
+                        new PivotExportRequest.PivotRow("PN-01", 0, false, java.util.Arrays.asList(null, null, null, null)),
+                        new PivotExportRequest.PivotRow("OP-01", 1, false, List.of(new BigDecimal("160"), new BigDecimal("159"), BigDecimal.ONE, BigDecimal.ZERO)),
+                        new PivotExportRequest.PivotRow("1-Aug", 2, false, List.of(new BigDecimal("160"), new BigDecimal("159"), BigDecimal.ONE, BigDecimal.ZERO)),
+                        new PivotExportRequest.PivotRow("Grand Total", 0, true, List.of(new BigDecimal("160"), new BigDecimal("159"), BigDecimal.ONE, BigDecimal.ZERO))
+                )),
+                new PivotExportRequest.PivotSheet("Rates", List.of("Group", "Efficiency", "A", "P", "Q", "OEE"), List.of(
+                        new PivotExportRequest.PivotRow("Operator", 1, false, List.of(new BigDecimal("0.9581"), BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, new BigDecimal("0.9581")))
+                ))
+        );
+        try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(service.exportPivot(request)))) {
+            assertEquals(2, workbook.getNumberOfSheets());
+            Sheet quantities = workbook.getSheet("Quantity");
+            assertEquals("Group", quantities.getRow(0).getCell(0).getStringCellValue());
+            assertEquals("Group", workbook.getSheet("Rates").getRow(0).getCell(0).getStringCellValue());
+            assertEquals(org.apache.poi.ss.usermodel.CellType.BLANK, quantities.getRow(1).getCell(1).getCellType());
+            assertEquals(160.0, quantities.getRow(4).getCell(1).getNumericCellValue());
+            assertEquals("Grand Total", quantities.getRow(4).getCell(0).getStringCellValue());
+            assertEquals(1, quantities.getRow(2).getCell(0).getCellStyle().getIndention());
+            assertEquals(1, quantities.getRow(2).getOutlineLevel());
+            assertEquals(2, quantities.getRow(3).getOutlineLevel());
+            assertEquals(0, quantities.getRow(4).getOutlineLevel());
+            assertEquals(IndexedColors.PALE_BLUE.getIndex(), quantities.getRow(0).getCell(0).getCellStyle().getFillForegroundColor());
+            assertTrue(workbook.getFontAt(quantities.getRow(2).getCell(1).getCellStyle().getFontIndex()).getBold());
+            assertEquals(0.9581, workbook.getSheet("Rates").getRow(1).getCell(1).getNumericCellValue());
+            assertEquals("0.00%", workbook.getSheet("Rates").getRow(1).getCell(1).getCellStyle().getDataFormatString());
+        }
+    }
 
     @Mock
     private ProductProcessRepository productProcessRepository;

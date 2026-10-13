@@ -5,6 +5,7 @@ import com.swico.swico.dto.DashboardSummaryResponse;
 import com.swico.swico.dto.ProductionCalculationRequest;
 import com.swico.swico.dto.ProductionCalculationResponse;
 import com.swico.swico.dto.ProductionReportResponse;
+import com.swico.swico.dto.PivotExportRequest;
 import com.swico.swico.service.AuditLogService;
 import com.swico.swico.service.ProductionExportService;
 import com.swico.swico.service.ProductionReportService;
@@ -121,6 +122,14 @@ public class ProductionReportController {
             return java.util.Collections.emptyList();
         }
         return reportService.getMyReports(username, reportDate, lineCode, shiftName, partNumber);
+    }
+
+    @PostMapping("/export-pivot")
+    public ResponseEntity<byte[]> exportPivot(@Valid @RequestBody PivotExportRequest request) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Pivot.xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(exportService.exportPivot(request));
     }
 
     @GetMapping("/export-v9")

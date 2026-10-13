@@ -456,6 +456,9 @@ const messages = {
       pivotStatistics: {
         eyebrow: '2.3 Thống kê',
         title: 'Thống kê Pivot báo cáo sản xuất',
+        exportExcel: 'Xuất Excel',
+        exportSuccess: 'Đã xuất thống kê Pivot',
+        exportFailed: 'Không xuất được thống kê Pivot',
         subtitle: 'Tổng hợp số lượng theo mã hàng/công đoạn và tỷ lệ OEE theo cán bộ/nhân viên.',
         dateFrom: 'Từ ngày',
         dateTo: 'Đến ngày',
@@ -1453,6 +1456,9 @@ const messages = {
       pivotStatistics: {
         eyebrow: '2.3 統計',
         title: '生產報表樞紐統計',
+        exportExcel: '匯出 Excel',
+        exportSuccess: '已匯出樞紐統計',
+        exportFailed: '無法匯出樞紐統計',
         subtitle: '依料號/工序彙總數量，依幹部/作員彙總 OEE 比率。',
         dateFrom: '開始日期',
         dateTo: '結束日期',

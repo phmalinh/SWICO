@@ -5,6 +5,7 @@ import com.swico.swico.dto.ProductionCalculationResponse;
 import com.swico.swico.dto.ProductionReportDowntimeDto;
 import com.swico.swico.dto.ProductionReportLotDto;
 import com.swico.swico.dto.ProductionReportResponse;
+import com.swico.swico.dto.PivotExportRequest;
 import com.swico.swico.entity.ProductProcess;
 import com.swico.swico.repository.ProductProcessRepository;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -47,6 +48,88 @@ public class ProductionExportService {
     public ProductionExportService(ProductProcessRepository productProcessRepository, ProductionFormulaService formulaService) {
         this.productProcessRepository = productProcessRepository;
         this.formulaService = formulaService;
+    }
+
+    public byte[] exportPivot(PivotExportRequest request) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            writePivotSheet(workbook, request.quantity(), false);
+            writePivotSheet(workbook, request.rates(), true);
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to generate pivot Excel export", e);
+        }
+    }
+
+    private void writePivotSheet(Workbook workbook, PivotExportRequest.PivotSheet data, boolean rates) {
+        Sheet sheet = workbook.createSheet(data.name());
+        sheet.setRowSumsBelow(false);
+        sheet.setDisplayGridlines(false);
+        Font bold = workbook.createFont();
+        bold.setFontName("Calibri");
+        bold.setFontHeightInPoints((short) 11);
+        bold.setBold(true);
+        CellStyle headerStyle = workbook.createCellStyle();
+        headerStyle.setFont(bold);
+        headerStyle.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setAlignment(HorizontalAlignment.LEFT);
+        CellStyle numberStyle = workbook.createCellStyle();
+        numberStyle.setAlignment(HorizontalAlignment.RIGHT);
+        numberStyle.setDataFormat(workbook.createDataFormat().getFormat(rates ? "0.00%" : "#,##0"));
+        CellStyle groupNumberStyle = workbook.createCellStyle();
+        groupNumberStyle.cloneStyleFrom(numberStyle);
+        groupNumberStyle.setFont(bold);
+        CellStyle[] labels = new CellStyle[3];
+        for (int level = 0; level < labels.length; level++) {
+            labels[level] = workbook.createCellStyle();
+            labels[level].setIndention((short) level);
+            if (level < 2) {
+                labels[level].setFont(bold);
+            }
+        }
+        CellStyle totalLabel = workbook.createCellStyle();
+        CellStyle totalNumber = workbook.createCellStyle();
+        totalNumber.cloneStyleFrom(numberStyle);
+        for (CellStyle style : List.of(totalLabel, totalNumber)) {
+            style.setFont(bold);
+            style.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        }
+        Row header = sheet.createRow(0);
+        header.setHeightInPoints(20);
+        for (int col = 0; col < data.headers().size(); col++) {
+            setValue(header.createCell(col), data.headers().get(col), headerStyle);
+            sheet.setColumnWidth(col, (col == 0 ? 45 : 24) * 256);
+        }
+        int rowIndex = 1;
+        for (PivotExportRequest.PivotRow item : data.rows()) {
+            if (item.values().size() != data.headers().size() - 1) {
+                throw new IllegalArgumentException("Pivot row does not match column count");
+            }
+            Row row = sheet.createRow(rowIndex++);
+            row.setHeightInPoints(16);
+            setValue(row.createCell(0), item.label(), item.total() ? totalLabel : labels[item.level()]);
+            for (int col = 0; col < item.values().size(); col++) {
+                setValue(row.createCell(col + 1), item.values().get(col), item.total() ? totalNumber
+                        : item.level() < 2 ? groupNumberStyle : numberStyle);
+            }
+        }
+        for (int index = 0; index < data.rows().size(); index++) {
+            PivotExportRequest.PivotRow parent = data.rows().get(index);
+            if (parent.total() || parent.level() >= 2) {
+                continue;
+            }
+            int end = index + 1;
+            while (end < data.rows().size() && !data.rows().get(end).total()
+                    && data.rows().get(end).level() > parent.level()) {
+                end++;
+            }
+            if (end > index + 1) {
+                sheet.groupRow(index + 2, end);
+            }
+        }
+        sheet.createFreezePane(1, 1);
     }
 
     public byte[] exportV9(List<ProductionReportResponse> reports) {

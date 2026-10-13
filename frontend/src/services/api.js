@@ -206,6 +206,7 @@ export const productionApi = {
 
   // Đã tối ưu hàm exportV9 dùng chung request()
   exportV9: params => request(`/production-reports/export-v9${buildQuery(params)}`, {}, { responseType: 'blob' }),
+  exportPivot: payload => request('/production-reports/export-pivot', { method: 'POST', body: JSON.stringify(payload) }, { responseType: 'blob' }),
 
   // Đã tối ưu hàm importV9 dùng chung request()
   importV9: async file => {

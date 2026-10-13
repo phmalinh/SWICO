@@ -31,6 +31,7 @@
         <div class="mt-2 flex flex-col gap-2 md:flex-row md:justify-end">
           <el-button @click="resetFilters">{{ l('reset') }}</el-button>
           <el-button type="primary" :loading="loading" @click="search">{{ l('search') }}</el-button>
+          <el-button type="success" :icon="Download" :loading="exporting" :disabled="loading || !reports.length" @click="exportExcel">{{ l('exportExcel') }}</el-button>
         </div>
       </el-form>
     </div>
@@ -120,6 +121,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Download } from '@element-plus/icons-vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { masterApi, productionApi } from '@/services/api'
 import { useI18n } from '@/i18n'
@@ -132,6 +134,7 @@ const firstDayOfMonth = today.slice(0, 8) + '01'
 
 const activeTab = ref('quantity')
 const loading = ref(false)
+const exporting = ref(false)
 const reports = ref([])
 const lines = ref([])
 const shifts = ref([])
@@ -319,6 +322,47 @@ function formatNumber(value) {
 function formatPercent(value) {
   const percent = Number(value || 0) * 100
   return `${Number(percent.toFixed(2))}%`
+}
+
+async function exportExcel() {
+  if (loading.value || exporting.value || !reports.value.length) return
+  exporting.value = true
+  let url
+  try {
+    const quantityKeys = ['inputQuantity', 'goodQuantity', 'internalDefectQuantity', 'externalDefectQuantity']
+    const rateKeys = ['productionEfficiency', 'availabilityRate', 'performanceRate', 'qualityRate', 'oee']
+    const exportRow = (row, keys, total = false) => ({
+      label: total ? l('grandTotal') : row.label,
+      level: total ? 0 : row.level,
+      total,
+      values: keys.map(key => !total && row.showValues === false ? null : Number(row[key] || 0)),
+    })
+    const blob = await productionApi.exportPivot({
+      quantity: {
+        name: 'TOL THÁNG(SẢN PHẨM)',
+        headers: ['rowLabels', 'completedQuantity', 'goodQuantity', 'internalDefectQuantity', 'externalDefectQuantity'].map(key => l(key)),
+        rows: [...quantityRows.value.map(row => exportRow(row, quantityKeys)), exportRow(quantityGrandTotal.value, quantityKeys, true)],
+      },
+      rates: {
+        name: 'TOL THÁNG(NHÂN VIÊN)',
+        headers: ['rowLabels', 'avgProductionEfficiency', 'avgAvailabilityRate', 'avgPerformanceRate', 'avgQualityRate', 'avgOee'].map(key => l(key)),
+        rows: [...rateRows.value.map(row => exportRow(row, rateKeys)), exportRow(rateGrandTotal.value, rateKeys, true)],
+      },
+    })
+    url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'Pivot.xlsx'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    ElMessage.success(l('exportSuccess'))
+  } catch (error) {
+    ElMessage.error(`${l('exportFailed')}: ${error.message}`)
+  } finally {
+    if (url) URL.revokeObjectURL(url)
+    exporting.value = false
+  }
 }
 
 function resetFilters() {
