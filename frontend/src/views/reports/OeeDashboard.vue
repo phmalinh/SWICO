@@ -79,10 +79,10 @@
           <div v-for="metric in line.metrics" :key="metric.label">
             <div class="mb-1 flex justify-between text-xs font-bold text-slate-500">
               <span>{{ metric.label }}</span>
-              <span>{{ metric.value }}%</span>
+              <span>{{ metric.value == null ? '-' : `${metric.value}%` }}</span>
             </div>
             <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
-              <div class="h-full rounded-full" :class="metric.barColor" :style="{ width: metric.value + '%' }"></div>
+              <div class="h-full rounded-full" :class="metric.barColor" :style="{ width: (metric.value ?? 0) + '%' }"></div>
             </div>
           </div>
         </div>
@@ -209,7 +209,7 @@ const lineDetails = computed(() =>
       tagType: isGood ? 'success' : isWarn ? 'warning' : 'danger',
       status: isGood ? t('reports.dashboard.sections.lineStatusStable') : isWarn ? t('reports.dashboard.sections.lineStatusWatch') : t('reports.dashboard.sections.lineStatusWarning'),
       metrics: [
-        { label: t('reports.dashboard.sections.availability'), value: (Number(r.availabilityRate || 0) * 100).toFixed(2), barColor: 'bg-sky-500' },
+        { label: t('reports.dashboard.sections.availability'), value: r.availabilityRate == null ? null : (Number(r.availabilityRate) * 100).toFixed(2), barColor: 'bg-sky-500' },
         { label: t('reports.dashboard.sections.performance'), value: (Number(r.performanceRate || 0) * 100).toFixed(2), barColor: 'bg-indigo-500' },
         { label: t('reports.dashboard.sections.quality'), value: (Number(r.qualityRate || 0) * 100).toFixed(2), barColor: r.qualityRate < 0.95 ? 'bg-rose-500' : 'bg-emerald-500' },
       ],

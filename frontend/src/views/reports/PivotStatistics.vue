@@ -139,6 +139,7 @@ const reports = ref([])
 const lines = ref([])
 const shifts = ref([])
 const processNameById = ref({})
+const processSequenceById = ref({})
 const filters = ref({
   dateFrom: firstDayOfMonth,
   dateTo: today,
@@ -156,6 +157,7 @@ function makeTotals() {
     externalDefectQuantity: 0,
     productionEfficiency: 0,
     availabilityRate: 0,
+    availabilityCount: 0,
     performanceRate: 0,
     qualityRate: 0,
     oee: 0,
@@ -170,6 +172,7 @@ function addReport(totals, report) {
   totals.externalDefectQuantity += Number(report.externalDefectQuantity || 0)
   totals.productionEfficiency += Number(report.productionEfficiency || 0)
   totals.availabilityRate += Number(report.availabilityRate || 0)
+  if (report.availabilityRate != null) totals.availabilityCount += 1
   totals.performanceRate += Number(report.performanceRate || 0)
   totals.qualityRate += Number(report.qualityRate || 0)
   totals.oee += Number(report.oee || 0)
@@ -180,7 +183,7 @@ function averages(totals) {
   const divisor = totals.count || 1
   return {
     productionEfficiency: totals.productionEfficiency / divisor,
-    availabilityRate: totals.availabilityRate / divisor,
+    availabilityRate: totals.availabilityCount ? totals.availabilityRate / totals.availabilityCount : null,
     performanceRate: totals.performanceRate / divisor,
     qualityRate: totals.qualityRate / divisor,
     oee: totals.oee / divisor,
@@ -194,11 +197,35 @@ function dateLabel(value) {
   return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }).replace(' ', '-')
 }
 
+function compareProcessIds(left, right) {
+  const leftSequence = processSequenceById.value[left] ?? Infinity
+  const rightSequence = processSequenceById.value[right] ?? Infinity
+  if (leftSequence !== rightSequence) return leftSequence < rightSequence ? -1 : 1
+  return String(processNameById.value[left] || left).localeCompare(
+    String(processNameById.value[right] || right), undefined, { numeric: true }
+  )
+}
+
+function orderedProcessIds(report) {
+  return [...(Array.isArray(report.processIds) ? report.processIds : [])].sort(compareProcessIds)
+}
+
+function compareProcessGroups(left, right) {
+  const leftIds = left.processIds
+  const rightIds = right.processIds
+  if (!leftIds.length || !rightIds.length) return rightIds.length - leftIds.length
+  for (let index = 0; index < Math.min(leftIds.length, rightIds.length); index++) {
+    const comparison = compareProcessIds(leftIds[index], rightIds[index])
+    if (comparison) return comparison
+  }
+  return leftIds.length - rightIds.length
+}
+
 function processLabel(report) {
   if (!Array.isArray(report.processIds) || report.processIds.length === 0) {
     return l('unknownProcess')
   }
-  return report.processIds
+  return orderedProcessIds(report)
     .map(id => processNameById.value[id])
     .filter(Boolean)
     .join(' + ') || l('unknownProcess')
@@ -224,7 +251,7 @@ function buildGroupedRows(items, firstKey, secondKey) {
     const first = firstMap.get(firstLabel)
     addReport(first.totals, report)
     if (!first.children.has(secondLabel)) {
-      first.children.set(secondLabel, { label: secondLabel, totals: makeTotals(), children: new Map() })
+      first.children.set(secondLabel, { label: secondLabel, processIds: orderedProcessIds(report), totals: makeTotals(), children: new Map() })
     }
     const second = first.children.get(secondLabel)
     addReport(second.totals, report)
@@ -236,7 +263,7 @@ function buildGroupedRows(items, firstKey, secondKey) {
 
   return [...firstMap.values()].flatMap(first => [
     toQuantityRow(first, 0, `first-${first.label}`, false),
-    ...[...first.children.values()].flatMap(second => [
+    ...[...first.children.values()].sort(compareProcessGroups).flatMap(second => [
       toQuantityRow(second, 1, `second-${first.label}-${second.label}`),
       ...[...second.children.values()].map(day => toQuantityRow(day, 2, `day-${first.label}-${second.label}-${day.label}`)),
     ]),
@@ -320,6 +347,7 @@ function formatNumber(value) {
 }
 
 function formatPercent(value) {
+  if (value == null) return '-'
   const percent = Number(value || 0) * 100
   return `${Number(percent.toFixed(2))}%`
 }
@@ -335,7 +363,7 @@ async function exportExcel() {
       label: total ? l('grandTotal') : row.label,
       level: total ? 0 : row.level,
       total,
-      values: keys.map(key => !total && row.showValues === false ? null : Number(row[key] || 0)),
+      values: keys.map(key => (!total && row.showValues === false) || row[key] == null ? null : Number(row[key])),
     })
     const blob = await productionApi.exportPivot({
       quantity: {
@@ -392,6 +420,12 @@ async function loadOptions() {
   )
   processNameById.value = processGroups.flat().reduce((map, process) => {
     if (process?.id) map[process.id] = process.processCode || process.process || String(process.id)
+    return map
+  }, {})
+  processSequenceById.value = processGroups.flat().reduce((map, process) => {
+    if (process?.id && process.sequence != null && Number.isFinite(Number(process.sequence))) {
+      map[process.id] = Number(process.sequence)
+    }
     return map
   }, {})
 }

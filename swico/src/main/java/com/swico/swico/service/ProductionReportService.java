@@ -1509,8 +1509,15 @@ public class ProductionReportService {
                     .toList();
         }
 
-        BigDecimal avgOee = average(reports.stream().map(DailyProductionReport::getOee).toList());
-        BigDecimal avgA = average(reports.stream().map(DailyProductionReport::getAvailabilityRate).toList());
+        Map<String, Boolean> nonElectricByCode = new HashMap<>();
+        reports.forEach(report -> nonElectricByCode.computeIfAbsent(report.getMachineCode(), formulaService::isNonElectricMachine));
+        java.util.function.Function<DailyProductionReport, BigDecimal> effectiveOee = report ->
+                Boolean.TRUE.equals(nonElectricByCode.get(report.getMachineCode()))
+                        ? formulaService.nonElectricOee(report.getPerformanceRate(), report.getQualityRate()) : report.getOee();
+        java.util.function.Function<DailyProductionReport, BigDecimal> effectiveA = report ->
+                Boolean.TRUE.equals(nonElectricByCode.get(report.getMachineCode())) ? null : report.getAvailabilityRate();
+        BigDecimal avgOee = average(reports.stream().map(effectiveOee).toList());
+        BigDecimal avgA = average(reports.stream().map(effectiveA).toList());
         BigDecimal avgP = average(reports.stream().map(DailyProductionReport::getPerformanceRate).toList());
         BigDecimal avgQ = average(reports.stream().map(DailyProductionReport::getQualityRate).toList());
 
@@ -1520,8 +1527,8 @@ public class ProductionReportService {
                 .sorted(java.util.Map.Entry.comparingByKey())
                 .map(entry -> {
                     List<DailyProductionReport> lineReports = entry.getValue();
-                    BigDecimal oee = average(lineReports.stream().map(DailyProductionReport::getOee).toList());
-                    BigDecimal av = average(lineReports.stream().map(DailyProductionReport::getAvailabilityRate).toList());
+                    BigDecimal oee = average(lineReports.stream().map(effectiveOee).toList());
+                    BigDecimal av = average(lineReports.stream().map(effectiveA).toList());
                     BigDecimal pr = average(lineReports.stream().map(DailyProductionReport::getPerformanceRate).toList());
                     BigDecimal qr = average(lineReports.stream().map(DailyProductionReport::getQualityRate).toList());
                     return new LineDashboardResponse(entry.getKey(), oee, av, pr, qr, status(oee));
@@ -1529,7 +1536,7 @@ public class ProductionReportService {
                 .toList();
 
         long warningCount = reports.stream()
-                .map(DailyProductionReport::getOee)
+                .map(effectiveOee)
                 .filter(o -> o != null && o.compareTo(new BigDecimal("0.65")) < 0)
                 .count();
 
@@ -1571,6 +1578,12 @@ public class ProductionReportService {
                 || request.evaluationLabel() != null;
         if (!hasOverrides) return calculated;
 
+        boolean nonElectric = formulaService.isNonElectricMachine(request.machineCode());
+        BigDecimal performance = request.performanceRate() != null ? request.performanceRate() : calculated.performanceRate();
+        BigDecimal quality = request.qualityRate() != null ? request.qualityRate() : calculated.qualityRate();
+        BigDecimal oee = nonElectric ? formulaService.nonElectricOee(performance, quality)
+                : request.oee() != null ? request.oee() : calculated.oee();
+
         return new ProductionCalculationResponse(
                 request.reportDate() != null ? request.reportDate() : calculated.reportDate(),
                 request.lineCode() != null ? request.lineCode() : calculated.lineCode(),
@@ -1589,19 +1602,21 @@ public class ProductionReportService {
                 calculated.dailyTargetDayQuantity(),
                 request.productionEfficiency() != null ? request.productionEfficiency() : calculated.productionEfficiency(),
                 calculated.dailyTargetEfficiency(),
-                request.availabilityRate() != null ? request.availabilityRate() : calculated.availabilityRate(),
+                nonElectric ? null : request.availabilityRate() != null ? request.availabilityRate() : calculated.availabilityRate(),
                 request.performanceRate() != null ? request.performanceRate() : calculated.performanceRate(),
                 request.qualityRate() != null ? request.qualityRate() : calculated.qualityRate(),
-                request.oee() != null ? request.oee() : calculated.oee(),
+                oee,
                 request.company() != null ? request.company() : calculated.company(),
                 request.downtimeReason() != null ? request.downtimeReason() : calculated.downtimeReason(),
                 calculated.responsibility(),
                 calculated.deductionPercent(),
-                request.evaluationLabel() != null ? request.evaluationLabel() : calculated.evaluationLabel()
+                nonElectric ? formulaService.evaluationLabel(oee) : request.evaluationLabel() != null ? request.evaluationLabel() : calculated.evaluationLabel()
         );
     }
 
     private ProductionReportResponse toResponse(DailyProductionReport report, ProductionCalculationResponse calculated) {
+        boolean nonElectric = formulaService.isNonElectricMachine(report.getMachineCode());
+        BigDecimal oee = nonElectric ? formulaService.nonElectricOee(report.getPerformanceRate(), report.getQualityRate()) : report.getOee();
         BigDecimal cycleTime = resolveProcessCycleTime(parseProcessIds(report.getProcessIds()));
         if (cycleTime == null) {
             cycleTime = report.getProduct() != null ? report.getProduct().getCycleTimeSeconds() : null;
@@ -1637,11 +1652,11 @@ public class ProductionReportService {
                 calculated != null ? calculated.dailyTargetDayQuantity() : report.getDailyTargetQuantity(),
                 calculated != null ? calculated.productionEfficiency() : report.getProductionEfficiency(),
                 calculated != null ? calculated.dailyTargetEfficiency() : report.getDailyTargetEfficiency(),
-                report.getAvailabilityRate(),
+                nonElectric ? null : report.getAvailabilityRate(),
                 report.getPerformanceRate(),
                 report.getQualityRate(),
-                report.getOee(),
-                calculated != null ? calculated.evaluationLabel() : report.getEvaluationLabel(),
+                oee,
+                nonElectric ? formulaService.evaluationLabel(oee) : calculated != null ? calculated.evaluationLabel() : report.getEvaluationLabel(),
                 report.getCreatedAt(),
                 report.getUpdatedAt(),
                 report.getCreatedBy(),

@@ -52,6 +52,9 @@
         <el-table-column prop="custodyDepartment" min-width="180" show-overflow-tooltip>
           <template #header><HeaderCell :label="l('custodyDepartment')" /></template>
         </el-table-column>
+        <el-table-column :label="t('master.machines.usesElectricity')" width="160" align="center">
+          <template #default="{ row }">{{ row.machineId ? t(row.usesElectricity === false ? 'master.machines.unpowered' : 'master.machines.powered') : '-' }}</template>
+        </el-table-column>
         <el-table-column :label="l('actions')" width="130" fixed="right" align="center">
           <template #header><HeaderCell :label="l('actions')" /></template>
           <template #default="{ row }">
@@ -104,6 +107,9 @@
         <el-form-item :label="l('machineName')"><el-input v-model="machineForm.description" /></el-form-item>
         <el-form-item :label="l('purchaseDate')"><el-date-picker v-model="machineForm.purchaseDate" type="date" value-format="YYYY-MM-DD" class="!w-full" /></el-form-item>
         <el-form-item :label="l('custodyDepartment')"><el-input v-model="machineForm.custodyDepartment" /></el-form-item>
+        <el-form-item :label="t('master.machines.usesElectricity')">
+          <el-switch v-model="machineForm.usesElectricity" :active-text="t('master.machines.powered')" :inactive-text="t('master.machines.unpowered')" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="machineDialogVisible = false">{{ l('cancel') }}</el-button>
@@ -143,7 +149,7 @@ const pageSize = ref(10)
 const pageSizeOptions = [10, 20, 50, 100]
 const fileInput = ref(null)
 const lineForm = ref({ id: null, lineCode: '', description: '' })
-const machineForm = ref({ id: null, lineCode: '', assetCode: '', machineCode: '', description: '', purchaseDate: '', custodyDepartment: '' })
+const machineForm = ref({ id: null, lineCode: '', assetCode: '', machineCode: '', description: '', purchaseDate: '', custodyDepartment: '', usesElectricity: true })
 const l = (key, params) => t(`master.lineMachines.${key}`, params)
 const lineDialogTitle = computed(() => lineForm.value.id ? l('lineEditTitle') : l('lineCreateTitle'))
 const machineDialogTitle = computed(() => machineForm.value.id ? l('machineEditTitle') : l('machineCreateTitle'))
@@ -218,8 +224,8 @@ function openLineDialog(row) {
 
 function openMachineDialog(row) {
   machineForm.value = row?.machineId
-    ? { id: row.machineId, lineCode: row.lineCode || '', assetCode: row.assetCode || '', machineCode: row.machineCode || '', description: row.description || '', purchaseDate: row.purchaseDate || '', custodyDepartment: row.custodyDepartment || '' }
-    : { id: null, lineCode: row?.lineCode || '', assetCode: '', machineCode: '', description: '', purchaseDate: '', custodyDepartment: '' }
+    ? { id: row.machineId, lineCode: row.lineCode || '', assetCode: row.assetCode || '', machineCode: row.machineCode || '', description: row.description || '', purchaseDate: row.purchaseDate || '', custodyDepartment: row.custodyDepartment || '', usesElectricity: row.usesElectricity !== false }
+    : { id: null, lineCode: row?.lineCode || '', assetCode: '', machineCode: '', description: '', purchaseDate: '', custodyDepartment: '', usesElectricity: true }
   machineDialogVisible.value = true
 }
 
@@ -228,7 +234,7 @@ function csvValue(value) {
 }
 
 function exportCsv() {
-  const headers = [l('lineCode'), l('assetCode'), l('machineCode'), l('machineName'), l('purchaseDate'), l('custodyDepartment')]
+  const headers = [l('lineCode'), l('assetCode'), l('machineCode'), l('machineName'), l('purchaseDate'), l('custodyDepartment'), t('master.machines.usesElectricity')]
   const dataRows = filteredRows.value.map(row => ({
     [l('lineCode')]: row.lineCode,
     [l('assetCode')]: row.assetCode,
@@ -236,6 +242,7 @@ function exportCsv() {
     [l('machineName')]: row.description,
     [l('purchaseDate')]: row.purchaseDate,
     [l('custodyDepartment')]: row.custodyDepartment,
+    [t('master.machines.usesElectricity')]: row.machineId ? row.usesElectricity === false ? 'no' : 'yes' : '',
   }))
   const content = [
     headers.map(csvValue).join(','),
@@ -285,6 +292,7 @@ async function saveMachine() {
     assetCode: machineForm.value.assetCode?.trim() || '',
     purchaseDate: machineForm.value.purchaseDate || null,
     custodyDepartment: machineForm.value.custodyDepartment?.trim() || '',
+    usesElectricity: machineForm.value.usesElectricity,
   }
   try {
     if (machineForm.value.id) await masterApi.updateMachine(machineForm.value.id, payload)

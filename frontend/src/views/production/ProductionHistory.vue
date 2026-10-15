@@ -336,6 +336,7 @@ function formatTime(iso) {
 }
 
 function formatPercent(value) {
+  if (value == null) return '-'
   return `${rate(value)}%`
 }
 

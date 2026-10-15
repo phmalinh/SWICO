@@ -5,6 +5,7 @@ import com.swico.swico.dto.ProductionCalculationRequest;
 import com.swico.swico.dto.ProductionCalculationResponse;
 import com.swico.swico.dto.ProductionReportDowntimeDto;
 import org.springframework.stereotype.Service;
+import com.swico.swico.repository.MachineRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,6 +16,22 @@ import java.util.Map;
 
 @Service
 public class ProductionFormulaService {
+
+    private final MachineRepository machineRepository;
+
+    public ProductionFormulaService(MachineRepository machineRepository) {
+        this.machineRepository = machineRepository;
+    }
+
+    public boolean isNonElectricMachine(String machineCode) {
+        return machineCode != null && machineRepository.findByMachineCode(machineCode.trim())
+                .map(machine -> Boolean.FALSE.equals(machine.getUsesElectricity())).orElse(false);
+    }
+
+    public BigDecimal nonElectricOee(BigDecimal performance, BigDecimal quality) {
+        return performance != null && quality != null
+                ? performance.multiply(quality).setScale(4, RoundingMode.HALF_UP) : null;
+    }
 
     private static final String SAME_MACHINE_CHANGEOVER_KEYWORD = "chuyen ma hang gia cong cung may";
 
@@ -56,6 +73,7 @@ public class ProductionFormulaService {
         BigDecimal oee = null;
 
         Integer availabilityDowntimeMinutes = availabilityDowntimeMinutes(request);
+        boolean nonElectric = isNonElectricMachine(request.machineCode());
         if (availabilityDowntimeMinutes != null && shiftMinutes != null && shiftMinutes > 0) {
             availabilityRate = BigDecimal.valueOf(Math.max(shiftMinutes - availabilityDowntimeMinutes, 0))
                     .divide(BigDecimal.valueOf(shiftMinutes), 4, RoundingMode.HALF_UP);
@@ -79,7 +97,10 @@ public class ProductionFormulaService {
                     .divide(BigDecimal.valueOf(inputQuantity), 4, RoundingMode.HALF_UP);
         }
 
-        if (availabilityRate != null && performanceRate != null && qualityRate != null) {
+        if (nonElectric) {
+            availabilityRate = null;
+            oee = nonElectricOee(performanceRate, qualityRate);
+        } else if (availabilityRate != null && performanceRate != null && qualityRate != null) {
             oee = availabilityRate.multiply(performanceRate).multiply(qualityRate).setScale(4, RoundingMode.HALF_UP);
         }
 

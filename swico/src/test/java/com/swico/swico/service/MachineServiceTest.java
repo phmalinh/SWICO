@@ -41,13 +41,27 @@ class MachineServiceTest {
             return machine;
         });
 
-        MachineResponse response = service.create(new MachineUpsertRequest("TC-01", "Test machine", "A1", null, null, null));
+        MachineResponse response = service.create(new MachineUpsertRequest("TC-01", "Test machine", "A1", null, null, null, null));
 
         ArgumentCaptor<Machine> machineCaptor = ArgumentCaptor.forClass(Machine.class);
         verify(machineRepository).save(machineCaptor.capture());
 
         assertEquals("A1", response.lineCode());
+        assertEquals(true, response.usesElectricity());
         assertEquals("A1", machineCaptor.getValue().getLine().getLineCode());
+    }
+
+    @Test
+    void updateShouldPersistNonElectricSettingAndKeepItWhenOmitted() {
+        MachineRepository machines = mock(MachineRepository.class);
+        MachineService service = new MachineService(machines, mock(LineRepository.class),
+                mock(DailyProductionReportRepository.class), mock(ProductProcessRepository.class));
+        Machine machine = new Machine();
+        machine.setId(1L);
+        when(machines.findById(1L)).thenReturn(Optional.of(machine));
+        when(machines.save(any(Machine.class))).thenAnswer(call -> call.getArgument(0));
+        assertEquals(false, service.update(1L, new MachineUpsertRequest("MP-03", "Manual", null, null, null, null, false)).usesElectricity());
+        assertEquals(false, service.update(1L, new MachineUpsertRequest("MP-03", "Renamed", null, null, null, null, null)).usesElectricity());
     }
 
     @Test

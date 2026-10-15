@@ -7,5 +7,6 @@ public record MachineResponse(
         String lineCode,
         String assetCode,
         String purchaseDate,
-        String custodyDepartment
+        String custodyDepartment,
+        Boolean usesElectricity
 ) {}

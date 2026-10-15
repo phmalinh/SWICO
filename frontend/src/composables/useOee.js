@@ -23,6 +23,7 @@ export function calculateOee({ operatingMinutes, downtimeMinutes, inputQty, good
 }
 
 export function formatPercent(value) {
+  if (value == null) return '-'
   return `${formatPercentNumber(value)}%`
 }
 

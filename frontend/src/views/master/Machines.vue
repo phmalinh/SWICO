@@ -18,6 +18,9 @@
         <el-table-column prop="purchaseDate" :label="t('master.machines.table.purchaseDate')" width="130" align="center" />
         <el-table-column prop="custodyDepartment" :label="t('master.machines.table.custodyDepartment')" min-width="170" show-overflow-tooltip />
         
+        <el-table-column :label="t('master.machines.usesElectricity')" width="160" align="center">
+          <template #default="{ row }">{{ t(row.usesElectricity === false ? 'master.machines.unpowered' : 'master.machines.powered') }}</template>
+        </el-table-column>
         <el-table-column :label="t('master.machines.table.actions')" width="150" align="center">
           <template #default="{ row }">
             <el-button type="primary" link @click="openDialog(row)">{{ t('common.edit') }}</el-button>
@@ -50,6 +53,9 @@
           <el-date-picker v-model="form.purchaseDate" type="date" value-format="YYYY-MM-DD" class="!w-full" />
         </el-form-item>
         <el-form-item :label="t('master.machines.dialog.custodyDepartment')"><el-input v-model="form.custodyDepartment" /></el-form-item>
+        <el-form-item :label="t('master.machines.usesElectricity')">
+          <el-switch v-model="form.usesElectricity" :active-text="t('master.machines.powered')" :inactive-text="t('master.machines.unpowered')" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
@@ -73,7 +79,7 @@ const lineOptions = ref([])
 const dialogVisible = ref(false)
 const editId = ref(null)
 const loading = ref(false)
-const form = ref({ machineCode: '', description: '', lineCode: '', assetCode: '', purchaseDate: '', custodyDepartment: '' })
+const form = ref({ machineCode: '', description: '', lineCode: '', assetCode: '', purchaseDate: '', custodyDepartment: '', usesElectricity: true })
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -92,6 +98,7 @@ function normalizeMachine(item) {
     assetCode: item.assetCode || '',
     purchaseDate: item.purchaseDate || '',
     custodyDepartment: item.custodyDepartment || '',
+    usesElectricity: item.usesElectricity !== false,
   }
 }
 
@@ -116,7 +123,7 @@ async function loadMachines() {
 
 function openDialog(row) {
   editId.value = row?.id || null
-  form.value = row ? { ...row } : { machineCode: '', description: '', lineCode: '', assetCode: '', purchaseDate: '', custodyDepartment: '' }
+  form.value = row ? { ...row } : { machineCode: '', description: '', lineCode: '', assetCode: '', purchaseDate: '', custodyDepartment: '', usesElectricity: true }
   dialogVisible.value = true
 }
 
@@ -130,6 +137,7 @@ async function save() {
       assetCode: form.value.assetCode?.trim() || '',
       purchaseDate: form.value.purchaseDate || null,
       custodyDepartment: form.value.custodyDepartment?.trim() || '',
+      usesElectricity: form.value.usesElectricity,
     }
     if (editId.value) {
       await masterApi.updateMachine(editId.value, payload)

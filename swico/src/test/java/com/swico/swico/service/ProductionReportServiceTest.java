@@ -35,6 +35,27 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ProductionReportServiceTest {
 
+    @Test
+    void importedOverridesShouldNotRestoreAvailabilityForNonElectricMachine() throws Exception {
+        var request = new com.fasterxml.jackson.databind.ObjectMapper().convertValue(Map.of(
+                "machineCode", "MP-03", "cycleTimeSeconds", 60, "totalOperatingMinutes", 100,
+                "downtimeMinutes", 20, "inputQuantity", 100, "goodQuantity", 90,
+                "availabilityRate", 0.5, "performanceRate", 0.8, "qualityRate", 0.9, "oee", 0.36
+        ), com.swico.swico.dto.ProductionCalculationRequest.class);
+        var machineRepository = org.mockito.Mockito.mock(com.swico.swico.repository.MachineRepository.class);
+        var calculator = new ProductionFormulaService(machineRepository);
+        var calculated = calculator.calculate(request, 100);
+        when(formulaService.isNonElectricMachine("MP-03")).thenReturn(true);
+        when(formulaService.nonElectricOee(new java.math.BigDecimal("0.8"), new java.math.BigDecimal("0.9"))).thenCallRealMethod();
+        when(formulaService.evaluationLabel(new java.math.BigDecimal("0.7200"))).thenCallRealMethod();
+        Method method = ProductionReportService.class.getDeclaredMethod("mergeCalculated",
+                com.swico.swico.dto.ProductionCalculationResponse.class, com.swico.swico.dto.ProductionCalculationRequest.class);
+        method.setAccessible(true);
+        var result = (com.swico.swico.dto.ProductionCalculationResponse) method.invoke(service, calculated, request);
+        org.junit.jupiter.api.Assertions.assertNull(result.availabilityRate());
+        assertEquals(new java.math.BigDecimal("0.7200"), result.oee());
+    }
+
     @Mock
     private DailyProductionReportRepository reportRepository;
 

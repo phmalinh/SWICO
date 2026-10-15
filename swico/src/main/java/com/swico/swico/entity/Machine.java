@@ -30,6 +30,17 @@ public class Machine {
     @Column(name = "custody_department", length = 255)
     private String custodyDepartment;
 
+    @Column(name = "uses_electricity", nullable = false, columnDefinition = "boolean default true")
+    private Boolean usesElectricity = true;
+
+    public Boolean getUsesElectricity() {
+        return usesElectricity;
+    }
+
+    public void setUsesElectricity(Boolean usesElectricity) {
+        this.usesElectricity = usesElectricity;
+    }
+
     public Long getId() {
         return id;
     }

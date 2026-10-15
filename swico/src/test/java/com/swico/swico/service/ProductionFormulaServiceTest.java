@@ -14,7 +14,21 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ProductionFormulaServiceTest {
 
-    private final ProductionFormulaService service = new ProductionFormulaService();
+    private final com.swico.swico.repository.MachineRepository machineRepository = org.mockito.Mockito.mock(com.swico.swico.repository.MachineRepository.class);
+    private final ProductionFormulaService service = new ProductionFormulaService(machineRepository);
+
+    @Test
+    void nonElectricMachineShouldSkipAvailabilityAndUsePerformanceTimesQuality() {
+        com.swico.swico.entity.Machine machine = new com.swico.swico.entity.Machine();
+        machine.setUsesElectricity(false);
+        org.mockito.Mockito.when(machineRepository.findByMachineCode("MC-01")).thenReturn(java.util.Optional.of(machine));
+        ProductionCalculationResponse response = service.calculate(request(146, 145, 1, new BigDecimal("27"), 66), 100);
+        assertNull(response.availabilityRate());
+        assertEquals(new BigDecimal("1.0000"), response.performanceRate());
+        assertEquals(new BigDecimal("0.9932"), response.oee());
+        assertEquals(new BigDecimal("222"), response.dailyTargetDayQuantity());
+        assertEquals(new BigDecimal("0.9959"), response.productionEfficiency());
+    }
 
     @Test
     void productionEfficiencyShouldUseRoundedDownTargetAndDeduction() {

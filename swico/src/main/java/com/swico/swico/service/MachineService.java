@@ -40,6 +40,7 @@ public class MachineService {
         machine.setAssetCode(request.assetCode());
         machine.setPurchaseDate(request.purchaseDate());
         machine.setCustodyDepartment(request.custodyDepartment());
+        machine.setUsesElectricity(!Boolean.FALSE.equals(request.usesElectricity()));
         Machine saved = machineRepository.save(machine);
         return toResponse(saved);
     }
@@ -52,6 +53,9 @@ public class MachineService {
         machine.setAssetCode(request.assetCode());
         machine.setPurchaseDate(request.purchaseDate());
         machine.setCustodyDepartment(request.custodyDepartment());
+        if (request.usesElectricity() != null) {
+            machine.setUsesElectricity(request.usesElectricity());
+        }
         return toResponse(machineRepository.save(machine));
     }
 
@@ -106,7 +110,8 @@ public class MachineService {
                 machine.getLine() != null ? machine.getLine().getLineCode() : null,
                 machine.getAssetCode(),
                 machine.getPurchaseDate() != null ? machine.getPurchaseDate().toString() : null,
-                machine.getCustodyDepartment()
+                machine.getCustodyDepartment(),
+                !Boolean.FALSE.equals(machine.getUsesElectricity())
         );
     }
 }

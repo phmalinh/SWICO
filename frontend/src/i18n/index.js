@@ -787,6 +787,9 @@ const messages = {
       },
       machines: {
         eyebrow: '3.4 Dữ liệu chính',
+        usesElectricity: 'Dùng điện / Không dùng điện',
+        powered: 'Dùng điện',
+        unpowered: 'Không dùng điện',
         pageTitle: 'Danh Mục Máy / Thiết Bị',
         pageSubtitle: 'Quản lý mã máy TC-31, TC-32... thuộc từng chuyền sản xuất.',
         add: 'Thêm máy',
@@ -1777,6 +1780,9 @@ const messages = {
       },
       machines: {
         eyebrow: '3.4 主資料',
+        usesElectricity: '有電 / 無電',
+        powered: '有電',
+        unpowered: '無電',
         pageTitle: '機台與設備主資料',
         pageSubtitle: '管理 TC-31、TC-32 等機台，並指定所屬產線。',
         add: '新增機台',

@@ -190,10 +190,12 @@ function employmentStatusLabel(value) {
 }
 
 function formatPercent(value) {
+  if (value == null) return '-'
   return `${formatPercentNumber(value)}%`
 }
 
 function rate(value) {
+  if (value == null) return '-'
   return formatPercentNumber(value)
 }
 

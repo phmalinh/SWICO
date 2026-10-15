@@ -2347,7 +2347,7 @@ const oeeCards = computed(() => {
     { key: 'oee', label: 'OEE', value: formatPercent(Number(r.oee || 0)), textClass: oeeColor.text, cardClass: 'border-slate-200 bg-slate-50' },
     { key: 'prod-eff', label: t('productionEntry.productionEfficiency'), value: formatPercent(Number(r.productionEfficiency || 0)), textClass: 'text-amber-600', cardClass: 'border-amber-100 bg-amber-50' },
     { key: 'daily-target-eff', label: t('productionEntry.dailyTargetEfficiency'), value: formatPercent(Number(r.dailyTargetEfficiency || 0)), textClass: 'text-cyan-600', cardClass: 'border-cyan-100 bg-cyan-50' },
-    { key: 'a', label: t('reports.dashboard.sections.availability'), value: formatPercent(Number(r.availabilityRate || 0)), textClass: 'text-sky-600', cardClass: 'border-sky-100 bg-sky-50' },
+    { key: 'a', label: t('reports.dashboard.sections.availability'), value: formatPercent(r.availabilityRate), textClass: 'text-sky-600', cardClass: 'border-sky-100 bg-sky-50' },
     { key: 'p', label: t('reports.dashboard.sections.performance'), value: formatPercent(Number(r.performanceRate || 0)), textClass: 'text-indigo-600', cardClass: 'border-indigo-100 bg-indigo-50' },
     { key: 'q', label: t('reports.dashboard.sections.quality'), value: formatPercent(Number(r.qualityRate || 0)), textClass: 'text-emerald-600', cardClass: 'border-emerald-100 bg-emerald-50' },
     { key: 'responsibility', label: t('productionEntry.responsibility'), value: formatPercent(Number(r.responsibility || 0)), textClass: 'text-rose-600', cardClass: 'border-rose-100 bg-rose-50' },

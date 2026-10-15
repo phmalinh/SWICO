@@ -9,5 +9,6 @@ public record MachineUpsertRequest(
         String lineCode,
         String assetCode,
         LocalDate purchaseDate,
-        String custodyDepartment
+        String custodyDepartment,
+        Boolean usesElectricity
 ) {}

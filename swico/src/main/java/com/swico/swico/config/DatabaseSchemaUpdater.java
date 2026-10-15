@@ -18,6 +18,8 @@ public class DatabaseSchemaUpdater {
 
     @PostConstruct
     public void updateSchema() {
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS machines ADD COLUMN IF NOT EXISTS uses_electricity boolean DEFAULT true");
+        jdbcTemplate.execute("UPDATE machines SET uses_electricity = true WHERE uses_electricity IS NULL");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS product_process ALTER COLUMN line_code TYPE varchar(1000)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS product_process ALTER COLUMN machine_code TYPE varchar(1000)");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS product_process ALTER COLUMN process TYPE varchar(1000)");

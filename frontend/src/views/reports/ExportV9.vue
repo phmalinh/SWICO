@@ -444,6 +444,7 @@ async function importExcelFile(file) {
 }
 
 function formatPercent(value) {
+  if (value == null) return '-'
   return `${formatPercentNumber(value)}%`
 }
 
@@ -582,6 +583,7 @@ function sameLot(left, right) {
 }
 
 function rate(value) {
+  if (value == null) return '-'
   return formatPercentNumber(value)
 }
 

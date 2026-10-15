@@ -60,6 +60,7 @@ public class LineMachineImportService {
             int descriptionColumn = findColumn(headerRow, formatter, "description");
             int purchaseDateColumn = findColumn(headerRow, formatter, "purchaseDate");
             int custodyColumn = findColumn(headerRow, formatter, "custody");
+            int electricityColumn = findColumn(headerRow, formatter, "electricity");
             if (lineColumn < 0 && machineColumn < 0) {
                 throw new IllegalArgumentException("Không tìm thấy cột chuyền hoặc thiết bị trong file Excel.");
             }
@@ -78,6 +79,7 @@ public class LineMachineImportService {
                 String description = descriptionColumn >= 0 ? text(row, descriptionColumn, formatter, evaluator) : null;
                 LocalDate purchaseDate = purchaseDateColumn >= 0 ? date(row, purchaseDateColumn, formatter, evaluator) : null;
                 String custodyDepartment = custodyColumn >= 0 ? text(row, custodyColumn, formatter, evaluator) : null;
+                Boolean usesElectricity = electricityColumn >= 0 ? parseElectricity(text(row, electricityColumn, formatter, evaluator)) : null;
                 if (lineCodes.isEmpty() && machineCodes.isEmpty()) {
                     rowsSkipped++;
                     continue;
@@ -92,7 +94,7 @@ public class LineMachineImportService {
                 }
                 Line machineLine = singleLine != null ? singleLine : currentLine;
                 for (String machineCode : machineCodes) {
-                    ensureMachine(machineCode, machineLine, assetCode, description, purchaseDate, custodyDepartment, touchedMachines);
+                    ensureMachine(machineCode, machineLine, assetCode, description, purchaseDate, custodyDepartment, usesElectricity, touchedMachines);
                 }
             }
         } catch (Exception ex) {
@@ -121,6 +123,9 @@ public class LineMachineImportService {
         if (headerRow == null) return -1;
         for (int c = 0; c < Math.max(0, headerRow.getLastCellNum()); c++) {
             String header = normalize(formatter.formatCellValue(headerRow.getCell(c)));
+            if (type.equals("electricity") && (header.contains("dien") || header.contains("有電") || header.contains("無電") || header.contains("electricity"))) {
+                return c;
+            }
             if (type.equals("line") && (header.contains("線別") || header.contains("line") || header.contains("day chuyen") || header.contains("chuyen"))) {
                 return c;
             }
@@ -155,18 +160,20 @@ public class LineMachineImportService {
     }
 
     private void ensureMachine(String code, Line line, String assetCode, String description, LocalDate purchaseDate,
-                               String custodyDepartment, Set<String> touchedMachines) {
+                               String custodyDepartment, Boolean usesElectricity, Set<String> touchedMachines) {
         if (isBlank(code)) return;
         touchedMachines.add(code);
         machineRepository.findByMachineCode(code)
                 .map(existing -> {
                     applyMachineDetails(existing, line, assetCode, description, purchaseDate, custodyDepartment);
+                    if (usesElectricity != null) existing.setUsesElectricity(usesElectricity);
                     return machineRepository.save(existing);
                 })
                 .orElseGet(() -> {
                     Machine machine = new Machine();
                     machine.setMachineCode(code);
                     applyMachineDetails(machine, line, assetCode, description, purchaseDate, custodyDepartment);
+                    if (usesElectricity != null) machine.setUsesElectricity(usesElectricity);
                     return machineRepository.save(machine);
                 });
     }
@@ -186,6 +193,14 @@ public class LineMachineImportService {
         if (!isBlank(custodyDepartment)) {
             machine.setCustodyDepartment(custodyDepartment.trim());
         }
+    }
+
+    private Boolean parseElectricity(String value) {
+        if (isBlank(value)) return null;
+        String normalized = normalize(value);
+        if (List.of("no", "false", "0", "khong", "khong dung dien", "khong co dien", "無電", "无电").contains(normalized)) return false;
+        if (List.of("yes", "true", "1", "co", "dung dien", "co dien", "有電", "有电").contains(normalized)) return true;
+        throw new IllegalArgumentException("Giá trị dùng điện không hợp lệ: " + value);
     }
 
     private List<String> splitCodes(String value) {
